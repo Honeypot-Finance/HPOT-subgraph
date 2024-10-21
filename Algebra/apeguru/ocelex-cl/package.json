@@ -1,0 +1,20 @@
+{
+  "name": "ocelex-cl",
+  "license": "UNLICENSED",
+  "scripts": {
+    "codegen": "graph codegen",
+    "build": "graph build",
+    "deploy": "graph deploy --node https://api.studio.thegraph.com/deploy/ apeguru/ocelex-cl",
+    "create-local": "graph create --node http://localhost:8020/ apeguru/ocelex-cl",
+    "remove-local": "graph remove --node http://localhost:8020/ apeguru/ocelex-cl",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 apeguru/ocelex-cl",
+    "test": "graph test"
+  },
+  "dependencies": {
+    "@graphprotocol/graph-ts": "0.32.0"
+  },
+  "devDependencies": {
+    "matchstick-as": "0.5.0",
+    "@sentio/cli": "^2.21.4"
+  }
+}
