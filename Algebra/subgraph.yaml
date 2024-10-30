@@ -5,11 +5,11 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: Factory
-    network: goerli
+    network: berachain-bartio
     source:
-      address: '0x13fcE0acbe6Fb11641ab753212550574CaD31415'
+      address: '0xab49321DF952315E208a2B7046A00d2015E39cba'
       abi: Factory
-      startBlock: 9705888 
+      startBlock: 6193033 
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -32,15 +32,17 @@ dataSources:
       eventHandlers:
         - event: Pool(indexed address,indexed address,address)
           handler: handlePoolCreated
+        - event: CustomPool(indexed address,indexed address,indexed address,address)
+          handler: handleCustomPoolCreated
         - event: DefaultCommunityFee(uint16)
           handler: handleNewCommunityFee
   - kind: ethereum/contract
     name: NonfungiblePositionManager
-    network: goerli
+    network: berachain-bartio
     source:
       address: '0xAbAc6f23fdf1313FC2E9C9244f666157CcD32990'
       abi: NonfungiblePositionManager
-      startBlock: 9705888 
+      startBlock: 6193033 
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -71,7 +73,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: Pool
-    network: goerli
+    network: berachain-bartio
     source:
       abi: Pool
     mapping:
@@ -92,11 +94,11 @@ templates:
       eventHandlers:
         - event: Initialize(uint160,int24)
           handler: handleInitialize
-        - event: Swap(indexed address,indexed address,int256,int256,uint160,uint128,int24)
+        - event: Swap(indexed address,indexed address,int256,int256,uint160,uint128,int24,uint24,uint24)
           handler: handleSwap
         - event: Mint(address,indexed address,indexed int24,indexed int24,uint128,uint256,uint256)
           handler: handleMint
-        - event: Burn(indexed address,indexed int24,indexed int24,uint128,uint256,uint256)
+        - event: Burn(indexed address,indexed int24,indexed int24,uint128,uint256,uint256,uint24)
           handler: handleBurn
         - event: Fee(uint16)
           handler: handleChangeFee
@@ -106,3 +108,7 @@ templates:
           handler: handleSetCommunityFee
         - event: TickSpacing(int24)
           handler: handleSetTickSpacing
+        - event: Plugin(address)
+          handler: handlePlugin
+        - event: PluginConfig(uint8)
+          handler: handlePluginConfig

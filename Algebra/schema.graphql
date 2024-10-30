@@ -84,6 +84,9 @@ type Pool @entity {
   token0: Token!
   # token1
   token1: Token!
+  deployer: Bytes!
+  plugin: Bytes!
+  pluginConfig: Int!
   # fee amount
   fee: BigInt!
   communityFee: BigInt!
@@ -692,6 +695,14 @@ type TokenHourData @entity {
   low: BigDecimal!
   # close price USD
   close: BigDecimal!
+}
+
+type Plugin @entity {
+  id: ID!
+  pool: Pool!
+  collectedFeesToken0: BigDecimal!
+  collectedFeesToken1: BigDecimal!
+  collectedFeesUSD: BigDecimal!
 }
 
 type FeeHourData @entity {
