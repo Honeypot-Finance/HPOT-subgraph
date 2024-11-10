@@ -23,7 +23,12 @@ $ yarn build
 
 For deploy you need to run:
 ```
-$ yarn graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ --access-token <access-token> <graph-name> subgraph.yaml
+#$ yarn graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ --access-token <access-token> <graph-name> subgraph.yaml
+
+goldsky: 
+goldsky subgraph deploy {name} --path {path}
+eg:
+goldsky subgraph deploy hpot/1.0.0 --path ./
 ```
 
 ## AlgebraFarming
