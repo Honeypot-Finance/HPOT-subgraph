@@ -6,7 +6,7 @@ import { Pool as PoolEvent } from '../types/Factory/Factory'
 import { DefaultCommunityFee, CustomPool } from '../types/Factory/Factory'
 import { Pool, Token, Bundle } from '../types/schema'
 import { Pool as PoolTemplate} from '../types/templates'
-import { fetchTokenSymbol, fetchTokenName, fetchTokenTotalSupply, fetchTokenDecimals } from '../utils/token'
+import { fetchTokenSymbol, fetchTokenName, fetchTokenTotalSupply, fetchTokenDecimals, fetchTokenPot2PumpAddress } from '../utils/token'
 import { log, BigInt, Address } from '@graphprotocol/graph-ts'
 
 export function handlePoolCreated(event: PoolEvent): void {
@@ -27,6 +27,7 @@ export function handlePoolCreated(event: PoolEvent): void {
     factory.totalValueLockedMaticUntracked = ZERO_BD
     factory.txCount = ZERO_BI
     factory.owner = ADDRESS_ZERO
+    
 
     // create new bundle for tracking matic price
     let bundle = new Bundle('1')
@@ -59,6 +60,7 @@ export function handlePoolCreated(event: PoolEvent): void {
     token0.name = fetchTokenName(token0_address)
     token0.totalSupply = fetchTokenTotalSupply(token0_address)
     let decimals = fetchTokenDecimals(token0_address)
+    token0.Pot2PumpAddress = fetchTokenPot2PumpAddress(token1_address).toHexString()
 
     // bail if we couldn't figure out the decimals
     if (decimals === null) {
@@ -86,11 +88,14 @@ export function handlePoolCreated(event: PoolEvent): void {
     token1.name = fetchTokenName(token1_address)
     token1.totalSupply = fetchTokenTotalSupply(token1_address)
     let decimals = fetchTokenDecimals(token1_address)
+    token1.Pot2PumpAddress = fetchTokenPot2PumpAddress(token1_address).toHexString()
+
     // bail if we couldn't figure out the decimals
     if (decimals === null) {
       log.debug('mybug the decimal on token 0 was null', [])
       return
     }
+
     token1.decimals = decimals
     token1.derivedMatic = ZERO_BD
     token1.volume = ZERO_BD

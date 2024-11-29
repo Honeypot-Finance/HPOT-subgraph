@@ -29,6 +29,8 @@ dataSources:
           file: ./abis/ERC20NameBytes.json
         - name: Pool
           file: ./abis/pool.json
+        - name: Pot2PumpFactory
+          file: ./abis/pot2PumpFactory.json
       eventHandlers:
         - event: Pool(indexed address,indexed address,address)
           handler: handlePoolCreated

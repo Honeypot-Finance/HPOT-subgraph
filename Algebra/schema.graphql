@@ -71,6 +71,10 @@ type Token @entity {
   whitelistPools: [Pool!]!
   # derived fields
   tokenDayData: [TokenDayData!]! @derivedFrom(field: "token")
+
+
+  #Pot2Pump
+  Pot2PumpAddress: String!
 }
 
 type Pool @entity {
@@ -152,6 +156,7 @@ type Pool @entity {
   swaps: [Swap!]! @derivedFrom(field: "pool")
   collects: [Collect!]! @derivedFrom(field: "pool")
   ticks: [Tick!]! @derivedFrom(field: "pool")
+
 }
 
 type Tick @entity {

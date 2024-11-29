@@ -5,6 +5,20 @@ import { ERC20NameBytes } from '../types/Factory/ERC20NameBytes'
 import { StaticTokenDefinition } from './staticTokenDefinition'
 import { BigInt, Address } from '@graphprotocol/graph-ts'
 import { isNullEthValue } from '.'
+import { Pot2PumpFactory } from '../types/Factory/pot2PumpFactory'
+import { ADDRESS_ZERO, POT2PUMP_FACTORY_ADDRESS } from './constants'
+
+export function fetchTokenPot2PumpAddress(tokenAddress: Address): Address {
+  const pot2PumpContract = Pot2PumpFactory.bind(Address.fromString(POT2PUMP_FACTORY_ADDRESS));
+  const pairAddress = pot2PumpContract.try_getPair(tokenAddress);
+
+  if (!pairAddress ||pairAddress.reverted|| pairAddress.value == Address.zero()) 
+  {
+    return Address.zero();
+  }
+
+  return pairAddress.value;
+}
 
 
 export function fetchTokenSymbol(tokenAddress: Address): string {
