@@ -12,11 +12,9 @@ export function fetchTokenPot2PumpAddress(tokenAddress: Address): Address {
   const pot2PumpContract = Pot2PumpFactory.bind(Address.fromString(POT2PUMP_FACTORY_ADDRESS));
   const pairAddress = pot2PumpContract.try_getPair(tokenAddress);
 
-  if (!pairAddress ||pairAddress.reverted|| pairAddress.value == Address.zero()) 
-  {
+  if (pairAddress.reverted) {
     return Address.zero();
   }
-
   return pairAddress.value;
 }
 

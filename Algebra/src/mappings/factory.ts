@@ -60,7 +60,7 @@ export function handlePoolCreated(event: PoolEvent): void {
     token0.name = fetchTokenName(token0_address)
     token0.totalSupply = fetchTokenTotalSupply(token0_address)
     let decimals = fetchTokenDecimals(token0_address)
-    token0.Pot2PumpAddress = fetchTokenPot2PumpAddress(token1_address).toHexString()
+    token0.Pot2PumpAddress = fetchTokenPot2PumpAddress(token0_address).toHexString()
 
     // bail if we couldn't figure out the decimals
     if (decimals === null) {
