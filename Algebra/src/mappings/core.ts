@@ -1,7 +1,7 @@
 /* eslint-disable prefer-const */
-import { Bundle, Burn, Factory, Mint, Pool, Swap, Tick, PoolPosition, Plugin, Token, PoolFeeData } from '../types/schema'
+import { Bundle, Burn, Factory, Mint, Pool, Swap, Tick, PoolPosition, Plugin, Token, PoolFeeData, HoldingToken } from '../types/schema'
 import { PluginConfig, Pool as PoolABI } from '../types/Factory/Pool'
-import { BigDecimal, BigInt, ethereum, log} from '@graphprotocol/graph-ts'
+import { Address, BigDecimal, BigInt, ethereum, log, store} from '@graphprotocol/graph-ts'
 
 import {
   Burn as BurnEvent,
@@ -15,7 +15,7 @@ import {
   Plugin as PluginEvent
 } from '../types/templates/Pool/Pool'
 import { convertTokenToDecimal, loadTransaction, safeDiv } from '../utils'
-import { FACTORY_ADDRESS, ONE_BI, ZERO_BD, ZERO_BI, pools_list, FEE_DENOMINATOR} from '../utils/constants'
+import { FACTORY_ADDRESS, ONE_BI, ZERO_BD, ZERO_BI, pools_list, FEE_DENOMINATOR, ADDRESS_ZERO} from '../utils/constants'
 import { findEthPerToken, getEthPriceInUSD, getTrackedAmountUSD, priceToTokenPrices } from '../utils/pricing'
 import {
   updatePoolDayData,
@@ -27,6 +27,9 @@ import {
   updateFeeHourData
 } from '../utils/intervalUpdates'
 import { createTick } from '../utils/tick'
+import { fetchTokenBalance } from '../utils/token'
+import { Transfer } from '../types/Factory/ERC20'
+
 
 export function handleInitialize(event: Initialize): void {
   let pool = Pool.load(event.address.toHexString())!
@@ -37,6 +40,7 @@ export function handleInitialize(event: Initialize): void {
   // update token prices
   let token0 = Token.load(pool.token0)!
   let token1 = Token.load(pool.token1)!
+
 
   // update Matic price now that prices could have changed
   let bundle = Bundle.load('1')!
@@ -61,6 +65,7 @@ export function handleMint(event: MintEvent): void {
 
   let token0 = Token.load(pool.token0)!
   let token1 = Token.load(pool.token1)!
+
 
   let amount0 = convertTokenToDecimal(event.params.amount0, token0.decimals)
   let amount1 = convertTokenToDecimal(event.params.amount1, token1.decimals)
@@ -204,6 +209,7 @@ export function handleBurn(event: BurnEvent): void {
   let token0 = Token.load(pool.token0)!
   let token1 = Token.load(pool.token1)!
 
+
   let amount0 = convertTokenToDecimal(event.params.amount0, token0.decimals)
   let amount1 = convertTokenToDecimal(event.params.amount1, token1.decimals)
 
@@ -325,9 +331,9 @@ export function handleSwap(event: SwapEvent): void {
   let oldTick = pool.tick
   let flag = false 
 
-
   let token0 = Token.load(pool.token0)!
   let token1 = Token.load(pool.token1)!
+
 
 
   let amount0 = convertTokenToDecimal(event.params.amount0, token0.decimals)
@@ -710,6 +716,47 @@ export function handlePluginConfig(event: PluginConfig): void {
   pool.save()
 }
 
+export function handleTransfer(event: Transfer): void {
+  const token = Token.load(event.address.toHexString())
+  
+  if(!token||token.Pot2PumpAddress == Address.zero().toHexString()){
+    return
+  }
+
+  // token holder update
+  // check from address 
+  const fromHolderId = token.id+event.params.from.toHexString()
+  const fromHolder = HoldingToken.load(fromHolderId)
+  if(fromHolder && event.params.from.toHexString()!==ADDRESS_ZERO){
+    //check user token balance
+    fromHolder.holdingValue.minus(event.params.value)
+    if(fromHolder.holdingValue.equals(ZERO_BI)){
+      store.remove('HoldingToken', fromHolderId)
+      token.holderCount.minus(ONE_BI)
+    }
+  }
+
+  // check to address
+  const toHolderId = token.id+event.params.to.toHexString()
+  const toHolder = HoldingToken.load(toHolderId)
+  if(event.params.to.toHexString()!==ADDRESS_ZERO){
+    if(toHolder){
+    toHolder.holdingValue.plus(event.params.value)
+    toHolder.save()
+  }
+    else{
+      let newHolder = new HoldingToken(toHolderId)
+      newHolder.account = event.params.to.toHexString()
+      newHolder.token = token.id
+      newHolder.holdingValue = event.params.value
+      newHolder.save()
+      token.holderCount.plus(ONE_BI)
+    }
+  }
+
+  token.save()
+
+}
 
 function loadTickUpdateFeeVarsAndSave(tickId: i32, event: ethereum.Event): void {
   let poolAddress = event.address
