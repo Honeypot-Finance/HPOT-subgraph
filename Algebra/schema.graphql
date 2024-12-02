@@ -29,6 +29,22 @@ type Factory @entity {
   owner: ID!
 }
 
+type Account @entity {
+  # account address
+  id: ID!
+  # holding tokens
+  holder: [HoldingToken!]! @derivedFrom(field: "account")
+}
+
+type HoldingToken @entity {
+  # account address + token address
+  id: ID!
+  # token address
+  token: Token!
+  account: Account!
+  holdingValue: BigInt!
+}
+
 # stores for USD calculations
 type Bundle @entity {
   id: ID!
@@ -73,8 +89,12 @@ type Token @entity {
   tokenDayData: [TokenDayData!]! @derivedFrom(field: "token")
 
 
-  #Pot2Pump
+  # Pot2Pump
   Pot2PumpAddress: String!
+
+  # holders
+  holderCount: BigInt!
+  holders: [HoldingToken!]! @derivedFrom(field: "token")
 }
 
 type Pool @entity {
@@ -156,7 +176,6 @@ type Pool @entity {
   swaps: [Swap!]! @derivedFrom(field: "pool")
   collects: [Collect!]! @derivedFrom(field: "pool")
   ticks: [Tick!]! @derivedFrom(field: "pool")
-
 }
 
 type Tick @entity {

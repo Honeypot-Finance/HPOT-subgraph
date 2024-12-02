@@ -80,6 +80,7 @@ export function handlePoolCreated(event: PoolEvent): void {
     token0.txCount = ZERO_BI
     token0.poolCount = ZERO_BI
     token0.whitelistPools = []
+    token0.holderCount = BigInt.fromI32(0)
   }
 
   if (token1 === null) {
@@ -108,6 +109,7 @@ export function handlePoolCreated(event: PoolEvent): void {
     token1.txCount = ZERO_BI
     token1.poolCount = ZERO_BI
     token1.whitelistPools = []
+    token1.holderCount = BigInt.fromI32(0)
   }
 
   // update white listed pools

@@ -3,10 +3,11 @@ import { ERC20 } from '../types/Factory/ERC20'
 import { ERC20SymbolBytes } from '../types/Factory/ERC20SymbolBytes'
 import { ERC20NameBytes } from '../types/Factory/ERC20NameBytes'
 import { StaticTokenDefinition } from './staticTokenDefinition'
-import { BigInt, Address } from '@graphprotocol/graph-ts'
+import { BigInt, Address, store } from '@graphprotocol/graph-ts'
 import { isNullEthValue } from '.'
 import { Pot2PumpFactory } from '../types/Factory/pot2PumpFactory'
-import { ADDRESS_ZERO, POT2PUMP_FACTORY_ADDRESS } from './constants'
+import { ONE_BI, POT2PUMP_FACTORY_ADDRESS, ZERO_BI } from './constants'
+import { HoldingToken, Token } from '../types/schema'
 
 export function fetchTokenPot2PumpAddress(tokenAddress: Address): Address {
   const pot2PumpContract = Pot2PumpFactory.bind(Address.fromString(POT2PUMP_FACTORY_ADDRESS));
@@ -16,6 +17,16 @@ export function fetchTokenPot2PumpAddress(tokenAddress: Address): Address {
     return Address.zero();
   }
   return pairAddress.value;
+}
+
+export function fetchTokenBalance(tokenAddress: Address, userAddress: Address): BigInt {
+  let contract = ERC20.bind(tokenAddress)
+  let balanceValue = BigInt.fromString("0")
+  let balanceResult = contract.try_balanceOf(userAddress)
+  if (!balanceResult.reverted) {
+    balanceValue = balanceResult.value
+  }
+  return balanceValue as BigInt
 }
 
 
@@ -92,7 +103,7 @@ export function fetchTokenDecimals(tokenAddress: Address): BigInt {
   let decimalValue = BigInt.fromString("1")
   let decimalResult = contract.try_decimals()
   if (!decimalResult.reverted) {
-    decimalValue = BigInt.fromI32(decimalResult.value as i32)
+    decimalValue = BigInt.fromI32(decimalResult.value as i32) 
   } else {
     // try with the static definition
     let staticTokenDefinition = StaticTokenDefinition.fromAddress(tokenAddress)
@@ -103,3 +114,31 @@ export function fetchTokenDecimals(tokenAddress: Address): BigInt {
 
   return decimalValue
 }
+
+// export function updateTokenHolders(token: Token, user: Address): void {
+//   //only count for pot2pump tokens
+//   if(token.Pot2PumpAddress == Address.zero().toHexString()){
+//     return
+//   }
+//   // token holder update
+//   const holdingId = token.id+user.toHexString()
+//   const holdingToken = HoldingToken.load(holdingId)
+
+//   if(holdingToken){
+//     //check user token balance
+//     let balance = fetchTokenBalance(Address.fromString(token.id), user)
+//     if(balance.equals(ZERO_BI)){
+//       store.remove('HoldingToken', holdingId)
+//     }
+//   }else{
+//     //check user token balance
+//     let balance = fetchTokenBalance(Address.fromString(token.id), user)
+//     if(!balance.equals(ZERO_BI)){
+//       let newHoldingToken = new HoldingToken(holdingId)
+//       newHoldingToken.token = token.id
+//       newHoldingToken.account = user.toHexString()
+//       newHoldingToken.save()
+//     }
+//   }
+// }
+
