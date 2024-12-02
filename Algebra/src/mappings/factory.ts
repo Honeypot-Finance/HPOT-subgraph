@@ -6,7 +6,7 @@ import { Pool as PoolEvent } from '../types/Factory/Factory'
 import { DefaultCommunityFee, CustomPool } from '../types/Factory/Factory'
 import { Pool, Token, Bundle } from '../types/schema'
 import { Pool as PoolTemplate} from '../types/templates'
-import { fetchTokenSymbol, fetchTokenName, fetchTokenTotalSupply, fetchTokenDecimals, fetchTokenPot2PumpAddress } from '../utils/token'
+import { fetchTokenSymbol, fetchTokenName, fetchTokenTotalSupply, fetchTokenDecimals, fetchTokenPot2PumpAddress, initializeToken } from '../utils/token'
 import { log, BigInt, Address } from '@graphprotocol/graph-ts'
 
 export function handlePoolCreated(event: PoolEvent): void {
@@ -28,7 +28,6 @@ export function handlePoolCreated(event: PoolEvent): void {
     factory.txCount = ZERO_BI
     factory.owner = ADDRESS_ZERO
     
-
     // create new bundle for tracking matic price
     let bundle = new Bundle('1')
     bundle.maticPriceUSD = ZERO_BD
@@ -55,61 +54,11 @@ export function handlePoolCreated(event: PoolEvent): void {
 
   // fetch info if null
   if (token0 === null) {
-    token0 = new Token(token0_address.toHexString())
-    token0.symbol = fetchTokenSymbol(token0_address)
-    token0.name = fetchTokenName(token0_address)
-    token0.totalSupply = fetchTokenTotalSupply(token0_address)
-    let decimals = fetchTokenDecimals(token0_address)
-    token0.Pot2PumpAddress = fetchTokenPot2PumpAddress(token0_address).toHexString()
-
-    // bail if we couldn't figure out the decimals
-    if (decimals === null) {
-      log.debug('mybug the decimal on token 0 was null', [])
-      return
-    }
-
-    token0.decimals = decimals
-    token0.derivedMatic = ZERO_BD
-    token0.volume = ZERO_BD
-    token0.volumeUSD = ZERO_BD
-    token0.feesUSD = ZERO_BD
-    token0.untrackedVolumeUSD = ZERO_BD
-    token0.totalValueLocked = ZERO_BD
-    token0.totalValueLockedUSD = ZERO_BD
-    token0.totalValueLockedUSDUntracked = ZERO_BD
-    token0.txCount = ZERO_BI
-    token0.poolCount = ZERO_BI
-    token0.whitelistPools = []
-    token0.holderCount = BigInt.fromI32(0)
+    token0 = initializeToken(token0_address)
   }
 
   if (token1 === null) {
-    token1 = new Token(token1_address.toHexString())
-    token1.symbol = fetchTokenSymbol(token1_address)
-    token1.name = fetchTokenName(token1_address)
-    token1.totalSupply = fetchTokenTotalSupply(token1_address)
-    let decimals = fetchTokenDecimals(token1_address)
-    token1.Pot2PumpAddress = fetchTokenPot2PumpAddress(token1_address).toHexString()
-
-    // bail if we couldn't figure out the decimals
-    if (decimals === null) {
-      log.debug('mybug the decimal on token 0 was null', [])
-      return
-    }
-
-    token1.decimals = decimals
-    token1.derivedMatic = ZERO_BD
-    token1.volume = ZERO_BD
-    token1.volumeUSD = ZERO_BD
-    token1.untrackedVolumeUSD = ZERO_BD
-    token1.feesUSD = ZERO_BD
-    token1.totalValueLocked = ZERO_BD
-    token1.totalValueLockedUSD = ZERO_BD
-    token1.totalValueLockedUSDUntracked = ZERO_BD
-    token1.txCount = ZERO_BI
-    token1.poolCount = ZERO_BI
-    token1.whitelistPools = []
-    token1.holderCount = BigInt.fromI32(0)
+    token1 = initializeToken(token1_address)
   }
 
   // update white listed pools
@@ -118,6 +67,7 @@ export function handlePoolCreated(event: PoolEvent): void {
     newPools.push(pool.id)
     token1.whitelistPools = newPools
   }
+
   if (WHITELIST_TOKENS.includes(token1.id)) {
     let newPools = token0.whitelistPools
     newPools.push(pool.id)
@@ -216,55 +166,12 @@ export function handleCustomPoolCreated(event: CustomPool): void {
 
   // fetch info if null
   if (token0 === null) {
-    token0 = new Token(token0_address.toHexString())
-    token0.symbol = fetchTokenSymbol(token0_address)
-    token0.name = fetchTokenName(token0_address)
-    token0.totalSupply = fetchTokenTotalSupply(token0_address)
-    let decimals = fetchTokenDecimals(token0_address)
-
-    // bail if we couldn't figure out the decimals
-    if (decimals === null) {
-      log.debug('mybug the decimal on token 0 was null', [])
-      return
-    }
-
-    token0.decimals = decimals
-    token0.derivedMatic = ZERO_BD
-    token0.volume = ZERO_BD
-    token0.volumeUSD = ZERO_BD
-    token0.feesUSD = ZERO_BD
-    token0.untrackedVolumeUSD = ZERO_BD
-    token0.totalValueLocked = ZERO_BD
-    token0.totalValueLockedUSD = ZERO_BD
-    token0.totalValueLockedUSDUntracked = ZERO_BD
-    token0.txCount = ZERO_BI
-    token0.poolCount = ZERO_BI
-    token0.whitelistPools = []
+    token0 = initializeToken(token0_address)
   }
 
   if (token1 === null) {
-    token1 = new Token(token1_address.toHexString())
-    token1.symbol = fetchTokenSymbol(token1_address)
-    token1.name = fetchTokenName(token1_address)
-    token1.totalSupply = fetchTokenTotalSupply(token1_address)
-    let decimals = fetchTokenDecimals(token1_address)
-    // bail if we couldn't figure out the decimals
-    if (decimals === null) {
-      log.debug('mybug the decimal on token 0 was null', [])
-      return
-    }
-    token1.decimals = decimals
-    token1.derivedMatic = ZERO_BD
-    token1.volume = ZERO_BD
-    token1.volumeUSD = ZERO_BD
-    token1.untrackedVolumeUSD = ZERO_BD
-    token1.feesUSD = ZERO_BD
-    token1.totalValueLocked = ZERO_BD
-    token1.totalValueLockedUSD = ZERO_BD
-    token1.totalValueLockedUSDUntracked = ZERO_BD
-    token1.txCount = ZERO_BI
-    token1.poolCount = ZERO_BI
-    token1.whitelistPools = []
+    
+    token1 = initializeToken(token1_address)
   }
 
   // update white listed pools

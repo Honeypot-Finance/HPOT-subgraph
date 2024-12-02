@@ -34,6 +34,8 @@ type Account @entity {
   id: ID!
   # holding tokens
   holder: [HoldingToken!]! @derivedFrom(field: "account")
+  # participation in Pot2Pump
+  participant: [Participant!]! @derivedFrom(field: "account")
 }
 
 type HoldingToken @entity {
@@ -95,6 +97,31 @@ type Token @entity {
   # holders
   holderCount: BigInt!
   holders: [HoldingToken!]! @derivedFrom(field: "token")
+}
+
+type Pot2Pump @entity {
+  # token address
+  id: ID!
+  # launch token
+  launchToken: Token!
+  # raised token
+  raisedToken: Token!
+
+  DepositRaisedToken: BigInt!
+  DepositLaunchToken: BigInt!
+  createdAt: BigInt!
+  endTime: BigInt!
+  state: BigInt!
+  participantsCount: BigInt!
+  participants: [Participant!]! @derivedFrom(field: "pot2Pump")
+}
+
+type Participant @entity {
+  id: ID!
+  pot2Pump: Pot2Pump!
+  account: Account!
+  amount: BigInt!
+  createdAt: BigInt!
 }
 
 type Pool @entity {

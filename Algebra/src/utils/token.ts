@@ -3,10 +3,10 @@ import { ERC20 } from '../types/Factory/ERC20'
 import { ERC20SymbolBytes } from '../types/Factory/ERC20SymbolBytes'
 import { ERC20NameBytes } from '../types/Factory/ERC20NameBytes'
 import { StaticTokenDefinition } from './staticTokenDefinition'
-import { BigInt, Address, store } from '@graphprotocol/graph-ts'
+import { BigInt, Address, store, log } from '@graphprotocol/graph-ts'
 import { isNullEthValue } from '.'
 import { Pot2PumpFactory } from '../types/Factory/pot2PumpFactory'
-import { ONE_BI, POT2PUMP_FACTORY_ADDRESS, ZERO_BI } from './constants'
+import { ONE_BI, POT2PUMP_FACTORY_ADDRESS, ZERO_BD, ZERO_BI } from './constants'
 import { HoldingToken, Token } from '../types/schema'
 
 export function fetchTokenPot2PumpAddress(tokenAddress: Address): Address {
@@ -115,30 +115,37 @@ export function fetchTokenDecimals(tokenAddress: Address): BigInt {
   return decimalValue
 }
 
-// export function updateTokenHolders(token: Token, user: Address): void {
-//   //only count for pot2pump tokens
-//   if(token.Pot2PumpAddress == Address.zero().toHexString()){
-//     return
-//   }
-//   // token holder update
-//   const holdingId = token.id+user.toHexString()
-//   const holdingToken = HoldingToken.load(holdingId)
+export function initializeToken(tokenAddress: Address): Token {
+  let token = Token.load(tokenAddress.toHexString())
+  if (token == null) {
+    token = new Token(tokenAddress.toHexString())
+    token.name = fetchTokenName(tokenAddress)
+    token.symbol = fetchTokenSymbol(tokenAddress)
+    token.totalSupply = fetchTokenTotalSupply(tokenAddress)
+    token.decimals = fetchTokenDecimals(tokenAddress)
 
-//   if(holdingToken){
-//     //check user token balance
-//     let balance = fetchTokenBalance(Address.fromString(token.id), user)
-//     if(balance.equals(ZERO_BI)){
-//       store.remove('HoldingToken', holdingId)
-//     }
-//   }else{
-//     //check user token balance
-//     let balance = fetchTokenBalance(Address.fromString(token.id), user)
-//     if(!balance.equals(ZERO_BI)){
-//       let newHoldingToken = new HoldingToken(holdingId)
-//       newHoldingToken.token = token.id
-//       newHoldingToken.account = user.toHexString()
-//       newHoldingToken.save()
-//     }
-//   }
-// }
+    // bail if we couldn't figure out the decimals
+    if (token.decimals === null) {
+      log.error('Token {} has no decimals', [tokenAddress.toHexString()])
+    }
+
+    token.derivedMatic = ZERO_BD
+    token.volume = ZERO_BD
+    token.volumeUSD = ZERO_BD
+    token.feesUSD = ZERO_BD
+    token.untrackedVolumeUSD = ZERO_BD
+    token.totalValueLocked = ZERO_BD
+    token.totalValueLockedUSD = ZERO_BD
+    token.totalValueLockedUSDUntracked = ZERO_BD
+    token.txCount = ZERO_BI
+    token.poolCount = ZERO_BI
+    token.whitelistPools = []
+    token.holderCount = BigInt.fromI32(0)
+    token.Pot2PumpAddress = fetchTokenPot2PumpAddress(tokenAddress).toHexString()
+
+    token.save()
+  }
+
+  return token
+}
 

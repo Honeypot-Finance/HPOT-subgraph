@@ -742,10 +742,8 @@ export function handleTransfer(event: Transfer): void {
   if(event.params.to.toHexString()!==ADDRESS_ZERO){
     if(toHolder){
     toHolder.holdingValue.plus(event.params.value)
-    toHolder.account = event.params.to.toHexString()
-    toHolder.token = token.id
     toHolder.save()
-    token.holderCount.plus(ONE_BI)}
+  }
     else{
       let newHolder = new HoldingToken(toHolderId)
       newHolder.account = event.params.to.toHexString()
@@ -755,6 +753,8 @@ export function handleTransfer(event: Transfer): void {
       token.holderCount.plus(ONE_BI)
     }
   }
+
+  token.save()
 
 }
 
