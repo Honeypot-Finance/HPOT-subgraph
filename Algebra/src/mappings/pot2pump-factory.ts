@@ -1,5 +1,5 @@
 import { ERC20 } from "../types/Factory/ERC20"
-import { PairCreated, Pot2PumpFactory } from "../types/Factory/pot2PumpFactory"
+import { PairCreated, Pot2PumpFactory } from "../types/Factory/Pot2PumpFactory"
 import { Pot2Pump, Token } from "../types/schema"
 import { Pot2Pump as Pot2PumpTemplate,
 Token as TokenTemplate
@@ -23,6 +23,8 @@ export function handlePairCreated(event: PairCreated): void {
         newPair.endTime = fetchEndTime(event.params.pair)
         newPair.DepositLaunchToken = event.params.param3
         newPair.DepositRaisedToken = new BigInt(0)
+        newPair.totalRefundAmount = new BigInt(0)
+        newPair.totalClaimLpAmount = new BigInt(0)
         newPair.participantsCount = new BigInt(0)
 
         newPair.save()

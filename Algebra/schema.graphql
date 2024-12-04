@@ -108,7 +108,12 @@ type Pot2Pump @entity {
   raisedToken: Token!
 
   DepositRaisedToken: BigInt!
+  # total deposit amount of pair
   DepositLaunchToken: BigInt!
+  # total refund amount of pair
+  totalRefundAmount: BigInt!
+  # total claimLP amount of pair
+  totalClaimLpAmount: BigInt!
   createdAt: BigInt!
   endTime: BigInt!
   state: BigInt!
@@ -120,8 +125,30 @@ type Participant @entity {
   id: ID!
   pot2Pump: Pot2Pump!
   account: Account!
+  # total deposit amount
   amount: BigInt!
+  # total refund amount
+  totalRefundAmount: BigInt!
+  # total claim LP amount , 1 mean claim all, 0 mean no claim 
+  totalclaimLqAmount: BigInt!
   createdAt: BigInt!
+
+  participantTransactionHistorys: [ParticipantTransactionHistory!]! @derivedFrom(field: "participant")
+}
+
+type ParticipantTransactionHistory @entity {
+  id: ID!
+  account: Account!
+  # deposit amount
+  depositAmount: BigInt!
+  # refund amount
+  refundAmount: BigInt!
+  # claim LP amount, 1 mean claim all, 0 mean no claim 
+  claimLqAmount: BigInt!
+  actionType: UserPot2PumpActionType!
+  createdAt: BigInt!
+
+  participant: Participant!
 }
 
 type Pool @entity {
@@ -775,4 +802,11 @@ type FeeHourData @entity {
   startFee: BigInt!
   #
   endFee: BigInt! 
+}
+
+
+enum UserPot2PumpActionType{
+  DEPOSIT
+  REFUND
+  CLAIM
 }

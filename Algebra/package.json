@@ -1,4 +1,3 @@
-
 {
   "name": "algebra-subgraph",
   "version": "1.0.0",
@@ -7,6 +6,7 @@
   "scripts": {
     "codegen": "graph codegen --output-dir src/types/",
     "build": "graph build",
+    "test": "graph test",
     "create-local": "graph create cryptoalgebra/algebra --node http://127.0.0.1:8020",
     "deploy-local": "graph deploy cryptoalgebra/algebra --debug --ipfs http://localhost:5001 --node http://127.0.0.1:8020",
     "deploy": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ --access-token e5343fbd612874a5c57de62e451407b2 thpot/integral-core subgraph.yaml",
@@ -20,6 +20,7 @@
     "@typescript-eslint/parser": "^2.0.0",
     "eslint": "^6.2.2",
     "eslint-config-prettier": "^6.1.0",
+    "matchstick-as": "^0.6.0",
     "prettier": "^1.18.2",
     "typescript": "^3.5.2"
   }
