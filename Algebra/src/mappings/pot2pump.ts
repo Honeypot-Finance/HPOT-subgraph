@@ -88,14 +88,11 @@ export function handleRefund(event: Refund): void {
 }
 
 export function handleClaimLP(event: ClaimLP): void {
-    let pair = Pot2Pump.load(event.address.toHexString())    
+    let pair = Pot2Pump.load(event.address.toHexString())   
     if (pair == null) {
         return
     }
-         // pair.totalClaimLpAmount = pair.DepositRaisedToken.minus(event.params.param1)
-        //pair.DepositRaisedToken = pair.DepositRaisedToken.minus(event.params.refundAmount)
-        // pair.save()
-    
+ 
         let participantId = pair.id + "-" + event.params.claimer.toHexString(); 
     
          //update participant info
@@ -117,7 +114,7 @@ export function handleClaimLP(event: ClaimLP): void {
         participantTransactionHistory.depositAmount  = new BigInt(0);
         participantTransactionHistory.participant = participant.id; 
     
-        participantTransactionHistory.save(); 
+        participantTransactionHistory.save();
 }
 
 export function handlePerform(event: Perform): void {
