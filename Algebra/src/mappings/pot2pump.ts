@@ -19,6 +19,9 @@ export function handleDepositRaisedToken(event: DepositRaisedToken): void {
     }
 
     pair.DepositRaisedToken = pair.DepositRaisedToken.plus(event.params.depositAmount)
+    if(pair.DepositRaisedToken >= pair.raisedTokenMinCap){
+        pair.raisedTokenReachingMinCap = true
+    }
 
     //update participant info
     let participant = Participant.load(event.transaction.hash.toHexString())

@@ -107,6 +107,7 @@ type Pot2Pump @entity {
   # raised token
   raisedTokenMinCap: BigInt!
   raisedToken: Token!
+  raisedTokenReachingMinCap: Boolean!
 
   DepositRaisedToken: BigInt!
   DepositLaunchToken: BigInt!
@@ -115,7 +116,6 @@ type Pot2Pump @entity {
   state: BigInt!
   participantsCount: BigInt!
   participants: [Participant!]! @derivedFrom(field: "pot2Pump")
-
 }
 
 type Participant @entity {
@@ -171,7 +171,7 @@ type Pool @entity {
   feesUSD: BigDecimal!
   # tick spacing
   tickSpacing: BigInt!
-  #
+  # 
   untrackedFeesUSD: BigDecimal!
   # all time number of transactions
   txCount: BigInt!

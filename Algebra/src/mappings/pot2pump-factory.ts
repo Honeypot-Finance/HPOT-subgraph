@@ -25,6 +25,7 @@ export function handlePairCreated(event: PairCreated): void {
         newPair.DepositRaisedToken = new BigInt(0)
         newPair.participantsCount = new BigInt(0)
         newPair.raisedTokenMinCap = fetchMinCap(event.params.pair)
+        newPair.raisedTokenReachingMinCap = false
 
         Pot2PumpTemplate.create(event.params.pair)
         newPair.save()
