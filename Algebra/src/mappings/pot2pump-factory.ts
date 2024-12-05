@@ -7,6 +7,7 @@ Token as TokenTemplate
 import { BigInt } from '@graphprotocol/graph-ts'
 import { fetchEndTime, fetchLaunchTokenAmount, fetchMinCap } from "../utils/pot2pump"
 import { initializeToken } from "../utils/token"
+import { ZERO_BD, ZERO_BI } from "../utils/constants"
 
 
 export function handlePairCreated(event: PairCreated): void {
@@ -22,9 +23,11 @@ export function handlePairCreated(event: PairCreated): void {
         newPair.createdAt = event.block.timestamp
         newPair.endTime = fetchEndTime(event.params.pair)
         newPair.DepositLaunchToken = fetchLaunchTokenAmount(event.params.pair)
-        newPair.DepositRaisedToken = new BigInt(0)
-        newPair.participantsCount = new BigInt(0)
+        newPair.DepositRaisedToken = ZERO_BI
+        newPair.participantsCount = ZERO_BI
         newPair.raisedTokenMinCap = fetchMinCap(event.params.pair)
+        newPair.LaunchTokenMarketCap = ZERO_BD
+        newPair.LaunchTokenTVL = ZERO_BD
 
         Pot2PumpTemplate.create(event.params.pair)
         newPair.save()

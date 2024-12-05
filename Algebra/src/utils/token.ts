@@ -141,6 +141,7 @@ export function initializeToken(tokenAddress: Address): Token {
     token.poolCount = ZERO_BI
     token.whitelistPools = []
     token.holderCount = BigInt.fromI32(0)
+    token.marketCap = ZERO_BD
     //token.pot2Pump = fetchTokenPot2PumpAddress(tokenAddress)
 
     token.save()

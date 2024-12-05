@@ -89,7 +89,8 @@ type Token @entity {
   whitelistPools: [Pool!]!
   # derived fields
   tokenDayData: [TokenDayData!]! @derivedFrom(field: "token")
-
+  # derived market cap by total supply and derived price
+  marketCap: BigDecimal!
 
   # Pot2Pump
   pot2Pump: Pot2Pump @derivedFrom(field: "launchToken")
@@ -104,18 +105,22 @@ type Pot2Pump @entity {
   id: ID!
   # launch token
   launchToken: Token!
+  DepositLaunchToken: BigInt!
+  LaunchTokenTVL: BigDecimal!
+  LaunchTokenMarketCap: BigDecimal!
   # raised token
   raisedTokenMinCap: BigInt!
   raisedToken: Token!
-
   DepositRaisedToken: BigInt!
-  DepositLaunchToken: BigInt!
-  createdAt: BigInt!
-  endTime: BigInt!
-  state: BigInt!
+
+  # participants
   participantsCount: BigInt!
   participants: [Participant!]! @derivedFrom(field: "pot2Pump")
 
+  # general info
+  createdAt: BigInt!
+  endTime: BigInt!
+  state: BigInt!
 }
 
 type Participant @entity {
