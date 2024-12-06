@@ -12,3 +12,32 @@ export const fetchEndTime = (address: Address): BigInt => {
 
     return endTime.reverted ? BigInt.fromI32(0) : endTime.value
 }
+
+export const fetchLaunchTokenAmount = (address: Address): BigInt => {
+    let pot2pump = Pot2PumpPair.bind(
+        address
+    )
+    let launchTokenAmount = pot2pump.try_depositedLaunchedToken()
+
+    return launchTokenAmount.reverted ? BigInt.fromI32(0) : launchTokenAmount.value
+}
+
+export const fetchState = (address: Address): BigInt => {
+    let pot2pump = Pot2PumpPair.bind(
+        address
+    )
+
+    let state = pot2pump.try_PairState()
+
+    return state.reverted ? BigInt.fromI32(3) : BigInt.fromI32(state.value)
+}
+
+export const fetchMinCap = (address: Address): BigInt => {
+    let pot2pump = Pot2PumpPair.bind(
+        address
+    )
+
+    let minCap = pot2pump.try_raisedTokenMinCap()
+
+    return minCap.reverted ? BigInt.fromI32(0) : minCap.value
+}

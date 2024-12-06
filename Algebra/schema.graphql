@@ -89,10 +89,11 @@ type Token @entity {
   whitelistPools: [Pool!]!
   # derived fields
   tokenDayData: [TokenDayData!]! @derivedFrom(field: "token")
-
+  # derived market cap by total supply and derived price
+  marketCap: BigDecimal!
 
   # Pot2Pump
-  Pot2PumpAddress: String!
+  pot2Pump: Pot2Pump @derivedFrom(field: "launchToken")
 
   # holders
   holderCount: BigInt!
@@ -104,12 +105,22 @@ type Pot2Pump @entity {
   id: ID!
   # launch token
   launchToken: Token!
+  DepositLaunchToken: BigInt!
+  LaunchTokenTVL: BigDecimal!
+  LaunchTokenMarketCap: BigDecimal!
   # raised token
+  raisedTokenMinCap: BigInt!
   raisedToken: Token!
+  raisedTokenReachingMinCap: Boolean!
 
   DepositRaisedToken: BigInt!
   # total deposit amount of pair
-  DepositLaunchToken: BigInt!
+
+  # participants
+  participantsCount: BigInt!
+  participants: [Participant!]! @derivedFrom(field: "pot2Pump")
+
+  # general info
   # total refund amount of pair
   totalRefundAmount: BigInt!
   # total claimLP amount of pair
@@ -117,8 +128,6 @@ type Pot2Pump @entity {
   createdAt: BigInt!
   endTime: BigInt!
   state: BigInt!
-  participantsCount: BigInt!
-  participants: [Participant!]! @derivedFrom(field: "pot2Pump")
 }
 
 type Participant @entity {
@@ -196,7 +205,7 @@ type Pool @entity {
   feesUSD: BigDecimal!
   # tick spacing
   tickSpacing: BigInt!
-  #
+  # 
   untrackedFeesUSD: BigDecimal!
   # all time number of transactions
   txCount: BigInt!

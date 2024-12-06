@@ -11,8 +11,6 @@ import { ADDRESS_ZERO, factoryContract, ZERO_BD, ZERO_BI, pools_list} from '../u
 import { Address, BigInt, ethereum } from '@graphprotocol/graph-ts'
 import { convertTokenToDecimal, loadTransaction } from '../utils'
 
-
-
 function getPosition(event: ethereum.Event, tokenId: BigInt): Position | null {
 
 

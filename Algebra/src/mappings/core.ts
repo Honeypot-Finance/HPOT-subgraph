@@ -164,7 +164,7 @@ export function handleMint(event: MintEvent): void {
   let poolPositionid = pool.id + "#" + event.params.owner.toHexString() + '#' + BigInt.fromI32(event.params.bottomTick).toString() + "#" +  BigInt.fromI32(event.params.topTick).toString()
   let poolPosition = PoolPosition.load(poolPositionid)
   if (poolPosition){
-    poolPosition.liquidity += event.params.liquidityAmount 
+    poolPosition.liquidity = poolPosition.liquidity.plus(event.params.liquidityAmount)
   }
   else{
     poolPosition = new PoolPosition(poolPositionid)
@@ -225,9 +225,10 @@ export function handleBurn(event: BurnEvent): void {
     .plus(amount1.times(token1.derivedMatic.times(bundle.maticPriceUSD)))
 
   let pluginFee = BigInt.fromI32(event.params.pluginFee).toBigDecimal()
-  plugin.collectedFeesToken0 += amount0.times(pluginFee).div(FEE_DENOMINATOR)
-  plugin.collectedFeesToken1 += amount1.times(pluginFee).div(FEE_DENOMINATOR)
-  plugin.collectedFeesUSD += amountUSD.times(pluginFee).div(FEE_DENOMINATOR)
+
+  plugin.collectedFeesToken0 = plugin.collectedFeesToken0.plus(amount0.times(pluginFee).div(FEE_DENOMINATOR))
+  plugin.collectedFeesToken1 = plugin.collectedFeesToken1.plus(amount1.times(pluginFee).div(FEE_DENOMINATOR))
+  plugin.collectedFeesUSD = plugin.collectedFeesUSD.plus(amountUSD.times(pluginFee).div(FEE_DENOMINATOR))
 
   plugin.save()
 
@@ -302,7 +303,7 @@ export function handleBurn(event: BurnEvent): void {
   let poolPositionid = pool.id + "#" + event.params.owner.toHexString() + '#' + BigInt.fromI32(event.params.bottomTick).toString() + "#" +  BigInt.fromI32(event.params.topTick).toString()
   let poolPosition = PoolPosition.load(poolPositionid)
   if (poolPosition){
-    poolPosition.liquidity -= event.params.liquidityAmount 
+    poolPosition.liquidity = poolPosition.liquidity.minus(event.params.liquidityAmount)
     poolPosition.save()
   }
 
@@ -459,12 +460,12 @@ export function handleSwap(event: SwapEvent): void {
   let plugin = Plugin.load(pool.plugin.toHexString())!
 
   if(amount0.lt(ZERO_BD)) {
-    plugin.collectedFeesToken1 += amount1.times(pluginFee.toBigDecimal()).div(FEE_DENOMINATOR)
+    plugin.collectedFeesToken1 = plugin.collectedFeesToken1.plus(amount1.times(pluginFee.toBigDecimal()).div(FEE_DENOMINATOR))
   } else {
-    plugin.collectedFeesToken0 += amount0.times(pluginFee.toBigDecimal()).div(FEE_DENOMINATOR)
+    plugin.collectedFeesToken0 = plugin.collectedFeesToken0.plus(amount0.times(pluginFee.toBigDecimal()).div(FEE_DENOMINATOR))
   }
 
-  plugin.collectedFeesUSD += amountTotalUSDTracked.times(pluginFee.toBigDecimal()).div(FEE_DENOMINATOR)
+  plugin.collectedFeesUSD = plugin.collectedFeesUSD.plus(amountTotalUSDTracked.times(pluginFee.toBigDecimal()).div(FEE_DENOMINATOR))
   plugin.save()
 
   pool.save()
@@ -694,6 +695,9 @@ export function handleChangeFee(event: ChangeFee): void {
 }
 
 export function handlePlugin(event: PluginEvent): void {
+  if (!event || !event.address|| event.address.toHexString()==ADDRESS_ZERO) {
+    return
+  }
   let pool = Pool.load(event.address.toHexString())!
   pool.plugin = event.params.newPluginAddress
   pool.save()
@@ -717,9 +721,12 @@ export function handlePluginConfig(event: PluginConfig): void {
 }
 
 export function handleTransfer(event: Transfer): void {
+  if(!event || !event.address||event.address.toHexString()==ADDRESS_ZERO){
+    return;
+  }
   const token = Token.load(event.address.toHexString())
   
-  if(!token||token.Pot2PumpAddress == Address.zero().toHexString()){
+  if(!token||!token.pot2Pump){
     return
   }
 
@@ -732,7 +739,7 @@ export function handleTransfer(event: Transfer): void {
     fromHolder.holdingValue.minus(event.params.value)
     if(fromHolder.holdingValue.equals(ZERO_BI)){
       store.remove('HoldingToken', fromHolderId)
-      token.holderCount.minus(ONE_BI)
+      token.holderCount = token.holderCount.minus(ONE_BI)
     }
   }
 
@@ -741,16 +748,16 @@ export function handleTransfer(event: Transfer): void {
   const toHolder = HoldingToken.load(toHolderId)
   if(event.params.to.toHexString()!==ADDRESS_ZERO){
     if(toHolder){
-    toHolder.holdingValue.plus(event.params.value)
-    toHolder.save()
-  }
+      toHolder.holdingValue.plus(event.params.value)
+      toHolder.save()
+    }
     else{
       let newHolder = new HoldingToken(toHolderId)
       newHolder.account = event.params.to.toHexString()
       newHolder.token = token.id
       newHolder.holdingValue = event.params.value
       newHolder.save()
-      token.holderCount.plus(ONE_BI)
+      token.holderCount = token.holderCount.plus(ONE_BI)
     }
   }
 
