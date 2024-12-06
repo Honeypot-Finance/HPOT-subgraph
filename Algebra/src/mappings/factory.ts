@@ -6,7 +6,7 @@ import { Pool as PoolEvent } from '../types/Factory/Factory'
 import { DefaultCommunityFee, CustomPool } from '../types/Factory/Factory'
 import { Pool, Token, Bundle } from '../types/schema'
 import { Pool as PoolTemplate} from '../types/templates'
-import { fetchTokenSymbol, fetchTokenName, fetchTokenTotalSupply, fetchTokenDecimals, fetchTokenPot2PumpAddress, initializeToken } from '../utils/token'
+import { fetchTokenSymbol, fetchTokenName, fetchTokenTotalSupply, fetchTokenDecimals, fetchTokenPot2PumpAddress, loadToken } from '../utils/token'
 import { log, BigInt, Address } from '@graphprotocol/graph-ts'
 
 export function handlePoolCreated(event: PoolEvent): void {
@@ -53,11 +53,11 @@ export function handlePoolCreated(event: PoolEvent): void {
 
   // fetch info if null
   if (token0 === null) {
-    token0 = initializeToken(token0_address)
+    token0 = loadToken(token0_address)
   }
 
   if (token1 === null) {
-    token1 = initializeToken(token1_address)
+    token1 = loadToken(token1_address)
   }
 
   // update white listed pools
@@ -165,12 +165,12 @@ export function handleCustomPoolCreated(event: CustomPool): void {
 
   // fetch info if null
   if (token0 === null) {
-    token0 = initializeToken(token0_address)
+    token0 = loadToken(token0_address)
   }
 
   if (token1 === null) {
     
-    token1 = initializeToken(token1_address)
+    token1 = loadToken(token1_address)
   }
 
   // update white listed pools

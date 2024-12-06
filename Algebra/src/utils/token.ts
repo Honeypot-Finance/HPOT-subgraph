@@ -115,7 +115,7 @@ export function fetchTokenDecimals(tokenAddress: Address): BigInt {
   return decimalValue
 }
 
-export function initializeToken(tokenAddress: Address): Token {
+export function loadToken(tokenAddress: Address): Token {
   let token = Token.load(tokenAddress.toHexString())
   if (token == null) {
     token = new Token(tokenAddress.toHexString())

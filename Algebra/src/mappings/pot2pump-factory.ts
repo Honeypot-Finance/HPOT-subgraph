@@ -7,7 +7,7 @@ import {
 } from "../types/templates"
 import { BigInt } from '@graphprotocol/graph-ts'
 import { fetchEndTime, fetchLaunchTokenAmount, fetchMinCap } from "../utils/pot2pump"
-import { initializeToken } from "../utils/token"
+import { loadToken } from "../utils/token"
 import { ZERO_BD, ZERO_BI } from "../utils/constants"
 
 
@@ -40,7 +40,7 @@ export function handlePairCreated (event: PairCreated): void {
     // Update the if launch is meme token and register it to ERC20 listener
     let launchToken = Token.load(event.params.launchedToken.toHexString())
     if (launchToken == null) {
-        launchToken = initializeToken(event.params.launchedToken)
+        launchToken = loadToken(event.params.launchedToken)
         TokenTemplate.create(event.params.launchedToken)
     }
 
