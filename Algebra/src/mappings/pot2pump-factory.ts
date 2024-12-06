@@ -1,8 +1,9 @@
 import { ERC20 } from "../types/Factory/ERC20"
-import { PairCreated, Pot2PumpFactory } from "../types/Factory/pot2PumpFactory"
+import { PairCreated, Pot2PumpFactory } from "../types/Factory/Pot2PumpFactory"
 import { Pot2Pump, Token } from "../types/schema"
-import { Pot2Pump as Pot2PumpTemplate,
-Token as TokenTemplate
+import {
+    Pot2Pump as Pot2PumpTemplate,
+    Token as TokenTemplate
 } from "../types/templates"
 import { BigInt } from '@graphprotocol/graph-ts'
 import { fetchEndTime, fetchLaunchTokenAmount, fetchMinCap } from "../utils/pot2pump"
@@ -10,7 +11,7 @@ import { initializeToken } from "../utils/token"
 import { ZERO_BD, ZERO_BI } from "../utils/constants"
 
 
-export function handlePairCreated(event: PairCreated): void {
+export function handlePairCreated (event: PairCreated): void {
     let newPair = Pot2Pump.load(event.params.pair.toHexString())
 
     if (newPair == null) {
@@ -24,6 +25,8 @@ export function handlePairCreated(event: PairCreated): void {
         newPair.endTime = fetchEndTime(event.params.pair)
         newPair.DepositLaunchToken = fetchLaunchTokenAmount(event.params.pair)
         newPair.DepositRaisedToken = ZERO_BI
+        newPair.totalRefundAmount = new BigInt(0)
+        newPair.totalClaimLpAmount = new BigInt(0)
         newPair.participantsCount = ZERO_BI
         newPair.raisedTokenMinCap = fetchMinCap(event.params.pair)
         newPair.raisedTokenReachingMinCap = false

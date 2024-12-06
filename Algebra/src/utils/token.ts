@@ -5,7 +5,7 @@ import { ERC20NameBytes } from '../types/Factory/ERC20NameBytes'
 import { StaticTokenDefinition } from './staticTokenDefinition'
 import { BigInt, Address, store, log } from '@graphprotocol/graph-ts'
 import { isNullEthValue } from '.'
-import { Pot2PumpFactory } from '../types/Factory/pot2PumpFactory'
+import { Pot2PumpFactory } from '../types/Factory/Pot2PumpFactory'
 import { ONE_BI, POT2PUMP_FACTORY_ADDRESS, ZERO_BD, ZERO_BI } from './constants'
 import { HoldingToken, Token } from '../types/schema'
 
