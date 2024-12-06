@@ -36,6 +36,8 @@ type Account @entity {
   holder: [HoldingToken!]! @derivedFrom(field: "account")
   # participation in Pot2Pump
   participant: [Participant!]! @derivedFrom(field: "account")
+
+  transaction: [Transaction!]! @derivedFrom(field: "account")
 }
 
 type HoldingToken @entity {
@@ -390,6 +392,11 @@ type Transaction @entity {
   swaps: [Swap!]! @derivedFrom(field: "transaction")
   flashed: [Flash!]! @derivedFrom(field: "transaction")
   collects: [Collect!]! @derivedFrom(field: "transaction")
+  depositRaisedTokens: [DepositRaisedToken!]! @derivedFrom(field: "transaction")
+  refunds: [Refund!]! @derivedFrom(field: "transaction")
+  claimLps: [ClaimLp!]! @derivedFrom(field: "transaction")
+
+  account: Account!
 }
 
 type Mint @entity {
@@ -782,6 +789,58 @@ type TokenHourData @entity {
   low: BigDecimal!
   # close price USD
   close: BigDecimal!
+}
+
+
+type DepositRaisedToken @entity {
+  # transaction hash + "#" + index in mints Transaction array
+  id: ID!
+  # which txn the mint was included in
+  transaction: Transaction!
+  # time of txn
+  timestamp: BigInt!
+  # deposit raised token
+  amount: BigInt!
+  # txn origin
+  origin: Bytes! # the EOA that initiated the txn
+  # order within the txn
+  logIndex: BigInt
+  # the address of contract which is deposited by user
+  poolAddress: Bytes! 
+}
+
+type Refund @entity {
+  # transaction hash + "#" + index in mints Transaction array
+  id: ID!
+  # which txn the mint was included in
+  transaction: Transaction!
+  # time of txn
+  timestamp: BigInt!
+  # deposit raised token
+  amount: BigInt!
+  # txn origin
+  origin: Bytes! # the EOA that initiated the txn
+  # order within the txn
+  logIndex: BigInt
+  # the address of contract which is refunded by user
+  poolAddress: Bytes! 
+}
+
+type ClaimLp @entity {
+  # transaction hash + "#" + index in mints Transaction array
+  id: ID!
+  # which txn the mint was included in
+  transaction: Transaction!
+  # time of txn
+  timestamp: BigInt!
+  # deposit raised token
+  amount: BigInt!
+  # txn origin
+  origin: Bytes! # the EOA that initiated the txn
+  # order within the txn
+  logIndex: BigInt
+  # the address of contract which is refund by user
+  poolAddress: Bytes! 
 }
 
 type Plugin @entity {
