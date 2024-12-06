@@ -2,7 +2,8 @@ import { bigInt } from "@graphprotocol/graph-ts"
 import { Account } from "../types/schema"
 import { ZERO_BD, ZERO_BI } from "./constants"
 
-export const initAccount = (account: string): Account =>{
+
+export const loadAccount = (account: string): Account =>{
     const loadedAccount = Account.load(account)
     if (loadedAccount !== null) {
         return loadedAccount
