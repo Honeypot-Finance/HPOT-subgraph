@@ -85,6 +85,7 @@ export function loadTransaction(event: ethereum.Event): Transaction {
   if (transaction === null) {
     transaction = new Transaction(event.transaction.hash.toHexString())
   }
+  transaction.account = event.transaction.from.toHex()
   transaction.blockNumber = event.block.number
   transaction.timestamp = event.block.timestamp
   transaction.gasLimit = event.transaction.gasLimit

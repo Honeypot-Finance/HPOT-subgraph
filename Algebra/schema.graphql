@@ -32,9 +32,11 @@ type Factory @entity {
 type Account @entity {
   # account address
   id: ID!
+
   # holding tokens
   memeTokenHoldingCount: BigInt!
   holder: [HoldingToken!]! @derivedFrom(field: "account")
+
   # Pot2Pump
   pot2PumpLaunchCount: BigInt!
   participateCount: BigInt!
@@ -45,7 +47,7 @@ type Account @entity {
   swapCount: BigInt!
   holdingPoolCount: BigInt!
 
-  # earning 
+  # earning (calculate all pot2pump, holding token, pool) derived in USD
   totalEarningUSDDay: BigDecimal!
   totalEarningPercentageDay: BigDecimal!
   totalEarningUSDWeek: BigDecimal!
@@ -54,6 +56,13 @@ type Account @entity {
   totalEarningPercentageMonth: BigDecimal!
   totalEarningUSDYear: BigDecimal!
   totalEarningPercentageYear: BigDecimal!
+
+  # balance (calculate all pot2pump, holding token, pool) derived in USD
+  accountBalanceUSD: BigDecimal!
+  accountBalanceUSDDay: BigDecimal!
+  accountBalanceUSDWeek: BigDecimal!
+  accountBalanceUSDMonth: BigDecimal!
+  accountBalanceUSDYear: BigDecimal!
 }
 
 type HoldingToken @entity {
