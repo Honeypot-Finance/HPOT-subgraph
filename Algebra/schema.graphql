@@ -33,9 +33,27 @@ type Account @entity {
   # account address
   id: ID!
   # holding tokens
+  memeTokenHoldingCount: BigInt!
   holder: [HoldingToken!]! @derivedFrom(field: "account")
-  # participation in Pot2Pump
+  # Pot2Pump
+  pot2PumpLaunchCount: BigInt!
+  participateCount: BigInt!
   participant: [Participant!]! @derivedFrom(field: "account")
+
+  # transactions
+  transactions: [Transaction!]! @derivedFrom(field: "account")
+  swapCount: BigInt!
+  holdingPoolCount: BigInt!
+
+  # earning 
+  totalEarningUSDDay: BigDecimal!
+  totalEarningPercentageDay: BigDecimal!
+  totalEarningUSDWeek: BigDecimal!
+  totalEarningPercentageWeek: BigDecimal!
+  totalEarningUSDMonth: BigDecimal!
+  totalEarningPercentageMonth: BigDecimal!
+  totalEarningUSDYear: BigDecimal!
+  totalEarningPercentageYear: BigDecimal!
 }
 
 type HoldingToken @entity {
@@ -377,6 +395,8 @@ type PositionSnapshot @entity {
 type Transaction @entity {
   # txn hash
   id: ID!
+  # account
+  account: Account!
   # block txn was included in
   blockNumber: BigInt!
   # timestamp txn was confirmed
