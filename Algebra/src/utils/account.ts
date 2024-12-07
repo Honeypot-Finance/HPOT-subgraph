@@ -1,14 +1,15 @@
-import { bigInt } from "@graphprotocol/graph-ts"
-import { Account } from "../types/schema"
-import { ZERO_BD, ZERO_BI } from "./constants"
+import { bigInt } from '@graphprotocol/graph-ts'
+import { Account } from '../types/schema'
+import { ADDRESS_ZERO, ZERO_BD, ZERO_BI } from './constants'
 
-
-export const loadAccount = (account: string): Account =>{
-    const loadedAccount = Account.load(account)
-    if (loadedAccount !== null) {
-        return loadedAccount
-    }
-
+export const loadAccount = (account: string): Account | null => {
+  if (account === ADDRESS_ZERO) {
+    return null
+  }
+  const loadedAccount = Account.load(account)
+  if (loadedAccount) {
+    return loadedAccount
+  } else {
     const newAcc = new Account(account)
 
     newAcc.id = account
@@ -31,7 +32,8 @@ export const loadAccount = (account: string): Account =>{
     newAcc.accountBalanceUSDMonth = ZERO_BD
     newAcc.accountBalanceUSDYear = ZERO_BD
 
-
     newAcc.save()
+
     return newAcc
+  }
 }

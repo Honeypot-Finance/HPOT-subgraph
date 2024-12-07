@@ -139,9 +139,10 @@ type Pot2Pump @entity {
   raisedTokenMinCap: BigInt!
   raisedToken: Token!
   raisedTokenReachingMinCap: Boolean!
-
   DepositRaisedToken: BigInt!
-  # total deposit amount of pair
+
+  # creator
+  creator: String!
 
   # participants
   participantsCount: BigInt!
@@ -165,8 +166,11 @@ type Participant @entity {
   amount: BigInt!
   # total refund amount
   totalRefundAmount: BigInt!
-  # total claim LP amount , 1 mean claim all, 0 mean no claim 
+  # total claim LP amount , 1 mean claim all, 0 mean no claim
   totalclaimLqAmount: BigInt!
+
+  canClaim: Boolean!
+
   createdAt: BigInt!
 
   participantTransactionHistorys: [ParticipantTransactionHistory!]! @derivedFrom(field: "participant")
@@ -179,7 +183,7 @@ type ParticipantTransactionHistory @entity {
   depositAmount: BigInt!
   # refund amount
   refundAmount: BigInt!
-  # claim LP amount, 1 mean claim all, 0 mean no claim 
+  # claim LP amount, 1 mean claim all, 0 mean no claim
   claimLqAmount: BigInt!
   actionType: UserPot2PumpActionType!
   createdAt: BigInt!
@@ -232,7 +236,7 @@ type Pool @entity {
   feesUSD: BigDecimal!
   # tick spacing
   tickSpacing: BigInt!
-  # 
+  #
   untrackedFeesUSD: BigDecimal!
   # all time number of transactions
   txCount: BigInt!
@@ -363,8 +367,8 @@ type Position @entity {
   feeGrowthInside0LastX128: BigInt!
   feeGrowthInside1LastX128: BigInt!
 
-  token0Tvl : BigDecimal
-  token1Tvl : BigDecimal 
+  token0Tvl: BigDecimal
+  token1Tvl: BigDecimal
 }
 
 type PositionSnapshot @entity {
@@ -644,7 +648,7 @@ type PoolDayData @entity {
   close: BigDecimal!
 }
 
-type PoolFeeData @entity{
+type PoolFeeData @entity {
   id: ID!
 
   pool: String
@@ -652,7 +656,6 @@ type PoolFeeData @entity{
   timestamp: BigInt!
 
   fee: BigInt!
-
 }
 
 # hourly stats tracker for pool
@@ -839,11 +842,10 @@ type FeeHourData @entity {
   #
   startFee: BigInt!
   #
-  endFee: BigInt! 
+  endFee: BigInt!
 }
 
-
-enum UserPot2PumpActionType{
+enum UserPot2PumpActionType {
   DEPOSIT
   REFUND
   CLAIM

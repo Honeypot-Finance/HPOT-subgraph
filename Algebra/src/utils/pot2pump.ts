@@ -3,6 +3,7 @@ import { Pot2Pump } from "../types/schema"
 import { Pot2Pump as Pot2PumpTemplate } from "../types/templates"
 import { Address, BigInt } from "@graphprotocol/graph-ts"
 import { Pot2PumpPair } from "../types/templates/Pot2Pump/Pot2PumpPair"
+import { ADDRESS_ZERO } from "./constants"
 
 export const fetchEndTime = (address: Address): BigInt => {
     let pot2pump = Pot2PumpPair.bind(
@@ -40,4 +41,14 @@ export const fetchMinCap = (address: Address): BigInt => {
     let minCap = pot2pump.try_raisedTokenMinCap()
 
     return minCap.reverted ? BigInt.fromI32(0) : minCap.value
+}
+
+export const fetchCreator = (address: Address): Address => {
+    let pot2pump = Pot2PumpPair.bind(
+        address
+    )
+
+    let creator = pot2pump.try_tokenDeployer()
+
+    return creator.reverted ? Address.fromString(ADDRESS_ZERO) : creator.value
 }

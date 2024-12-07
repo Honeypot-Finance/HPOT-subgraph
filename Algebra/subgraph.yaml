@@ -154,6 +154,8 @@ templates:
       abis:
         - name: ERC20
           file: ./abis/ERC20.json
+        - name: Pot2PumpFactory
+          file: ./abis/pot2PumpFactory.json
       eventHandlers:
           - event: Transfer(indexed address,indexed address,uint256)
             handler: handleTransfer
