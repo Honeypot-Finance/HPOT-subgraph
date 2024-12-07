@@ -29,6 +29,7 @@ import {
 import { createTick } from '../utils/tick'
 import { fetchTokenBalance } from '../utils/token'
 import { Transfer } from '../types/Factory/ERC20'
+import { loadAccount } from '../utils/account'
 
 
 export function handleInitialize(event: Initialize): void {
@@ -734,12 +735,15 @@ export function handleTransfer(event: Transfer): void {
   // check from address 
   const fromHolderId = token.id+event.params.from.toHexString()
   const fromHolder = HoldingToken.load(fromHolderId)
+  const account = loadAccount(event.params.from.toHexString());
+
   if(fromHolder && event.params.from.toHexString()!==ADDRESS_ZERO){
     //check user token balance
     fromHolder.holdingValue.minus(event.params.value)
     if(fromHolder.holdingValue.equals(ZERO_BI)){
       store.remove('HoldingToken', fromHolderId)
       token.holderCount = token.holderCount.minus(ONE_BI)
+      account.memeTokenHoldingCount = account.memeTokenHoldingCount.minus(ONE_BI)
     }
   }
 
@@ -758,11 +762,12 @@ export function handleTransfer(event: Transfer): void {
       newHolder.holdingValue = event.params.value
       newHolder.save()
       token.holderCount = token.holderCount.plus(ONE_BI)
+      account.memeTokenHoldingCount = account.memeTokenHoldingCount.plus(ONE_BI)
     }
   }
 
   token.save()
-
+  account.save()
 }
 
 function loadTickUpdateFeeVarsAndSave(tickId: i32, event: ethereum.Event): void {

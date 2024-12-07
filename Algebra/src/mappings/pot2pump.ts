@@ -3,6 +3,7 @@ import { Pot2Pump as Pot2PumpTemplate } from "../types/templates"
 import { BigInt } from "@graphprotocol/graph-ts"
 import { ClaimLP, DepositRaisedToken, Perform, Refund } from "../types/templates/Pot2Pump/Pot2PumpPair"
 import { fetchState } from "../utils/pot2pump"
+import { loadAccount } from '../utils/account';
 
 // type Participant @entity {
 //     id: ID!
@@ -27,6 +28,7 @@ export function handleDepositRaisedToken (event: DepositRaisedToken): void {
     let participantId = pair.id + "-" + event.params.depositor.toHexString();
 
     let participant = Participant.load(participantId);
+    let account = loadAccount(event.params.depositor.toHexString());
 
     if (participant == null) {
         participant = new Participant(participantId)
@@ -40,10 +42,10 @@ export function handleDepositRaisedToken (event: DepositRaisedToken): void {
 
         pair.participantsCount = pair.participantsCount.plus(new BigInt(1))
         pair.state = fetchState(event.address)
+
+        account.participateCount = account.participateCount.plus(new BigInt(1))
     }
     participant.amount = participant.amount.plus(event.params.depositAmount)
-
-    participant.save()
 
     // save participant transaction history
     let participantTransactionHistory = new ParticipantTransactionHistory(event.transaction.hash.toHexString())
@@ -56,7 +58,9 @@ export function handleDepositRaisedToken (event: DepositRaisedToken): void {
     participantTransactionHistory.participant = participant.id;
 
     participantTransactionHistory.save();
+    participant.save()
     pair.save()
+    account.save()
 }
 
 export function handleRefund (event: Refund): void {
