@@ -328,10 +328,7 @@ export function handleSwap (event: SwapEvent): void {
   let bundle = Bundle.load('1')!
   let factory = Factory.load(FACTORY_ADDRESS)!
   let pool = Pool.load(event.address.toHexString())!
-
   let oldTick = pool.tick
-  let flag = false
-
   let token0 = Token.load(pool.token0)!
   let token1 = Token.load(pool.token1)!
 
@@ -341,17 +338,11 @@ export function handleSwap (event: SwapEvent): void {
   let amount1 = convertTokenToDecimal(event.params.amount1, token1.decimals)
 
   if (pools_list.includes(event.address.toHexString())) {
-
     amount0 = convertTokenToDecimal(event.params.amount1, token0.decimals)
     amount1 = convertTokenToDecimal(event.params.amount0, token1.decimals)
-
-
   }
 
-  let swapFee = pool.fee
-  if (event.params.overrideFee > 0) {
-    swapFee = BigInt.fromI32(event.params.overrideFee)
-  }
+  let swapFee = event.params.overrideFee > 0 ? BigInt.fromI32(event.params.overrideFee) : pool.fee;
 
   let pluginFee = BigInt.fromI32(event.params.pluginFee)
 
