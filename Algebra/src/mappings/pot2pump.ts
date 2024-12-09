@@ -1,7 +1,7 @@
-import { Participant, ParticipantTransactionHistory, Pot2Pump, DepositRaisedToken, Transaction, Refund } from '../types/schema';
+import { Participant, ParticipantTransactionHistory, Pot2Pump, DepositRaisedToken, Transaction, Refund, ClaimLp } from '../types/schema';
 import { Pot2Pump as Pot2PumpTemplate } from "../types/templates"
 import { Address, BigInt } from "@graphprotocol/graph-ts"
-import { ClaimLP, DepositRaisedToken as TDepositRaisedToken, Perform, Refund as TRefund } from "../types/templates/Pot2Pump/Pot2PumpPair"
+import { ClaimLP as TClaimLP, DepositRaisedToken as TDepositRaisedToken, Perform, Refund as TRefund } from "../types/templates/Pot2Pump/Pot2PumpPair"
 import { fetchState } from "../utils/pot2pump"
 import { ADDRESS_ZERO } from '../utils/constants';
 
@@ -123,11 +123,29 @@ export function handleRefund (event: TRefund): void {
     participantTransactionHistory.save();
 }
 
-export function handleClaimLP (event: ClaimLP): void {
+export function handleClaimLP (event: TClaimLP): void {
     let pair = Pot2Pump.load(event.address.toHexString())
     if (pair == null) {
         return
     }
+
+    const transaction = createTransaction({
+        account: event.params.claimer.toHexString(),
+        blockNumber: event.block.number,
+        gasLimit: event.transaction.gasLimit,
+        gasPrice: event.transaction.gasPrice,
+        hash: event.transaction.hash.toHexString(),
+        timestamp: event.block.timestamp
+    })
+
+
+    const claimLp = new ClaimLp(event.transaction.hash.toHexString() + '#' + event.logIndex.toString())
+    claimLp.amount = event.params.param1;
+    claimLp.transaction = transaction.id;
+    claimLp.timestamp = event.block.timestamp;
+    claimLp.origin = event.transaction.from;
+    claimLp.logIndex = event.logIndex;
+    claimLp.poolAddress = Address.fromString(pair.id);
 
     let participantId = pair.id + "-" + event.params.claimer.toHexString();
 
