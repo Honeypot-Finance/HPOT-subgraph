@@ -1,18 +1,12 @@
-import { Participant, ParticipantTransactionHistory, Pot2Pump } from '../types/schema';
+import { Participant, ParticipantTransactionHistory, Pot2Pump, DepositRaisedToken, Transaction } from '../types/schema';
 import { Pot2Pump as Pot2PumpTemplate } from "../types/templates"
-import { BigInt } from "@graphprotocol/graph-ts"
-import { ClaimLP, DepositRaisedToken, Perform, Refund } from "../types/templates/Pot2Pump/Pot2PumpPair"
+import { Address, BigInt } from "@graphprotocol/graph-ts"
+import { ClaimLP, DepositRaisedToken as TDepositRaisedToken, Perform, Refund } from "../types/templates/Pot2Pump/Pot2PumpPair"
 import { fetchState } from "../utils/pot2pump"
+import { ADDRESS_ZERO } from '../utils/constants';
 
-// type Participant @entity {
-//     id: ID!
-//     pot2Pump: Pot2Pump!
-//     account: Account!
-//     amount: BigInt!
-//     createdAt: BigInt!
-// }
 
-export function handleDepositRaisedToken (event: DepositRaisedToken): void {
+export function handleDepositRaisedToken (event: TDepositRaisedToken): void {
     let pair = Pot2Pump.load(event.address.toHexString())
     if (pair == null) {
         return
@@ -22,6 +16,25 @@ export function handleDepositRaisedToken (event: DepositRaisedToken): void {
     if (pair.DepositRaisedToken >= pair.raisedTokenMinCap) {
         pair.raisedTokenReachingMinCap = true
     }
+
+    let transaction = new Transaction(event.transaction.hash.toHexString())
+    transaction.blockNumber = event.block.number;
+    transaction.timestamp = event.block.timestamp;
+    transaction.gasLimit = event.transaction.gasLimit;
+    transaction.gasPrice = event.transaction.gasPrice;
+    transaction.account = event.params.depositor.toHexString();
+
+    transaction.save();
+
+    let depositRaisedToken = new DepositRaisedToken(event.transaction.hash.toHexString() + '#' + event.logIndex.toString());
+    depositRaisedToken.transaction = transaction.id;
+    depositRaisedToken.timestamp = event.block.timestamp;
+    depositRaisedToken.amount = event.params.depositAmount;
+    depositRaisedToken.logIndex = event.logIndex;
+    depositRaisedToken.origin = event.transaction.from;
+    depositRaisedToken.poolAddress = event.transaction.to ?? Address.fromString(ADDRESS_ZERO);
+
+    depositRaisedToken.save()
 
     //update participant info
     let participantId = pair.id + "-" + event.params.depositor.toHexString();
