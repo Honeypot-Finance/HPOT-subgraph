@@ -1,7 +1,7 @@
-import { Participant, ParticipantTransactionHistory, Pot2Pump, DepositRaisedToken, Transaction } from '../types/schema';
+import { Participant, ParticipantTransactionHistory, Pot2Pump, DepositRaisedToken, Transaction, Refund } from '../types/schema';
 import { Pot2Pump as Pot2PumpTemplate } from "../types/templates"
 import { Address, BigInt } from "@graphprotocol/graph-ts"
-import { ClaimLP, DepositRaisedToken as TDepositRaisedToken, Perform, Refund } from "../types/templates/Pot2Pump/Pot2PumpPair"
+import { ClaimLP, DepositRaisedToken as TDepositRaisedToken, Perform, Refund as TRefund } from "../types/templates/Pot2Pump/Pot2PumpPair"
 import { fetchState } from "../utils/pot2pump"
 import { ADDRESS_ZERO } from '../utils/constants';
 
@@ -17,14 +17,14 @@ export function handleDepositRaisedToken (event: TDepositRaisedToken): void {
         pair.raisedTokenReachingMinCap = true
     }
 
-    let transaction = new Transaction(event.transaction.hash.toHexString())
-    transaction.blockNumber = event.block.number;
-    transaction.timestamp = event.block.timestamp;
-    transaction.gasLimit = event.transaction.gasLimit;
-    transaction.gasPrice = event.transaction.gasPrice;
-    transaction.account = event.params.depositor.toHexString();
-
-    transaction.save();
+    let transaction = createTransaction({
+        hash: event.transaction.hash.toHexString(),
+        account: event.params.depositor.toHexString(),
+        blockNumber: event.block.number,
+        gasLimit: event.transaction.gasLimit,
+        gasPrice: event.transaction.gasPrice,
+        timestamp: event.block.timestamp
+    })
 
     let depositRaisedToken = new DepositRaisedToken(event.transaction.hash.toHexString() + '#' + event.logIndex.toString());
     depositRaisedToken.transaction = transaction.id;
@@ -72,7 +72,7 @@ export function handleDepositRaisedToken (event: TDepositRaisedToken): void {
     pair.save()
 }
 
-export function handleRefund (event: Refund): void {
+export function handleRefund (event: TRefund): void {
     let pair = Pot2Pump.load(event.address.toHexString())
     if (pair == null) {
         return
@@ -81,6 +81,23 @@ export function handleRefund (event: Refund): void {
 
     //pair.DepositRaisedToken = pair.DepositRaisedToken.minus(event.params.refundAmount)
     pair.save()
+
+    const transaction = createTransaction({
+        account: event.params.depositor.toHexString(),
+        blockNumber: event.block.number,
+        gasLimit: event.transaction.gasLimit,
+        gasPrice: event.transaction.gasPrice,
+        timestamp: event.block.timestamp,
+        hash: event.transaction.hash.toHexString()
+    })
+
+    let refund = new Refund(event.transaction.hash.toHexString() + '#' + event.logIndex.toString());
+    refund.transaction = transaction.id;
+    refund.timestamp = event.block.timestamp;
+    refund.amount = event.params.refundAmount;
+    refund.logIndex = event.logIndex;
+    refund.origin = event.transaction.from;
+    refund.poolAddress = Address.fromString(pair.id);
 
     let participantId = pair.id + "-" + event.params.depositor.toHexString();
 
@@ -145,3 +162,25 @@ export function handlePerform (event: Perform): void {
     pair.save()
 }
 
+type TCreateTransaction = { hash: string, blockNumber: BigInt, timestamp: BigInt, gasLimit: BigInt, gasPrice: BigInt, account: string }
+
+export function createTransaction ({
+    hash,
+    blockNumber,
+    timestamp,
+    gasLimit, gasPrice,
+    account
+}: TCreateTransaction) {
+    let transaction = new Transaction(hash)
+    transaction.blockNumber = blockNumber;
+    transaction.timestamp = timestamp;
+    transaction.gasLimit = gasLimit;
+    transaction.gasPrice = gasPrice;
+    transaction.account = account;
+
+    transaction.save();
+
+
+    return transaction
+
+}
