@@ -1,24 +1,51 @@
-import { Participant, ParticipantTransactionHistory, Pot2Pump } from '../types/schema'
+import {
+  Participant,
+  ParticipantTransactionHistory,
+  Pot2Pump,
+  DepositRaisedToken,
+  Transaction,
+  Refund,
+  ClaimLp
+} from '../types/schema'
 import { Pot2Pump as Pot2PumpTemplate } from '../types/templates'
-import { BigInt } from '@graphprotocol/graph-ts'
-import { ClaimLP, DepositRaisedToken, Perform, Refund } from '../types/templates/Pot2Pump/Pot2PumpPair'
+import { Address, BigInt } from '@graphprotocol/graph-ts'
+import {
+  ClaimLP as TClaimLP,
+  DepositRaisedToken as TDepositRaisedToken,
+  Perform,
+  Refund as TRefund
+} from '../types/templates/Pot2Pump/Pot2PumpPair'
 import { fetchState } from '../utils/pot2pump'
 import { loadAccount } from '../utils/account'
 import { ONE_BI, ZERO_BI } from '../utils/constants'
+import { ADDRESS_ZERO } from '../utils/constants'
 
-// type Participant @entity {
-//     id: ID!
-//     pot2Pump: Pot2Pump!
-//     account: Account!
-//     amount: BigInt!
-//     createdAt: BigInt!
-// }
-
-export function handleDepositRaisedToken(event: DepositRaisedToken): void {
+export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
   let pair = Pot2Pump.load(event.address.toHexString())
   if (pair == null) {
     return
   }
+
+  let transaction = createTransaction({
+    hash: event.transaction.hash.toHexString(),
+    account: event.params.depositor.toHexString(),
+    blockNumber: event.block.number,
+    gasLimit: event.transaction.gasLimit,
+    gasPrice: event.transaction.gasPrice,
+    timestamp: event.block.timestamp
+  })
+
+  let depositRaisedToken = new DepositRaisedToken(
+    event.transaction.hash.toHexString() + '#' + event.logIndex.toString()
+  )
+  depositRaisedToken.transaction = transaction.id
+  depositRaisedToken.timestamp = event.block.timestamp
+  depositRaisedToken.amount = event.params.depositAmount
+  depositRaisedToken.logIndex = event.logIndex
+  depositRaisedToken.origin = event.transaction.from
+  depositRaisedToken.poolAddress = event.transaction.to ?? Address.fromString(ADDRESS_ZERO)
+
+  depositRaisedToken.save()
 
   //update participant info
   let participantId = pair.id + '-' + event.params.depositor.toHexString()
@@ -76,7 +103,7 @@ export function handleDepositRaisedToken(event: DepositRaisedToken): void {
   pair.save()
 }
 
-export function handleRefund(event: Refund): void {
+export function handleRefund(event: TRefund): void {
   let pair = Pot2Pump.load(event.address.toHexString())
   if (pair == null) {
     return
@@ -85,6 +112,23 @@ export function handleRefund(event: Refund): void {
 
   //pair.DepositRaisedToken = pair.DepositRaisedToken.minus(event.params.refundAmount)
   pair.save()
+
+  const transaction = createTransaction({
+    account: event.params.depositor.toHexString(),
+    blockNumber: event.block.number,
+    gasLimit: event.transaction.gasLimit,
+    gasPrice: event.transaction.gasPrice,
+    timestamp: event.block.timestamp,
+    hash: event.transaction.hash.toHexString()
+  })
+
+  let refund = new Refund(event.transaction.hash.toHexString() + '#' + event.logIndex.toString())
+  refund.transaction = transaction.id
+  refund.timestamp = event.block.timestamp
+  refund.amount = event.params.refundAmount
+  refund.logIndex = event.logIndex
+  refund.origin = event.transaction.from
+  refund.poolAddress = Address.fromString(pair.id)
 
   let participantId = pair.id + '-' + event.params.depositor.toHexString()
 
@@ -109,11 +153,28 @@ export function handleRefund(event: Refund): void {
   participantTransactionHistory.save()
 }
 
-export function handleClaimLP(event: ClaimLP): void {
+export function handleClaimLP(event: TClaimLP): void {
   let pair = Pot2Pump.load(event.address.toHexString())
   if (pair == null) {
     return
   }
+
+  const transaction = createTransaction({
+    account: event.params.claimer.toHexString(),
+    blockNumber: event.block.number,
+    gasLimit: event.transaction.gasLimit,
+    gasPrice: event.transaction.gasPrice,
+    hash: event.transaction.hash.toHexString(),
+    timestamp: event.block.timestamp
+  })
+
+  const claimLp = new ClaimLp(event.transaction.hash.toHexString() + '#' + event.logIndex.toString())
+  claimLp.amount = event.params.param1
+  claimLp.transaction = transaction.id
+  claimLp.timestamp = event.block.timestamp
+  claimLp.origin = event.transaction.from
+  claimLp.logIndex = event.logIndex
+  claimLp.poolAddress = Address.fromString(pair.id)
 
   let participantId = pair.id + '-' + event.params.claimer.toHexString()
 
@@ -146,4 +207,25 @@ export function handlePerform(event: Perform): void {
   }
   pair.state = new BigInt(event.params.pairState)
   pair.save()
+}
+type TCreateTransaction = {
+  hash: string
+  blockNumber: BigInt
+  timestamp: BigInt
+  gasLimit: BigInt
+  gasPrice: BigInt
+  account: string
+}
+
+export function createTransaction({ hash, blockNumber, timestamp, gasLimit, gasPrice, account }: TCreateTransaction) {
+  let transaction = new Transaction(hash)
+  transaction.blockNumber = blockNumber
+  transaction.timestamp = timestamp
+  transaction.gasLimit = gasLimit
+  transaction.gasPrice = gasPrice
+  transaction.account = account
+
+  transaction.save()
+
+  return transaction
 }
