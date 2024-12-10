@@ -154,7 +154,7 @@ export function handleNewCommunityFee (event: DefaultCommunityFee): void {
   factory.save()
 }
 
-function loadFactory () {
+function loadFactory (): Factory {
   let factory = Factory.load(FACTORY_ADDRESS)
   if (factory == null) {
     factory = new Factory(FACTORY_ADDRESS)
@@ -181,7 +181,7 @@ function loadFactory () {
   return factory;
 }
 
-function loadDefaultPool (id: string) {
+function loadDefaultPool (id: string): Pool {
   let pool = new Pool(id) as Pool
   pool.deployer = Address.fromString(ADDRESS_ZERO)
   pool.plugin = Address.fromString(ADDRESS_ZERO)

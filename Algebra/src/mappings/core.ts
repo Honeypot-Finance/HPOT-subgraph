@@ -1,20 +1,7 @@
 /* eslint-disable prefer-const */
-import {
-  Bundle,
-  Burn,
-  Factory,
-  Mint,
-  Pool,
-  Swap,
-  Tick,
-  PoolPosition,
-  Plugin,
-  Token,
-  PoolFeeData,
-  HoldingToken
-} from '../types/schema'
+import { Bundle, Burn, Factory, Mint, Pool, Swap, Tick, PoolPosition, Plugin, Token, PoolFeeData, HoldingToken } from '../types/schema'
 import { PluginConfig, Pool as PoolABI } from '../types/Factory/Pool'
-import { Address, BigDecimal, BigInt, ethereum, log, store } from '@graphprotocol/graph-ts'
+import { BigDecimal, BigInt, ethereum, store } from '@graphprotocol/graph-ts'
 
 import {
   Burn as BurnEvent,
@@ -28,15 +15,7 @@ import {
   Plugin as PluginEvent
 } from '../types/templates/Pool/Pool'
 import { convertTokenToDecimal, loadTransaction, safeDiv } from '../utils'
-import {
-  FACTORY_ADDRESS,
-  ONE_BI,
-  ZERO_BD,
-  ZERO_BI,
-  pools_list,
-  FEE_DENOMINATOR,
-  ADDRESS_ZERO
-} from '../utils/constants'
+import { FACTORY_ADDRESS, ONE_BI, ZERO_BD, ZERO_BI, pools_list, FEE_DENOMINATOR } from '../utils/constants'
 import { findEthPerToken, getEthPriceInUSD, getTrackedAmountUSD, priceToTokenPrices } from '../utils/pricing'
 import {
   updatePoolDayData,
@@ -48,9 +27,9 @@ import {
   updateFeeHourData
 } from '../utils/intervalUpdates'
 import { createTick } from '../utils/tick'
-import { fetchTokenBalance, fetchTokenPot2PumpAddress } from '../utils/token'
 import { Transfer } from '../types/Factory/ERC20'
-import { loadAccount } from '../utils/account'
+import { isNotZeroAddress, isZeroAddress } from '../utils/address'
+
 
 export function handleInitialize (event: Initialize): void {
   let pool = Pool.load(event.address.toHexString())!
@@ -61,6 +40,7 @@ export function handleInitialize (event: Initialize): void {
   // update token prices
   let token0 = Token.load(pool.token0)!
   let token1 = Token.load(pool.token1)!
+
 
   // update Matic price now that prices could have changed
   let bundle = Bundle.load('1')!
@@ -73,6 +53,7 @@ export function handleInitialize (event: Initialize): void {
   token1.derivedMatic = findEthPerToken(token1 as Token)
   token0.save()
   token1.save()
+
 }
 
 export function handleMint (event: MintEvent): void {
@@ -81,15 +62,19 @@ export function handleMint (event: MintEvent): void {
   let pool = Pool.load(poolAddress)!
   let factory = Factory.load(FACTORY_ADDRESS)!
 
+
   let token0 = Token.load(pool.token0)!
   let token1 = Token.load(pool.token1)!
+
 
   let amount0 = convertTokenToDecimal(event.params.amount0, token0.decimals)
   let amount1 = convertTokenToDecimal(event.params.amount1, token1.decimals)
 
   if (pools_list.includes(event.address.toHexString())) {
+
     amount0 = convertTokenToDecimal(event.params.amount1, token0.decimals)
     amount1 = convertTokenToDecimal(event.params.amount0, token1.decimals)
+
   }
 
   let amountUSD = amount0
@@ -152,7 +137,6 @@ export function handleMint (event: MintEvent): void {
   mint.tickLower = BigInt.fromI32(event.params.bottomTick)
   mint.tickUpper = BigInt.fromI32(event.params.topTick)
 
-
   // tick entities
   let lowerTickIdx = event.params.bottomTick
   let upperTickIdx = event.params.topTick
@@ -177,19 +161,12 @@ export function handleMint (event: MintEvent): void {
   upperTick.liquidityGross = upperTick.liquidityGross.plus(amount)
   upperTick.liquidityNet = upperTick.liquidityNet.minus(amount)
 
-  let poolPositionid =
-    pool.id +
-    '#' +
-    event.params.owner.toHexString() +
-    '#' +
-    BigInt.fromI32(event.params.bottomTick).toString() +
-    '#' +
-    BigInt.fromI32(event.params.topTick).toString()
+  let poolPositionid = pool.id + "#" + event.params.owner.toHexString() + '#' + BigInt.fromI32(event.params.bottomTick).toString() + "#" + BigInt.fromI32(event.params.topTick).toString()
   let poolPosition = PoolPosition.load(poolPositionid)
   if (poolPosition) {
-  if (poolPosition) {
     poolPosition.liquidity = poolPosition.liquidity.plus(event.params.liquidityAmount)
-  } else {
+  }
+  else {
     poolPosition = new PoolPosition(poolPositionid)
     poolPosition.pool = pool.id
     poolPosition.lowerTick = lowerTick.id
@@ -216,10 +193,13 @@ export function handleMint (event: MintEvent): void {
   mint.save()
 
   // Update inner tick vars and save the ticks
+  updateTickFeeVarsAndSave(lowerTick, event)
   updateTickFeeVarsAndSave(upperTick, event)
+
 }
 
-export function handleBurn(event: BurnEvent): void {
+export function handleBurn (event: BurnEvent): void {
+
   let bundle = Bundle.load('1')!
   let poolAddress = event.address.toHexString()
   let pool = Pool.load(poolAddress)!
@@ -229,12 +209,15 @@ export function handleBurn(event: BurnEvent): void {
   let token0 = Token.load(pool.token0)!
   let token1 = Token.load(pool.token1)!
 
+
   let amount0 = convertTokenToDecimal(event.params.amount0, token0.decimals)
   let amount1 = convertTokenToDecimal(event.params.amount1, token1.decimals)
 
-  if  (pools_list.includes(event.address.toHexString()))  {
+  if (pools_list.includes(event.address.toHexString())) {
+
     amount0 = convertTokenToDecimal(event.params.amount1, token0.decimals)
     amount1 = convertTokenToDecimal(event.params.amount0, token1.decimals)
+
   }
 
   let amountUSD = amount0
@@ -305,6 +288,7 @@ export function handleBurn(event: BurnEvent): void {
   burn.tickLower = BigInt.fromI32(event.params.bottomTick)
   burn.tickUpper = BigInt.fromI32(event.params.topTick)
 
+
   // tick entities
   let lowerTickId = poolAddress + '#' + BigInt.fromI32(event.params.bottomTick).toString()
   let upperTickId = poolAddress + '#' + BigInt.fromI32(event.params.topTick).toString()
@@ -316,16 +300,8 @@ export function handleBurn(event: BurnEvent): void {
   upperTick.liquidityGross = upperTick.liquidityGross.minus(amount)
   upperTick.liquidityNet = upperTick.liquidityNet.plus(amount)
 
-  let poolPositionid =
-    pool.id +
-    '#' +
-    event.params.owner.toHexString() +
-    '#' +
-    BigInt.fromI32(event.params.bottomTick).toString() +
-    '#' +
-    BigInt.fromI32(event.params.topTick).toString()
+  let poolPositionid = pool.id + "#" + event.params.owner.toHexString() + '#' + BigInt.fromI32(event.params.bottomTick).toString() + "#" + BigInt.fromI32(event.params.topTick).toString()
   let poolPosition = PoolPosition.load(poolPositionid)
-  if (poolPosition) {
   if (poolPosition) {
     poolPosition.liquidity = poolPosition.liquidity.minus(event.params.liquidityAmount)
     poolPosition.save()
@@ -339,6 +315,7 @@ export function handleBurn(event: BurnEvent): void {
   updateTokenHourData(token0 as Token, event)
   updateTokenHourData(token1 as Token, event)
   updateTickFeeVarsAndSave(lowerTick, event)
+  updateTickFeeVarsAndSave(upperTick, event)
 
   token0.save()
   token1.save()
@@ -352,53 +329,22 @@ export function handleSwap (event: SwapEvent): void {
   let factory = Factory.load(FACTORY_ADDRESS)!
   let pool = Pool.load(event.address.toHexString())!
   let oldTick = pool.tick
-  let flag = false
-
   let token0 = Token.load(pool.token0)!
   let token1 = Token.load(pool.token1)!
 
-  let amount0 = convertTokenToDecimal(event.params.amount0, token0.decimals)
-  let amount1 = convertTokenToDecimal(event.params.amount1, token1.decimals)
+  let [amount0, amount1] = pools_list.includes(event.address.toHexString()) ? [convertTokenToDecimal(event.params.amount1, token0.decimals), convertTokenToDecimal(event.params.amount0, token1.decimals)] : [convertTokenToDecimal(event.params.amount0, token0.decimals), convertTokenToDecimal(event.params.amount1, token1.decimals)]
 
-  if (pools_list.includes(event.address.toHexString())) {
-  if (pools_list.includes(event.address.toHexString())) {
-    amount0 = convertTokenToDecimal(event.params.amount1, token0.decimals)
-    amount1 = convertTokenToDecimal(event.params.amount0, token1.decimals)
-  }
-
-  let swapFee = pool.fee
-  if (event.params.overrideFee > 0) {
-    swapFee = BigInt.fromI32(event.params.overrideFee)
-  }
+  let swapFee = event.params.overrideFee > 0 ? BigInt.fromI32(event.params.overrideFee) : pool.fee;
 
   let pluginFee = BigInt.fromI32(event.params.pluginFee)
 
   // need absolute amounts for volume
-  let amount0Abs = amount0
-  let amount0withFee = amount0
-  if (amount0.lt(ZERO_BD)) {
-    amount0Abs = amount0.times(BigDecimal.fromString('-1'))
-  } else {
-    let communityFeeAmount = amount0.times(
-      BigDecimal.fromString(swapFee.times(pool.communityFee).toString()).div(BigDecimal.fromString('1000000000'))
-    )
-    communityFeeAmount = communityFeeAmount.times(BigDecimal.fromString('1'))
-    amount0withFee = amount0.times(FEE_DENOMINATOR.minus(swapFee.plus(pluginFee).toBigDecimal())).div(FEE_DENOMINATOR)
-    amount0Abs = amount0
-  }
+  let amount0withFee = amount0.lt(ZERO_BD) ? amount0 : amount0.times(FEE_DENOMINATOR.minus((swapFee.plus(pluginFee)).toBigDecimal())).div(FEE_DENOMINATOR)
+  let amount0Abs = amount0.times(BigDecimal.fromString('-1'))
 
-  let amount1Abs = amount1
-  let amount1withFee = amount1
-  if (amount1.lt(ZERO_BD)) {
-    amount1Abs = amount1.times(BigDecimal.fromString('-1'))
-  } else {
-    let communityFeeAmount = amount1.times(
-      BigDecimal.fromString(swapFee.times(pool.communityFee).toString()).div(BigDecimal.fromString('1000000000'))
-    )
-    communityFeeAmount = communityFeeAmount.times(BigDecimal.fromString('1'))
-    amount1Abs = amount1
-    amount1withFee = amount1.times(FEE_DENOMINATOR.minus(swapFee.plus(pluginFee).toBigDecimal())).div(FEE_DENOMINATOR)
-  }
+
+  let amount1withFee = amount1.lt(ZERO_BD) ? amount1 : amount1.times(FEE_DENOMINATOR.minus((swapFee.plus(pluginFee)).toBigDecimal())).div(FEE_DENOMINATOR)
+  let amount1Abs = amount1.times(BigDecimal.fromString('-1'))
 
   let amount0Matic = amount0Abs.times(token0.derivedMatic)
   let amount1Matic = amount1Abs.times(token1.derivedMatic)
@@ -469,7 +415,6 @@ export function handleSwap (event: SwapEvent): void {
   pool.token1Price = prices[1]
 
   if (pools_list.includes(event.address.toHexString())) {
-  if (pools_list.includes(event.address.toHexString())) {
     prices = priceToTokenPrices(pool.sqrtPrice, token1 as Token, token0 as Token)
     pool.token0Price = prices[1]
     pool.token1Price = prices[0]
@@ -478,18 +423,12 @@ export function handleSwap (event: SwapEvent): void {
   let plugin = Plugin.load(pool.plugin.toHexString())!
 
   if (amount0.lt(ZERO_BD)) {
-    plugin.collectedFeesToken1 = plugin.collectedFeesToken1.plus(
-      amount1.times(pluginFee.toBigDecimal()).div(FEE_DENOMINATOR)
-    )
+    plugin.collectedFeesToken1 = plugin.collectedFeesToken1.plus(amount1.times(pluginFee.toBigDecimal()).div(FEE_DENOMINATOR))
   } else {
-    plugin.collectedFeesToken0 = plugin.collectedFeesToken0.plus(
-      amount0.times(pluginFee.toBigDecimal()).div(FEE_DENOMINATOR)
-    )
+    plugin.collectedFeesToken0 = plugin.collectedFeesToken0.plus(amount0.times(pluginFee.toBigDecimal()).div(FEE_DENOMINATOR))
   }
 
-  plugin.collectedFeesUSD = plugin.collectedFeesUSD.plus(
-    amountTotalUSDTracked.times(pluginFee.toBigDecimal()).div(FEE_DENOMINATOR)
-  )
+  plugin.collectedFeesUSD = plugin.collectedFeesUSD.plus(amountTotalUSDTracked.times(pluginFee.toBigDecimal()).div(FEE_DENOMINATOR))
   plugin.save()
 
   pool.save()
@@ -530,7 +469,7 @@ export function handleSwap (event: SwapEvent): void {
   swap.amount0 = amount0
   swap.amount1 = amount1
   swap.amountUSD = amountTotalUSDTracked
-  swap.tick = BigInt.fromI32(event.params.tick as i32)
+  swap.tick = BigInt.fromI32(event.params.tick)
   swap.price = event.params.price
 
   // update fee growth
@@ -550,12 +489,10 @@ export function handleSwap (event: SwapEvent): void {
   let token1HourData = updateTokenHourData(token1 as Token, event)
 
   if (amount0.lt(ZERO_BD)) {
-  if (amount0.lt(ZERO_BD)) {
     pool.feesToken1 = pool.feesToken1.plus(amount1.times(swapFee.toBigDecimal()).div(FEE_DENOMINATOR))
     poolDayData.feesToken1 = poolDayData.feesToken1.plus(amount1.times(swapFee.toBigDecimal()).div(FEE_DENOMINATOR))
   }
 
-  if (amount1.lt(ZERO_BD)) {
   if (amount1.lt(ZERO_BD)) {
     pool.feesToken0 = pool.feesToken0.plus(amount0.times(swapFee.toBigDecimal()).div(FEE_DENOMINATOR))
     poolDayData.feesToken0 = poolDayData.feesToken0.plus(amount0.times(swapFee.toBigDecimal()).div(FEE_DENOMINATOR))
@@ -571,6 +508,7 @@ export function handleSwap (event: SwapEvent): void {
   poolDayData.volumeToken0 = poolDayData.volumeToken0.plus(amount0Abs)
   poolDayData.volumeToken1 = poolDayData.volumeToken1.plus(amount1Abs)
   poolDayData.feesUSD = poolDayData.feesUSD.plus(feesUSD)
+
 
   poolHourData.untrackedVolumeUSD = poolHourData.untrackedVolumeUSD.plus(amountTotalUSDUntracked)
   poolHourData.volumeUSD = poolHourData.volumeUSD.plus(amountTotalUSDTracked)
@@ -609,7 +547,6 @@ export function handleSwap (event: SwapEvent): void {
   token0.save()
   token1.save()
 
-
   // Update inner vars of current or crossed ticks
   let newTick = pool.tick
   let modulo = newTick.mod(pool.tickSpacing)
@@ -645,46 +582,43 @@ export function handleSwap (event: SwapEvent): void {
 export function handleSetCommunityFee (event: CommunityFee): void {
   let pool = Pool.load(event.address.toHexString())
   if (pool) {
-  if (pool) {
     pool.communityFee = BigInt.fromI32(event.params.communityFeeNew)
     pool.save()
-    pool.save()
   }
+
 }
 
-export function handleCollect(event: Collect): void {
+export function handleCollect (event: Collect): void {
+
   let poolAddress = event.address.toHexString()
   let pool = Pool.load(poolAddress)!
   let factory = Factory.load(FACTORY_ADDRESS)!
 
-  let token0 = Token.load(pool.token0)!
-  let token1 = Token.load(pool.token1)!
 
+  let token0 = Token.load(pool.token0)!
   let token1 = Token.load(pool.token1)!
 
   // update globals
   factory.txCount = factory.txCount.plus(ONE_BI)
 
-
   // update token0 data
   token0.txCount = token0.txCount.plus(ONE_BI)
-
 
   // update token1 data
   token1.txCount = token1.txCount.plus(ONE_BI)
 
-
   // pool data
   pool.txCount = pool.txCount.plus(ONE_BI)
-
 
   token0.save()
   token1.save()
   pool.save()
   factory.save()
+
 }
 
-function updateTickFeeVarsAndSave(tick: Tick, event: ethereum.Event): void {
+
+function updateTickFeeVarsAndSave (tick: Tick, event: ethereum.Event): void {
   let poolAddress = event.address
   // not all ticks are initialized so obtaining null is expected behavior
   let poolContract = PoolABI.bind(poolAddress)
@@ -702,27 +636,28 @@ export function handleSetTickSpacing (event: TickSpacing): void {
   pool.save
 }
 
-export function handleChangeFee(event: ChangeFee): void {
+export function handleChangeFee (event: ChangeFee): void {
+
   let pool = Pool.load(event.address.toHexString())!
   pool.fee = BigInt.fromI32(event.params.fee as i32)
   pool.save()
 
   let fee = PoolFeeData.load(event.address.toHexString() + event.block.timestamp.toString())
   if (fee == null) {
-  if (fee == null) {
     fee = new PoolFeeData(event.block.timestamp.toString() + event.address.toHexString())
     fee.pool = event.address.toHexString()
     fee.fee = BigInt.fromI32(event.params.fee)
     fee.timestamp = event.block.timestamp
-  } else {
+  }
+  else {
     fee.fee = BigInt.fromI32(event.params.fee)
   }
   updateFeeHourData(event, BigInt.fromI32(event.params.fee))
   fee.save()
 }
 
-export function handlePlugin(event: PluginEvent): void {
-  if (!event || !event.address || event.address.toHexString() == ADDRESS_ZERO) {
+export function handlePlugin (event: PluginEvent): void {
+  if (!event || !event.address || isZeroAddress(event.address.toHexString())) {
     return
   }
   let pool = Pool.load(event.address.toHexString())!
@@ -747,69 +682,49 @@ export function handlePluginConfig (event: PluginConfig): void {
   pool.save()
 }
 
-export function handleTransfer(event: Transfer): void {
-  if (!event || !event.address || event.address.toHexString() == ADDRESS_ZERO) {
-    return
+export function handleTransfer (event: Transfer): void {
+  if (!event || !event.address || isZeroAddress(event.address.toHexString())) {
+    return;
   }
   const token = Token.load(event.address.toHexString())
-
-  if (!token || !token.pot2Pump) {
 
   if (!token || !token.pot2Pump) {
     return
   }
 
   // token holder update
-  // check from address
+  // check from address 
   const fromHolderId = token.id + event.params.from.toHexString()
   const fromHolder = HoldingToken.load(fromHolderId)
-
-  if (fromHolder && event.params.from.toHexString() !== ADDRESS_ZERO) {
+  if (fromHolder && isNotZeroAddress(event.params.from.toHexString())) {
     //check user token balance
     fromHolder.holdingValue.minus(event.params.value)
     if (fromHolder.holdingValue.equals(ZERO_BI)) {
-    if (fromHolder.holdingValue.equals(ZERO_BI)) {
       store.remove('HoldingToken', fromHolderId)
       token.holderCount = token.holderCount.minus(ONE_BI)
-
-      // update account meme token holding count
-      if (fetchTokenPot2PumpAddress(event.params.from).toHexString() == ADDRESS_ZERO) {
-        const account = loadAccount(event.params.from.toHexString())
-        if (account) {
-          account.memeTokenHoldingCount = account.memeTokenHoldingCount.minus(ONE_BI)
-          account.save()
-        }
-      }
     }
   }
 
   // check to address
   const toHolderId = token.id + event.params.to.toHexString()
   const toHolder = HoldingToken.load(toHolderId)
-  if (event.params.to.toHexString() !== ADDRESS_ZERO) {
+  if (isNotZeroAddress(event.params.to.toHexString())) {
     if (toHolder) {
       toHolder.holdingValue.plus(event.params.value)
       toHolder.save()
-    } else {
+    }
+    else {
       let newHolder = new HoldingToken(toHolderId)
       newHolder.account = event.params.to.toHexString()
       newHolder.token = token.id
       newHolder.holdingValue = event.params.value
       newHolder.save()
       token.holderCount = token.holderCount.plus(ONE_BI)
-
-      // update account meme token holding count
-      if (fetchTokenPot2PumpAddress(event.params.to).toHexString() == ADDRESS_ZERO) {
-        const account = loadAccount(event.params.to.toHexString())
-        if (account) {
-          account.memeTokenHoldingCount = account.memeTokenHoldingCount.plus(ONE_BI)
-          account.save()
-        }
-      }
     }
   }
 
   token.save()
+
 }
 
 function loadTickUpdateFeeVarsAndSave (tickId: i32, event: ethereum.Event): void {
