@@ -27,24 +27,13 @@ export function handlePoolCreated(event: PoolEvent): void {
   let token0_address = event.params.token0
   let token1_address = event.params.token1
 
-  let token0 = Token.load(token0_address.toHexString())
-  let token1 = Token.load(token1_address.toHexString())
-
   if (pools_list.includes(event.params.pool.toHexString())) {
-    token0 = Token.load(event.params.token1.toHexString())
-    token1 = Token.load(event.params.token0.toHexString())
     token0_address = event.params.token1
     token1_address = event.params.token0
   }
 
-  // fetch info if null
-  if (token0 === null) {
-    token0 = loadToken(token0_address)
-  }
-
-  if (token1 === null) {
-    token1 = loadToken(token1_address)
-  }
+  let token0 = loadToken(token0_address)
+  let token1 = loadToken(token1_address)
 
   // update white listed pools
   if (WHITELIST_TOKENS.includes(token0.id)) {
@@ -115,24 +104,13 @@ export function handleCustomPoolCreated(event: CustomPool): void {
   let token0_address = event.params.token0
   let token1_address = event.params.token1
 
-  let token0 = Token.load(token0_address.toHexString())
-  let token1 = Token.load(token1_address.toHexString())
-
   if (pools_list.includes(event.params.pool.toHexString())) {
-    token0 = Token.load(event.params.token1.toHexString())
-    token1 = Token.load(event.params.token0.toHexString())
     token0_address = event.params.token1
     token1_address = event.params.token0
   }
 
-  // fetch info if null
-  if (token0 === null) {
-    token0 = loadToken(token0_address)
-  }
-
-  if (token1 === null) {
-    token1 = loadToken(token1_address)
-  }
+  let token0 = loadToken(token0_address)
+  let token1 = loadToken(token1_address)
 
   // update white listed pools
   if (WHITELIST_TOKENS.includes(token0.id)) {

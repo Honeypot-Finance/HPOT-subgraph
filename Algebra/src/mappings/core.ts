@@ -163,11 +163,11 @@ export function handleMint(event: MintEvent): void {
   let upperTick = Tick.load(upperTickId)
 
   if (lowerTick === null) {
-    lowerTick = createTick(lowerTickId, lowerTickIdx, pool.id, event)
+    lowerTick = createTick(lowerTickId.toLowerCase(), lowerTickIdx, pool.id, event)
   }
 
   if (upperTick === null) {
-    upperTick = createTick(upperTickId, upperTickIdx, pool.id, event)
+    upperTick = createTick(upperTickId.toLowerCase(), upperTickIdx, pool.id, event)
   }
 
   let amount = event.params.liquidityAmount
@@ -216,6 +216,7 @@ export function handleMint(event: MintEvent): void {
 
   // Update inner tick vars and save the ticks
   updateTickFeeVarsAndSave(upperTick, event)
+  updateTickFeeVarsAndSave(lowerTick, event)
 }
 
 export function handleBurn(event: BurnEvent): void {
@@ -307,9 +308,16 @@ export function handleBurn(event: BurnEvent): void {
   // tick entities
   let lowerTickId = poolAddress + '#' + BigInt.fromI32(event.params.bottomTick).toString()
   let upperTickId = poolAddress + '#' + BigInt.fromI32(event.params.topTick).toString()
-  let lowerTick = Tick.load(lowerTickId)!
-  let upperTick = Tick.load(upperTickId)!
+  let lowerTick = Tick.load(lowerTickId.toLowerCase())!
+  let upperTick = Tick.load(upperTickId.toLowerCase())!
   let amount = event.params.liquidityAmount
+
+  if (lowerTick === null) {
+    lowerTick = createTick(lowerTickId.toLowerCase(), event.params.bottomTick, pool.id, event)
+  }
+  if (upperTick === null) {
+    upperTick = createTick(upperTickId.toLowerCase(), event.params.topTick, pool.id, event)
+  }
   lowerTick.liquidityGross = lowerTick.liquidityGross.minus(amount)
   lowerTick.liquidityNet = lowerTick.liquidityNet.minus(amount)
   upperTick.liquidityGross = upperTick.liquidityGross.minus(amount)
@@ -337,6 +345,7 @@ export function handleBurn(event: BurnEvent): void {
   updateTokenHourData(token0 as Token, event)
   updateTokenHourData(token1 as Token, event)
   updateTickFeeVarsAndSave(lowerTick, event)
+  updateTickFeeVarsAndSave(upperTick, event)
 
   token0.save()
   token1.save()
@@ -460,7 +469,6 @@ export function handleSwap(event: SwapEvent): void {
   token1.txCount = token1.txCount.plus(ONE_BI)
 
   // updated pool ratess
-
   let prices = priceToTokenPrices(pool.sqrtPrice, token0 as Token, token1 as Token)
   pool.token0Price = prices[0]
   pool.token1Price = prices[1]
