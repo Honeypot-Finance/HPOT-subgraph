@@ -1,55 +1,34 @@
 import { WHITELIST_TOKENS } from '../utils/pricing'
 /* eslint-disable prefer-const */
-import { FACTORY_ADDRESS, ZERO_BI, ONE_BI, ZERO_BD, ADDRESS_ZERO, pools_list} from '../utils/constants'
+import { FACTORY_ADDRESS, ZERO_BI, ONE_BI, ZERO_BD, ADDRESS_ZERO, pools_list } from '../utils/constants'
 import { Factory } from '../types/schema'
 import { Pool as PoolEvent } from '../types/Factory/Factory'
 import { DefaultCommunityFee, CustomPool } from '../types/Factory/Factory'
 import { Pool, Token, Bundle } from '../types/schema'
-import { Pool as PoolTemplate} from '../types/templates'
+import { Pool as PoolTemplate } from '../types/templates'
 import { fetchTokenSymbol, fetchTokenName, fetchTokenTotalSupply, fetchTokenDecimals, fetchTokenPot2PumpAddress, loadToken } from '../utils/token'
 import { log, BigInt, Address } from '@graphprotocol/graph-ts'
 
-export function handlePoolCreated(event: PoolEvent): void {
+export function handlePoolCreated (event: PoolEvent): void {
   // load factory
-  let factory = Factory.load(FACTORY_ADDRESS)
-  if (factory == null) {
-    factory = new Factory(FACTORY_ADDRESS)
-    factory.poolCount = ZERO_BI
-    factory.totalVolumeMatic = ZERO_BD
-    factory.totalVolumeUSD = ZERO_BD
-    factory.untrackedVolumeUSD = ZERO_BD
-    factory.totalFeesUSD = ZERO_BD
-    factory.totalFeesMatic = ZERO_BD
-    factory.defaultCommunityFee = ZERO_BI
-    factory.totalValueLockedMatic = ZERO_BD
-    factory.totalValueLockedUSD = ZERO_BD
-    factory.totalValueLockedUSDUntracked = ZERO_BD
-    factory.totalValueLockedMaticUntracked = ZERO_BD
-    factory.txCount = ZERO_BI
-    factory.owner = ADDRESS_ZERO
-    
-    // create new bundle for tracking matic price
-    let bundle = new Bundle('1')
-    bundle.maticPriceUSD = ZERO_BD
-    bundle.save()
-  }
+  let factory = loadFactory()
 
   factory.poolCount = factory.poolCount.plus(ONE_BI)
 
   let pool = new Pool(event.params.pool.toHexString()) as Pool
-  
+
   let token0_address = event.params.token0
   let token1_address = event.params.token1
 
   let token0 = Token.load(token0_address.toHexString())
   let token1 = Token.load(token1_address.toHexString())
 
-  if(pools_list.includes(event.params.pool.toHexString())){
+  if (pools_list.includes(event.params.pool.toHexString())) {
     token0 = Token.load(event.params.token1.toHexString())
     token1 = Token.load(event.params.token0.toHexString())
     token0_address = event.params.token1
-    token1_address = event.params.token0  
-  }  
+    token1_address = event.params.token0
+  }
 
   // fetch info if null
   if (token0 === null) {
@@ -106,7 +85,6 @@ export function handlePoolCreated(event: PoolEvent): void {
   pool.feesToken1 = ZERO_BD
   pool.untrackedVolumeUSD = ZERO_BD
   pool.untrackedFeesUSD = ZERO_BD
-
   pool.collectedFeesToken0 = ZERO_BD
   pool.collectedFeesToken1 = ZERO_BD
   pool.collectedFeesUSD = ZERO_BD
@@ -120,35 +98,14 @@ export function handlePoolCreated(event: PoolEvent): void {
 
 }
 
-export function handleCustomPoolCreated(event: CustomPool): void {
+export function handleCustomPoolCreated (event: CustomPool): void {
   // load factory
-  let factory = Factory.load(FACTORY_ADDRESS)
-  if (factory == null) {
-    factory = new Factory(FACTORY_ADDRESS)
-    factory.poolCount = ZERO_BI
-    factory.totalVolumeMatic = ZERO_BD
-    factory.totalVolumeUSD = ZERO_BD
-    factory.untrackedVolumeUSD = ZERO_BD
-    factory.totalFeesUSD = ZERO_BD
-    factory.totalFeesMatic = ZERO_BD
-    factory.defaultCommunityFee = ZERO_BI
-    factory.totalValueLockedMatic = ZERO_BD
-    factory.totalValueLockedUSD = ZERO_BD
-    factory.totalValueLockedUSDUntracked = ZERO_BD
-    factory.totalValueLockedMaticUntracked = ZERO_BD
-    factory.txCount = ZERO_BI
-    factory.owner = ADDRESS_ZERO
-
-    // create new bundle for tracking matic price
-    let bundle = new Bundle('1')
-    bundle.maticPriceUSD = ZERO_BD
-    bundle.save()
-  }
+  let factory = loadFactory()
 
   factory.poolCount = factory.poolCount.plus(ONE_BI)
 
   let pool = new Pool(event.params.pool.toHexString()) as Pool
-  
+
   let token0_address = event.params.token0
   let token1_address = event.params.token1
 
@@ -156,11 +113,11 @@ export function handleCustomPoolCreated(event: CustomPool): void {
   let token1 = Token.load(token1_address.toHexString())
 
 
-  if(pools_list.includes(event.params.pool.toHexString())){
+  if (pools_list.includes(event.params.pool.toHexString())) {
     token0 = Token.load(event.params.token1.toHexString())
     token1 = Token.load(event.params.token0.toHexString())
     token0_address = event.params.token1
-    token1_address = event.params.token0  
+    token1_address = event.params.token0
   }
 
   // fetch info if null
@@ -169,7 +126,7 @@ export function handleCustomPoolCreated(event: CustomPool): void {
   }
 
   if (token1 === null) {
-    
+
     token1 = loadToken(token1_address)
   }
 
@@ -218,7 +175,6 @@ export function handleCustomPoolCreated(event: CustomPool): void {
   pool.feesToken1 = ZERO_BD
   pool.untrackedVolumeUSD = ZERO_BD
   pool.untrackedFeesUSD = ZERO_BD
-
   pool.collectedFeesToken0 = ZERO_BD
   pool.collectedFeesToken1 = ZERO_BD
   pool.collectedFeesUSD = ZERO_BD
@@ -232,7 +188,7 @@ export function handleCustomPoolCreated(event: CustomPool): void {
 
 }
 
-export function handleNewCommunityFee(event: DefaultCommunityFee): void{
+export function handleNewCommunityFee (event: DefaultCommunityFee): void {
   let factory = Factory.load(FACTORY_ADDRESS)
   if (factory == null) {
     factory = new Factory(FACTORY_ADDRESS)
@@ -254,7 +210,34 @@ export function handleNewCommunityFee(event: DefaultCommunityFee): void{
     bundle.maticPriceUSD = ZERO_BD
     bundle.save()
   }
-  
+
   factory.defaultCommunityFee = BigInt.fromI32(event.params.newDefaultCommunityFee as i32)
   factory.save()
+}
+
+function loadFactory () {
+  let factory = Factory.load(FACTORY_ADDRESS)
+  if (factory == null) {
+    factory = new Factory(FACTORY_ADDRESS)
+    factory.poolCount = ZERO_BI
+    factory.totalVolumeMatic = ZERO_BD
+    factory.totalVolumeUSD = ZERO_BD
+    factory.untrackedVolumeUSD = ZERO_BD
+    factory.totalFeesUSD = ZERO_BD
+    factory.totalFeesMatic = ZERO_BD
+    factory.defaultCommunityFee = ZERO_BI
+    factory.totalValueLockedMatic = ZERO_BD
+    factory.totalValueLockedUSD = ZERO_BD
+    factory.totalValueLockedUSDUntracked = ZERO_BD
+    factory.totalValueLockedMaticUntracked = ZERO_BD
+    factory.txCount = ZERO_BI
+    factory.owner = ADDRESS_ZERO
+
+    // create new bundle for tracking matic price
+    let bundle = new Bundle('1')
+    bundle.maticPriceUSD = ZERO_BD
+    bundle.save()
+  }
+  factory.save();
+  return factory;
 }
