@@ -15,7 +15,7 @@ export function handlePoolCreated (event: PoolEvent): void {
 
   factory.poolCount = factory.poolCount.plus(ONE_BI)
 
-  let pool = new Pool(event.params.pool.toHexString()) as Pool
+  let pool = loadDefaultPool(event.params.pool.toHexString())
 
   let token0_address = event.params.token0
   let token1_address = event.params.token1
@@ -52,42 +52,11 @@ export function handlePoolCreated (event: PoolEvent): void {
     token0.whitelistPools = newPools
   }
 
-  pool.deployer = Address.fromString(ADDRESS_ZERO)
-  pool.plugin = Address.fromString(ADDRESS_ZERO)
   pool.token0 = token0.id
   pool.token1 = token1.id
-  pool.fee = BigInt.fromI32(100)
-  pool.pluginConfig = 0
   pool.createdAtTimestamp = event.block.timestamp
   pool.createdAtBlockNumber = event.block.number
-  pool.liquidityProviderCount = ZERO_BI
-  pool.tickSpacing = BigInt.fromI32(60)
-  pool.tick = ZERO_BI
-  pool.txCount = ZERO_BI
-  pool.liquidity = ZERO_BI
-  pool.sqrtPrice = ZERO_BI
-  pool.feeGrowthGlobal0X128 = ZERO_BI
-  pool.feeGrowthGlobal1X128 = ZERO_BI
   pool.communityFee = factory.defaultCommunityFee
-  pool.token0Price = ZERO_BD
-  pool.token1Price = ZERO_BD
-  pool.observationIndex = ZERO_BI
-  pool.totalValueLockedToken0 = ZERO_BD
-  pool.totalValueLockedToken1 = ZERO_BD
-  pool.totalValueLockedUSD = ZERO_BD
-  pool.totalValueLockedMatic = ZERO_BD
-  pool.totalValueLockedUSDUntracked = ZERO_BD
-  pool.volumeToken0 = ZERO_BD
-  pool.volumeToken1 = ZERO_BD
-  pool.volumeUSD = ZERO_BD
-  pool.feesUSD = ZERO_BD
-  pool.feesToken0 = ZERO_BD
-  pool.feesToken1 = ZERO_BD
-  pool.untrackedVolumeUSD = ZERO_BD
-  pool.untrackedFeesUSD = ZERO_BD
-  pool.collectedFeesToken0 = ZERO_BD
-  pool.collectedFeesToken1 = ZERO_BD
-  pool.collectedFeesUSD = ZERO_BD
 
   pool.save()
   // create the tracked contract based on the template
@@ -104,7 +73,7 @@ export function handleCustomPoolCreated (event: CustomPool): void {
 
   factory.poolCount = factory.poolCount.plus(ONE_BI)
 
-  let pool = new Pool(event.params.pool.toHexString()) as Pool
+  let pool = loadDefaultPool(event.params.pool.toHexString())
 
   let token0_address = event.params.token0
   let token1_address = event.params.token1
@@ -143,41 +112,11 @@ export function handleCustomPoolCreated (event: CustomPool): void {
   }
 
   pool.deployer = event.params.deployer
-  pool.plugin = Address.fromString(ADDRESS_ZERO)
   pool.token0 = token0.id
   pool.token1 = token1.id
-  pool.fee = BigInt.fromI32(100)
-  pool.pluginConfig = 0
   pool.createdAtTimestamp = event.block.timestamp
   pool.createdAtBlockNumber = event.block.number
-  pool.liquidityProviderCount = ZERO_BI
-  pool.tickSpacing = BigInt.fromI32(60)
-  pool.tick = ZERO_BI
-  pool.txCount = ZERO_BI
-  pool.liquidity = ZERO_BI
-  pool.sqrtPrice = ZERO_BI
-  pool.feeGrowthGlobal0X128 = ZERO_BI
-  pool.feeGrowthGlobal1X128 = ZERO_BI
   pool.communityFee = factory.defaultCommunityFee
-  pool.token0Price = ZERO_BD
-  pool.token1Price = ZERO_BD
-  pool.observationIndex = ZERO_BI
-  pool.totalValueLockedToken0 = ZERO_BD
-  pool.totalValueLockedToken1 = ZERO_BD
-  pool.totalValueLockedUSD = ZERO_BD
-  pool.totalValueLockedMatic = ZERO_BD
-  pool.totalValueLockedUSDUntracked = ZERO_BD
-  pool.volumeToken0 = ZERO_BD
-  pool.volumeToken1 = ZERO_BD
-  pool.volumeUSD = ZERO_BD
-  pool.feesUSD = ZERO_BD
-  pool.feesToken0 = ZERO_BD
-  pool.feesToken1 = ZERO_BD
-  pool.untrackedVolumeUSD = ZERO_BD
-  pool.untrackedFeesUSD = ZERO_BD
-  pool.collectedFeesToken0 = ZERO_BD
-  pool.collectedFeesToken1 = ZERO_BD
-  pool.collectedFeesUSD = ZERO_BD
 
   pool.save()
   // create the tracked contract based on the template
@@ -238,6 +177,48 @@ function loadFactory () {
     bundle.maticPriceUSD = ZERO_BD
     bundle.save()
   }
-  factory.save();
+
   return factory;
+}
+
+function loadDefaultPool (id: string) {
+  let pool = new Pool(id) as Pool
+  pool.deployer = Address.fromString(ADDRESS_ZERO)
+  pool.plugin = Address.fromString(ADDRESS_ZERO)
+  pool.token0 = ""
+  pool.token1 = ''
+  pool.fee = BigInt.fromI32(100)
+  pool.pluginConfig = 0
+  pool.createdAtTimestamp = ZERO_BI
+  pool.createdAtBlockNumber = ZERO_BI
+  pool.liquidityProviderCount = ZERO_BI
+  pool.tickSpacing = BigInt.fromI32(60)
+  pool.tick = ZERO_BI
+  pool.txCount = ZERO_BI
+  pool.liquidity = ZERO_BI
+  pool.sqrtPrice = ZERO_BI
+  pool.feeGrowthGlobal0X128 = ZERO_BI
+  pool.feeGrowthGlobal1X128 = ZERO_BI
+  pool.communityFee = ZERO_BI
+  pool.token0Price = ZERO_BD
+  pool.token1Price = ZERO_BD
+  pool.observationIndex = ZERO_BI
+  pool.totalValueLockedToken0 = ZERO_BD
+  pool.totalValueLockedToken1 = ZERO_BD
+  pool.totalValueLockedUSD = ZERO_BD
+  pool.totalValueLockedMatic = ZERO_BD
+  pool.totalValueLockedUSDUntracked = ZERO_BD
+  pool.volumeToken0 = ZERO_BD
+  pool.volumeToken1 = ZERO_BD
+  pool.volumeUSD = ZERO_BD
+  pool.feesUSD = ZERO_BD
+  pool.feesToken0 = ZERO_BD
+  pool.feesToken1 = ZERO_BD
+  pool.untrackedVolumeUSD = ZERO_BD
+  pool.untrackedFeesUSD = ZERO_BD
+  pool.collectedFeesToken0 = ZERO_BD
+  pool.collectedFeesToken1 = ZERO_BD
+  pool.collectedFeesUSD = ZERO_BD
+
+  return pool;
 }
