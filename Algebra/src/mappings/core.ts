@@ -739,3 +739,4 @@ function loadTickUpdateFeeVarsAndSave (tickId: i32, event: ethereum.Event): void
     updateTickFeeVarsAndSave(tick, event)
   }
 }
+
