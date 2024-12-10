@@ -6,10 +6,17 @@ import { Pool as PoolEvent } from '../types/Factory/Factory'
 import { DefaultCommunityFee, CustomPool } from '../types/Factory/Factory'
 import { Pool, Token, Bundle } from '../types/schema'
 import { Pool as PoolTemplate } from '../types/templates'
-import { fetchTokenSymbol, fetchTokenName, fetchTokenTotalSupply, fetchTokenDecimals, fetchTokenPot2PumpAddress, loadToken } from '../utils/token'
+import {
+  fetchTokenSymbol,
+  fetchTokenName,
+  fetchTokenTotalSupply,
+  fetchTokenDecimals,
+  fetchTokenPot2PumpAddress,
+  loadToken
+} from '../utils/token'
 import { log, BigInt, Address } from '@graphprotocol/graph-ts'
 
-export function handlePoolCreated (event: PoolEvent): void {
+export function handlePoolCreated(event: PoolEvent): void {
   // load factory
   let factory = loadFactory()
 
@@ -95,10 +102,9 @@ export function handlePoolCreated (event: PoolEvent): void {
   token0.save()
   token1.save()
   factory.save()
-
 }
 
-export function handleCustomPoolCreated (event: CustomPool): void {
+export function handleCustomPoolCreated(event: CustomPool): void {
   // load factory
   let factory = loadFactory()
 
@@ -111,7 +117,6 @@ export function handleCustomPoolCreated (event: CustomPool): void {
 
   let token0 = Token.load(token0_address.toHexString())
   let token1 = Token.load(token1_address.toHexString())
-
 
   if (pools_list.includes(event.params.pool.toHexString())) {
     token0 = Token.load(event.params.token1.toHexString())
@@ -126,7 +131,6 @@ export function handleCustomPoolCreated (event: CustomPool): void {
   }
 
   if (token1 === null) {
-
     token1 = loadToken(token1_address)
   }
 
@@ -185,10 +189,9 @@ export function handleCustomPoolCreated (event: CustomPool): void {
   token0.save()
   token1.save()
   factory.save()
-
 }
 
-export function handleNewCommunityFee (event: DefaultCommunityFee): void {
+export function handleNewCommunityFee(event: DefaultCommunityFee): void {
   let factory = Factory.load(FACTORY_ADDRESS)
   if (factory == null) {
     factory = new Factory(FACTORY_ADDRESS)
@@ -215,7 +218,7 @@ export function handleNewCommunityFee (event: DefaultCommunityFee): void {
   factory.save()
 }
 
-function loadFactory () {
+function loadFactory(): Factory {
   let factory = Factory.load(FACTORY_ADDRESS)
   if (factory == null) {
     factory = new Factory(FACTORY_ADDRESS)
@@ -238,6 +241,6 @@ function loadFactory () {
     bundle.maticPriceUSD = ZERO_BD
     bundle.save()
   }
-  factory.save();
-  return factory;
+  factory.save()
+  return factory
 }

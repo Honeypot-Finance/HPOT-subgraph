@@ -63,8 +63,6 @@ type Account @entity {
   accountBalanceUSDWeek: BigDecimal!
   accountBalanceUSDMonth: BigDecimal!
   accountBalanceUSDYear: BigDecimal!
-
-  transaction: [Transaction!]! @derivedFrom(field: "account")
 }
 
 type HoldingToken @entity {
@@ -428,8 +426,6 @@ type Transaction @entity {
   depositRaisedTokens: [DepositRaisedToken!]! @derivedFrom(field: "transaction")
   refunds: [Refund!]! @derivedFrom(field: "transaction")
   claimLps: [ClaimLp!]! @derivedFrom(field: "transaction")
-
-  account: Account!
 }
 
 type Mint @entity {
