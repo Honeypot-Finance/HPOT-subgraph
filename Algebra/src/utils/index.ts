@@ -10,7 +10,6 @@ export function exponentToBigDecimal(decimals: BigInt): BigDecimal {
   }
   return bd
 }
-
 // return 0 if denominator is 0 in division
 export function safeDiv(amount0: BigDecimal, amount1: BigDecimal): BigDecimal {
   if (amount1.equals(ZERO_BD)) {

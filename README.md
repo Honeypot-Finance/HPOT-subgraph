@@ -16,7 +16,7 @@ After that you need to run:
 ```
 $ yarn
 $ yarn codegen
-$ yarn build 
+$ yarn build
 ```
 
 ### Deploy
