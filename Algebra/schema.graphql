@@ -64,7 +64,7 @@ type Account @entity {
   accountBalanceUSDMonth: BigDecimal!
   accountBalanceUSDYear: BigDecimal!
 
-  transaction: [Transaction!]! @derivedFrom(field: "account")
+  # transaction: [Transaction!]! @derivedFrom(field: "account")
 }
 
 type HoldingToken @entity {
@@ -432,8 +432,6 @@ type Transaction @entity {
   depositRaisedTokens: [DepositRaisedToken!]! @derivedFrom(field: "transaction")
   refunds: [Refund!]! @derivedFrom(field: "transaction")
   claimLps: [ClaimLp!]! @derivedFrom(field: "transaction")
-
-  account: Account!
 }
 
 type Mint @entity {
@@ -935,7 +933,7 @@ type DepositRaisedToken @entity {
   # order within the txn
   logIndex: BigInt
   # the address of contract which is deposited by user
-  poolAddress: Bytes!
+  poolAddress: Bytes
 }
 
 type Refund @entity {

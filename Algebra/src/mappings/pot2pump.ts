@@ -26,15 +26,22 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
     return
   }
 
-  let transaction = createTransaction({
-    hash: event.transaction.hash.toHexString(),
-    account: event.params.depositor.toHexString(),
-    blockNumber: event.block.number,
-    gasLimit: event.transaction.gasLimit,
-    gasPrice: event.transaction.gasPrice,
-    timestamp: event.block.timestamp
-  })
-
+  // let transaction = createTransaction(
+  //   hash: event.transaction.hash.toHexString(),
+  //   account: event.params.depositor.toHexString(),
+  //   blockNumber: event.block.number,
+  //   gasLimit: event.transaction.gasLimit,
+  //   gasPrice: event.transaction.gasPrice,
+  //   timestamp: event.block.timestamp
+  // )
+  const transaction = createTransaction(
+    event.transaction.hash.toHexString(),
+    event.block.number,
+    event.block.timestamp,
+    event.transaction.gasLimit,
+    event.transaction.gasPrice,
+    event.params.depositor.toHexString()
+  )
   let depositRaisedToken = new DepositRaisedToken(
     event.transaction.hash.toHexString() + '#' + event.logIndex.toString()
   )
@@ -43,7 +50,7 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
   depositRaisedToken.amount = event.params.depositAmount
   depositRaisedToken.logIndex = event.logIndex
   depositRaisedToken.origin = event.transaction.from
-  depositRaisedToken.poolAddress = event.transaction.to ?? Address.fromString(ADDRESS_ZERO)
+  depositRaisedToken.poolAddress = event.transaction.to ? event.transaction.to : Address.fromString(ADDRESS_ZERO)
 
   depositRaisedToken.save()
 
@@ -113,15 +120,22 @@ export function handleRefund(event: TRefund): void {
   //pair.DepositRaisedToken = pair.DepositRaisedToken.minus(event.params.refundAmount)
   pair.save()
 
-  const transaction = createTransaction({
-    account: event.params.depositor.toHexString(),
-    blockNumber: event.block.number,
-    gasLimit: event.transaction.gasLimit,
-    gasPrice: event.transaction.gasPrice,
-    timestamp: event.block.timestamp,
-    hash: event.transaction.hash.toHexString()
-  })
-
+  // const transaction = createTransaction({
+  //   account: event.params.depositor.toHexString(),
+  //   blockNumber: event.block.number,
+  //   gasLimit: event.transaction.gasLimit,
+  //   gasPrice: event.transaction.gasPrice,
+  //   timestamp: event.block.timestamp,
+  //   hash: event.transaction.hash.toHexString()
+  // })
+  const transaction = createTransaction(
+    event.transaction.hash.toHexString(),
+    event.block.number,
+    event.block.timestamp,
+    event.transaction.gasLimit,
+    event.transaction.gasPrice,
+    event.params.depositor.toHexString()
+  )
   let refund = new Refund(event.transaction.hash.toHexString() + '#' + event.logIndex.toString())
   refund.transaction = transaction.id
   refund.timestamp = event.block.timestamp
@@ -159,15 +173,22 @@ export function handleClaimLP(event: TClaimLP): void {
     return
   }
 
-  const transaction = createTransaction({
-    account: event.params.claimer.toHexString(),
-    blockNumber: event.block.number,
-    gasLimit: event.transaction.gasLimit,
-    gasPrice: event.transaction.gasPrice,
-    hash: event.transaction.hash.toHexString(),
-    timestamp: event.block.timestamp
-  })
-
+  // const transaction = createTransaction(
+  //   event.params.claimer.toHexString(),
+  //   event.block.number,
+  //  event.transaction.gasLimit,
+  //   event.transaction.gasPrice,
+  //    event.block.timestamp,
+  //    event.transaction.hash.toHexString(),
+  // )
+  const transaction = createTransaction(
+    event.transaction.hash.toHexString(),
+    event.block.number,
+    event.block.timestamp,
+    event.transaction.gasLimit,
+    event.transaction.gasPrice,
+    event.params.claimer.toHexString()
+  )
   const claimLp = new ClaimLp(event.transaction.hash.toHexString() + '#' + event.logIndex.toString())
   claimLp.amount = event.params.param1
   claimLp.transaction = transaction.id
@@ -208,16 +229,23 @@ export function handlePerform(event: Perform): void {
   pair.state = new BigInt(event.params.pairState)
   pair.save()
 }
-type TCreateTransaction = {
-  hash: string
-  blockNumber: BigInt
-  timestamp: BigInt
-  gasLimit: BigInt
-  gasPrice: BigInt
-  account: string
-}
+// type TCreateTransaction = {
+//   hash: string;
+//   blockNumber: BigInt;
+//   timestamp: BigInt;
+//   gasLimit: BigInt;
+//   gasPrice: BigInt;
+//   account: string;
+// }
 
-export function createTransaction({ hash, blockNumber, timestamp, gasLimit, gasPrice, account }: TCreateTransaction) {
+export function createTransaction(
+  hash: string,
+  blockNumber: BigInt,
+  timestamp: BigInt,
+  gasLimit: BigInt,
+  gasPrice: BigInt,
+  account: string
+): Transaction {
   let transaction = new Transaction(hash)
   transaction.blockNumber = blockNumber
   transaction.timestamp = timestamp
