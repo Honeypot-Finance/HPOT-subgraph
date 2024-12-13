@@ -43,8 +43,12 @@ type Account @entity {
 
   # transactions
   transaction: [Transaction!]! @derivedFrom(field: "account")
+  platformTxCount: BigInt!
   swapCount: BigInt!
   holdingPoolCount: BigInt!
+
+  # dex total profit
+  totalSpendUSD: BigDecimal!
 
   # earning (calculate all pot2pump, holding token, pool) derived in USD
   totalEarningUSDDay: BigDecimal!
@@ -158,6 +162,9 @@ type Pot2Pump @entity {
   createdAt: BigInt!
   endTime: BigInt!
   state: BigInt!
+
+  # transactions
+  participantTransactionHistorys: [ParticipantTransactionHistory!]! @derivedFrom(field: "pot2Pump")
 }
 
 type Participant @entity {
@@ -180,7 +187,10 @@ type Participant @entity {
 
 type ParticipantTransactionHistory @entity {
   id: ID!
+  # participant Account
   account: Account!
+  # pot2Pump
+  pot2Pump: Pot2Pump!
   # deposit amount
   depositAmount: BigInt!
   # refund amount

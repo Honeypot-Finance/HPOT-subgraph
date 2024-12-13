@@ -1,4 +1,4 @@
-import { bigInt } from '@graphprotocol/graph-ts'
+import { Address, bigInt } from '@graphprotocol/graph-ts'
 import { Account } from '../types/schema'
 import { ADDRESS_ZERO, ZERO_BD, ZERO_BI } from './constants'
 
@@ -13,6 +13,7 @@ export const createAccount = (account: string): Account => {
   newAcc.id = account
   newAcc.memeTokenHoldingCount = ZERO_BI
   newAcc.pot2PumpLaunchCount = ZERO_BI
+  newAcc.platformTxCount = ZERO_BI
   newAcc.participateCount = ZERO_BI
   newAcc.swapCount = ZERO_BI
   newAcc.holdingPoolCount = ZERO_BI
@@ -29,6 +30,7 @@ export const createAccount = (account: string): Account => {
   newAcc.accountBalanceUSDWeek = ZERO_BD
   newAcc.accountBalanceUSDMonth = ZERO_BD
   newAcc.accountBalanceUSDYear = ZERO_BD
+  newAcc.totalSpendUSD = ZERO_BD
 
   newAcc.save()
 

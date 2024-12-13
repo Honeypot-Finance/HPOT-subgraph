@@ -35,6 +35,7 @@ export function handlePairCreated(event: PairCreated): void {
     let account = loadAccount(fetchCreator(event.params.pair).toHexString())
     if (account != null) {
       account.pot2PumpLaunchCount = account.pot2PumpLaunchCount.plus(ONE_BI)
+      account.platformTxCount = account.platformTxCount.plus(ONE_BI)
       account.save()
     }
 

@@ -44,6 +44,7 @@ import {
 import { createTick } from '../utils/tick'
 import { Transfer } from '../types/Factory/ERC20'
 import { isNotZeroAddress, isZeroAddress } from '../utils/address'
+import { loadAccount } from '../utils/account'
 
 export function handleInitialize(event: Initialize): void {
   let pool = Pool.load(event.address.toHexString())!
@@ -131,6 +132,7 @@ export function handleMint(event: MintEvent): void {
   factory.totalValueLockedUSD = factory.totalValueLockedMatic.times(bundle.maticPriceUSD)
 
   let transaction = loadTransaction(event)
+  let account = loadAccount(transaction.account)
   let mint = new Mint(transaction.id.toString() + '#' + pool.txCount.toString())
   mint.transaction = transaction.id
   mint.timestamp = transaction.timestamp
@@ -146,6 +148,10 @@ export function handleMint(event: MintEvent): void {
   mint.amountUSD = amountUSD
   mint.tickLower = BigInt.fromI32(event.params.bottomTick)
   mint.tickUpper = BigInt.fromI32(event.params.topTick)
+  if (account) {
+    account.platformTxCount = account.platformTxCount.plus(ONE_BI)
+    account.save()
+  }
 
   // tick entities
   let lowerTickIdx = event.params.bottomTick
@@ -287,6 +293,7 @@ export function handleBurn(event: BurnEvent): void {
 
   // burn entity
   let transaction = loadTransaction(event)
+  let account = loadAccount(transaction.account)
   let burn = new Burn(transaction.id + '#' + pool.txCount.toString())
   burn.transaction = transaction.id
   burn.timestamp = transaction.timestamp
@@ -301,6 +308,10 @@ export function handleBurn(event: BurnEvent): void {
   burn.amountUSD = amountUSD
   burn.tickLower = BigInt.fromI32(event.params.bottomTick)
   burn.tickUpper = BigInt.fromI32(event.params.topTick)
+  if (account) {
+    account.platformTxCount = account.platformTxCount.plus(ONE_BI)
+    account.save()
+  }
 
   // tick entities
   let lowerTickId = poolAddress + '#' + BigInt.fromI32(event.params.bottomTick).toString()
@@ -360,9 +371,13 @@ export function handleSwap(event: SwapEvent): void {
   let oldTick = pool.tick
   let token0 = Token.load(pool.token0)!
   let token1 = Token.load(pool.token1)!
+  let recipientAccount = loadAccount(event.params.recipient.toHexString())
 
-  // let [amount0, amount1] = pools_list.includes(event.address.toHexString()) ? [convertTokenToDecimal(event.params.amount1, token0.decimals), convertTokenToDecimal(event.params.amount0, token1.decimals)] : [convertTokenToDecimal(event.params.amount0, token0.decimals), convertTokenToDecimal(event.params.amount1, token1.decimals)]
-  // let [amount0, amount1] = [convertTokenToDecimal(event.params.amount1, token0.decimals), convertTokenToDecimal(event.params.amount0, token1.decimals)];
+  // update recipient account
+  if (recipientAccount != null) {
+    recipientAccount.swapCount = recipientAccount.swapCount.plus(ONE_BI)
+  }
+
   let amount0: BigDecimal
   let amount1: BigDecimal
   if (pools_list.includes(event.address.toHexString())) {
@@ -475,6 +490,7 @@ export function handleSwap(event: SwapEvent): void {
   plugin.collectedFeesUSD = plugin.collectedFeesUSD.plus(
     amountTotalUSDTracked.times(pluginFee.toBigDecimal()).div(FEE_DENOMINATOR)
   )
+
   plugin.save()
 
   pool.save()
@@ -502,6 +518,7 @@ export function handleSwap(event: SwapEvent): void {
 
   // create Swap event
   let transaction = loadTransaction(event)
+  let account = loadAccount(transaction.account)
   let swap = new Swap(transaction.id + '#' + pool.txCount.toString())
   swap.transaction = transaction.id
   swap.timestamp = transaction.timestamp
@@ -517,6 +534,10 @@ export function handleSwap(event: SwapEvent): void {
   swap.amountUSD = amountTotalUSDTracked
   swap.tick = BigInt.fromI32(event.params.tick)
   swap.price = event.params.price
+  if (account) {
+    account.platformTxCount = account.platformTxCount.plus(ONE_BI)
+    account.save()
+  }
 
   // update fee growth
   let poolContract = PoolABI.bind(event.address)
@@ -609,6 +630,9 @@ export function handleSwap(event: SwapEvent): void {
   pool.save()
   token0.save()
   token1.save()
+  if (recipientAccount != null) {
+    recipientAccount.save()
+  }
 
   // Update inner vars of current or crossed ticks
   let newTick = pool.tick

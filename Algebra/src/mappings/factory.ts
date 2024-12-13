@@ -158,6 +158,7 @@ function loadFactory(): Factory {
     bundle.maticPriceUSD = ZERO_BD
     bundle.save()
   }
+
   factory.save()
   return factory
 }

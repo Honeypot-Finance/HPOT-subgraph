@@ -19,6 +19,7 @@ import { fetchState } from '../utils/pot2pump'
 import { loadAccount } from '../utils/account'
 import { ONE_BI, ZERO_BI } from '../utils/constants'
 import { ADDRESS_ZERO } from '../utils/constants'
+import { loadToken } from '../utils/token'
 
 export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
   let pair = Pot2Pump.load(event.address.toHexString())
@@ -26,14 +27,10 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
     return
   }
 
-  // let transaction = createTransaction(
-  //   hash: event.transaction.hash.toHexString(),
-  //   account: event.params.depositor.toHexString(),
-  //   blockNumber: event.block.number,
-  //   gasLimit: event.transaction.gasLimit,
-  //   gasPrice: event.transaction.gasPrice,
-  //   timestamp: event.block.timestamp
-  // )
+  const pot2Pump = Pot2Pump.load(event.address.toHexString())!
+  const raiseToken = loadToken(Address.fromString(pot2Pump.raisedToken))
+  const launchToken = loadToken(Address.fromString(pot2Pump.launchToken))
+
   const transaction = createTransaction(
     event.transaction.hash.toHexString(),
     event.block.number,
@@ -75,6 +72,10 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
     let account = loadAccount(event.params.depositor.toHexString())
     if (account != null) {
       account.participateCount = account.participateCount.plus(ONE_BI)
+      account.platformTxCount = account.platformTxCount.plus(ONE_BI)
+
+      const Spending = depositRaisedToken.amount.toBigDecimal().times(raiseToken.derivedMatic)
+      account.totalSpendUSD = account.totalSpendUSD.plus(Spending)
       account.save()
     }
   }
@@ -97,6 +98,7 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
   }
   // save participant transaction history
   let participantTransactionHistory = new ParticipantTransactionHistory(event.transaction.hash.toHexString())
+  participantTransactionHistory.pot2Pump = pair.id
   participantTransactionHistory.depositAmount = event.params.depositAmount
   participantTransactionHistory.refundAmount = ZERO_BI
   participantTransactionHistory.claimLqAmount = ZERO_BI
@@ -120,14 +122,10 @@ export function handleRefund(event: TRefund): void {
   //pair.DepositRaisedToken = pair.DepositRaisedToken.minus(event.params.refundAmount)
   pair.save()
 
-  // const transaction = createTransaction({
-  //   account: event.params.depositor.toHexString(),
-  //   blockNumber: event.block.number,
-  //   gasLimit: event.transaction.gasLimit,
-  //   gasPrice: event.transaction.gasPrice,
-  //   timestamp: event.block.timestamp,
-  //   hash: event.transaction.hash.toHexString()
-  // })
+  const pot2Pump = Pot2Pump.load(event.address.toHexString())!
+  const raiseToken = loadToken(Address.fromString(pot2Pump.raisedToken))
+  const launchToken = loadToken(Address.fromString(pot2Pump.launchToken))
+
   const transaction = createTransaction(
     event.transaction.hash.toHexString(),
     event.block.number,
@@ -156,6 +154,7 @@ export function handleRefund(event: TRefund): void {
 
   // save participant transaction history
   let participantTransactionHistory = new ParticipantTransactionHistory(event.transaction.hash.toHexString())
+  participantTransactionHistory.pot2Pump = pair.id
   participantTransactionHistory.refundAmount = event.params.refundAmount
   participantTransactionHistory.depositAmount = new BigInt(0)
   participantTransactionHistory.claimLqAmount = new BigInt(0)
@@ -163,6 +162,12 @@ export function handleRefund(event: TRefund): void {
   participantTransactionHistory.account = event.params.depositor.toHexString()
   participantTransactionHistory.actionType = 'REFUND'
   participantTransactionHistory.participant = participant.id
+
+  let account = loadAccount(event.params.depositor.toHexString())
+  if (account != null) {
+    account.platformTxCount = account.platformTxCount.plus(ONE_BI)
+    account.save()
+  }
 
   participantTransactionHistory.save()
 }
@@ -173,14 +178,10 @@ export function handleClaimLP(event: TClaimLP): void {
     return
   }
 
-  // const transaction = createTransaction(
-  //   event.params.claimer.toHexString(),
-  //   event.block.number,
-  //  event.transaction.gasLimit,
-  //   event.transaction.gasPrice,
-  //    event.block.timestamp,
-  //    event.transaction.hash.toHexString(),
-  // )
+  const pot2Pump = Pot2Pump.load(event.address.toHexString())!
+  const raiseToken = loadToken(Address.fromString(pot2Pump.raisedToken))
+  const launchToken = loadToken(Address.fromString(pot2Pump.launchToken))
+
   const transaction = createTransaction(
     event.transaction.hash.toHexString(),
     event.block.number,
@@ -210,6 +211,7 @@ export function handleClaimLP(event: TClaimLP): void {
 
   // save participant transaction history
   let participantTransactionHistory = new ParticipantTransactionHistory(event.transaction.hash.toHexString())
+  participantTransactionHistory.pot2Pump = pair.id
   participantTransactionHistory.createdAt = event.block.timestamp
   participantTransactionHistory.account = event.params.claimer.toHexString()
   participantTransactionHistory.actionType = 'CLAIM'
@@ -217,6 +219,13 @@ export function handleClaimLP(event: TClaimLP): void {
   participantTransactionHistory.refundAmount = new BigInt(0)
   participantTransactionHistory.depositAmount = new BigInt(0)
   participantTransactionHistory.participant = participant.id
+
+  let account = loadAccount(event.params.claimer.toHexString())
+
+  if (account != null) {
+    account.platformTxCount = account.platformTxCount.plus(ONE_BI)
+    account.save()
+  }
 
   participantTransactionHistory.save()
 }
@@ -229,14 +238,6 @@ export function handlePerform(event: Perform): void {
   pair.state = new BigInt(event.params.pairState)
   pair.save()
 }
-// type TCreateTransaction = {
-//   hash: string;
-//   blockNumber: BigInt;
-//   timestamp: BigInt;
-//   gasLimit: BigInt;
-//   gasPrice: BigInt;
-//   account: string;
-// }
 
 export function createTransaction(
   hash: string,
