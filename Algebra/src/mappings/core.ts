@@ -14,7 +14,7 @@ import {
   HoldingToken
 } from '../types/schema'
 import { PluginConfig, Pool as PoolABI } from '../types/Factory/Pool'
-import { Address, BigDecimal, BigInt, ethereum, log, store } from '@graphprotocol/graph-ts'
+import { BigDecimal, BigInt, ethereum, store } from '@graphprotocol/graph-ts'
 
 import {
   Burn as BurnEvent,
@@ -28,15 +28,7 @@ import {
   Plugin as PluginEvent
 } from '../types/templates/Pool/Pool'
 import { convertTokenToDecimal, loadTransaction, safeDiv } from '../utils'
-import {
-  FACTORY_ADDRESS,
-  ONE_BI,
-  ZERO_BD,
-  ZERO_BI,
-  pools_list,
-  FEE_DENOMINATOR,
-  ADDRESS_ZERO
-} from '../utils/constants'
+import { FACTORY_ADDRESS, ONE_BI, ZERO_BD, ZERO_BI, pools_list, FEE_DENOMINATOR } from '../utils/constants'
 import { findEthPerToken, getEthPriceInUSD, getTrackedAmountUSD, priceToTokenPrices } from '../utils/pricing'
 import {
   updatePoolDayData,
@@ -45,12 +37,13 @@ import {
   updateTokenDayData,
   updateTokenHourData,
   updateAlgebraDayData,
-  updateFeeHourData
+  updateFeeHourData,
+  updatePoolWeekData,
+  updatePoolMonthData
 } from '../utils/intervalUpdates'
 import { createTick } from '../utils/tick'
-import { fetchTokenBalance, fetchTokenPot2PumpAddress } from '../utils/token'
 import { Transfer } from '../types/Factory/ERC20'
-import { loadAccount } from '../utils/account'
+import { isNotZeroAddress, isZeroAddress } from '../utils/address'
 
 export function handleInitialize(event: Initialize): void {
   let pool = Pool.load(event.address.toHexString())!
@@ -68,6 +61,8 @@ export function handleInitialize(event: Initialize): void {
   bundle.save()
   updatePoolDayData(event)
   updatePoolHourData(event)
+  updatePoolWeekData(event)
+  updatePoolMonthData(event)
   // update token prices
   token0.derivedMatic = findEthPerToken(token0 as Token)
   token1.derivedMatic = findEthPerToken(token1 as Token)
@@ -185,7 +180,6 @@ export function handleMint(event: MintEvent): void {
     '#' +
     BigInt.fromI32(event.params.topTick).toString()
   let poolPosition = PoolPosition.load(poolPositionid)
-
   if (poolPosition) {
     poolPosition.liquidity = poolPosition.liquidity.plus(event.params.liquidityAmount)
   } else {
@@ -202,6 +196,8 @@ export function handleMint(event: MintEvent): void {
   updateAlgebraDayData(event)
   updatePoolDayData(event)
   updatePoolHourData(event)
+  updatePoolWeekData(event)
+  updatePoolMonthData(event)
   updateTokenDayData(token0 as Token, event)
   updateTokenDayData(token1 as Token, event)
   updateTokenHourData(token0 as Token, event)
@@ -215,6 +211,7 @@ export function handleMint(event: MintEvent): void {
   mint.save()
 
   // Update inner tick vars and save the ticks
+  updateTickFeeVarsAndSave(lowerTick, event)
   updateTickFeeVarsAndSave(upperTick, event)
   updateTickFeeVarsAndSave(lowerTick, event)
 }
@@ -340,6 +337,8 @@ export function handleBurn(event: BurnEvent): void {
   updateAlgebraDayData(event)
   updatePoolDayData(event)
   updatePoolHourData(event)
+  updatePoolWeekData(event)
+  updatePoolMonthData(event)
   updateTokenDayData(token0 as Token, event)
   updateTokenDayData(token1 as Token, event)
   updateTokenHourData(token0 as Token, event)
@@ -359,52 +358,34 @@ export function handleSwap(event: SwapEvent): void {
   let factory = Factory.load(FACTORY_ADDRESS)!
   let pool = Pool.load(event.address.toHexString())!
   let oldTick = pool.tick
-  let flag = false
-
   let token0 = Token.load(pool.token0)!
   let token1 = Token.load(pool.token1)!
 
-  let amount0 = convertTokenToDecimal(event.params.amount0, token0.decimals)
-  let amount1 = convertTokenToDecimal(event.params.amount1, token1.decimals)
-
+  // let [amount0, amount1] = pools_list.includes(event.address.toHexString()) ? [convertTokenToDecimal(event.params.amount1, token0.decimals), convertTokenToDecimal(event.params.amount0, token1.decimals)] : [convertTokenToDecimal(event.params.amount0, token0.decimals), convertTokenToDecimal(event.params.amount1, token1.decimals)]
+  // let [amount0, amount1] = [convertTokenToDecimal(event.params.amount1, token0.decimals), convertTokenToDecimal(event.params.amount0, token1.decimals)];
+  let amount0: BigDecimal
+  let amount1: BigDecimal
   if (pools_list.includes(event.address.toHexString())) {
     amount0 = convertTokenToDecimal(event.params.amount1, token0.decimals)
     amount1 = convertTokenToDecimal(event.params.amount0, token1.decimals)
+  } else {
+    amount0 = convertTokenToDecimal(event.params.amount0, token0.decimals)
+    amount1 = convertTokenToDecimal(event.params.amount1, token1.decimals)
   }
-
-  let swapFee = pool.fee
-  if (event.params.overrideFee > 0) {
-    swapFee = BigInt.fromI32(event.params.overrideFee)
-  }
+  let swapFee = event.params.overrideFee > 0 ? BigInt.fromI32(event.params.overrideFee) : pool.fee
 
   let pluginFee = BigInt.fromI32(event.params.pluginFee)
 
   // need absolute amounts for volume
-  let amount0Abs = amount0
-  let amount0withFee = amount0
-  if (amount0.lt(ZERO_BD)) {
-    amount0Abs = amount0.times(BigDecimal.fromString('-1'))
-  } else {
-    let communityFeeAmount = amount0.times(
-      BigDecimal.fromString(swapFee.times(pool.communityFee).toString()).div(BigDecimal.fromString('1000000000'))
-    )
-    communityFeeAmount = communityFeeAmount.times(BigDecimal.fromString('1'))
-    amount0withFee = amount0.times(FEE_DENOMINATOR.minus(swapFee.plus(pluginFee).toBigDecimal())).div(FEE_DENOMINATOR)
-    amount0Abs = amount0
-  }
+  let amount0withFee = amount0.lt(ZERO_BD)
+    ? amount0
+    : amount0.times(FEE_DENOMINATOR.minus(swapFee.plus(pluginFee).toBigDecimal())).div(FEE_DENOMINATOR)
+  let amount0Abs = amount0.times(BigDecimal.fromString('-1'))
 
-  let amount1Abs = amount1
-  let amount1withFee = amount1
-  if (amount1.lt(ZERO_BD)) {
-    amount1Abs = amount1.times(BigDecimal.fromString('-1'))
-  } else {
-    let communityFeeAmount = amount1.times(
-      BigDecimal.fromString(swapFee.times(pool.communityFee).toString()).div(BigDecimal.fromString('1000000000'))
-    )
-    communityFeeAmount = communityFeeAmount.times(BigDecimal.fromString('1'))
-    amount1Abs = amount1
-    amount1withFee = amount1.times(FEE_DENOMINATOR.minus(swapFee.plus(pluginFee).toBigDecimal())).div(FEE_DENOMINATOR)
-  }
+  let amount1withFee = amount1.lt(ZERO_BD)
+    ? amount1
+    : amount1.times(FEE_DENOMINATOR.minus(swapFee.plus(pluginFee).toBigDecimal())).div(FEE_DENOMINATOR)
+  let amount1Abs = amount1.times(BigDecimal.fromString('-1'))
 
   let amount0Matic = amount0Abs.times(token0.derivedMatic)
   let amount1Matic = amount1Abs.times(token1.derivedMatic)
@@ -534,7 +515,7 @@ export function handleSwap(event: SwapEvent): void {
   swap.amount0 = amount0
   swap.amount1 = amount1
   swap.amountUSD = amountTotalUSDTracked
-  swap.tick = BigInt.fromI32(event.params.tick as i32)
+  swap.tick = BigInt.fromI32(event.params.tick)
   swap.price = event.params.price
 
   // update fee growth
@@ -548,6 +529,8 @@ export function handleSwap(event: SwapEvent): void {
   let algebraDayData = updateAlgebraDayData(event)
   let poolDayData = updatePoolDayData(event)
   let poolHourData = updatePoolHourData(event)
+  let poolWeekData = updatePoolWeekData(event)
+  let poolMonthData = updatePoolMonthData(event)
   let token0DayData = updateTokenDayData(token0 as Token, event)
   let token1DayData = updateTokenDayData(token1 as Token, event)
   let token0HourData = updateTokenHourData(token0 as Token, event)
@@ -580,6 +563,20 @@ export function handleSwap(event: SwapEvent): void {
   poolHourData.volumeToken1 = poolHourData.volumeToken1.plus(amount1Abs)
   poolHourData.feesUSD = poolHourData.feesUSD.plus(feesUSD)
 
+  // update pool week data
+  poolWeekData.untrackedVolumeUSD = poolWeekData.untrackedVolumeUSD.plus(amountTotalUSDUntracked)
+  poolWeekData.volumeUSD = poolWeekData.volumeUSD.plus(amountTotalUSDTracked)
+  poolWeekData.volumeToken0 = poolWeekData.volumeToken0.plus(amount0Abs)
+  poolWeekData.volumeToken1 = poolWeekData.volumeToken1.plus(amount1Abs)
+  poolWeekData.feesUSD = poolWeekData.feesUSD.plus(feesUSD)
+
+  // update pool month data
+  poolMonthData.untrackedVolumeUSD = poolMonthData.untrackedVolumeUSD.plus(amountTotalUSDUntracked)
+  poolMonthData.volumeUSD = poolMonthData.volumeUSD.plus(amountTotalUSDTracked)
+  poolMonthData.volumeToken0 = poolMonthData.volumeToken0.plus(amount0Abs)
+  poolMonthData.volumeToken1 = poolMonthData.volumeToken1.plus(amount1Abs)
+  poolMonthData.feesUSD = poolMonthData.feesUSD.plus(feesUSD)
+
   token0DayData.volume = token0DayData.volume.plus(amount0Abs)
   token0DayData.volumeUSD = token0DayData.volumeUSD.plus(amountTotalUSDTracked)
   token0DayData.untrackedVolumeUSD = token0DayData.untrackedVolumeUSD.plus(amountTotalUSDTracked)
@@ -606,6 +603,8 @@ export function handleSwap(event: SwapEvent): void {
   algebraDayData.save()
   poolHourData.save()
   poolDayData.save()
+  poolWeekData.save()
+  poolMonthData.save()
   factory.save()
   pool.save()
   token0.save()
@@ -647,7 +646,6 @@ export function handleSetCommunityFee(event: CommunityFee): void {
   let pool = Pool.load(event.address.toHexString())
   if (pool) {
     pool.communityFee = BigInt.fromI32(event.params.communityFeeNew)
-    pool.save()
     pool.save()
   }
 }
@@ -715,7 +713,7 @@ export function handleChangeFee(event: ChangeFee): void {
 }
 
 export function handlePlugin(event: PluginEvent): void {
-  if (!event || !event.address || event.address.toHexString() == ADDRESS_ZERO) {
+  if (!event || !event.address || isZeroAddress(event.address.toHexString())) {
     return
   }
   let pool = Pool.load(event.address.toHexString())!
@@ -741,7 +739,7 @@ export function handlePluginConfig(event: PluginConfig): void {
 }
 
 export function handleTransfer(event: Transfer): void {
-  if (!event || !event.address || event.address.toHexString() == ADDRESS_ZERO) {
+  if (!event || !event.address || isZeroAddress(event.address.toHexString())) {
     return
   }
   const token = Token.load(event.address.toHexString())
@@ -754,29 +752,19 @@ export function handleTransfer(event: Transfer): void {
   // check from address
   const fromHolderId = token.id + event.params.from.toHexString()
   const fromHolder = HoldingToken.load(fromHolderId)
-
-  if (fromHolder && event.params.from.toHexString() !== ADDRESS_ZERO) {
+  if (fromHolder && isNotZeroAddress(event.params.from.toHexString())) {
     //check user token balance
     fromHolder.holdingValue.minus(event.params.value)
     if (fromHolder.holdingValue.equals(ZERO_BI)) {
       store.remove('HoldingToken', fromHolderId)
       token.holderCount = token.holderCount.minus(ONE_BI)
-
-      // update account meme token holding count
-      if (fetchTokenPot2PumpAddress(event.params.from).toHexString() == ADDRESS_ZERO) {
-        const account = loadAccount(event.params.from.toHexString())
-        if (account) {
-          account.memeTokenHoldingCount = account.memeTokenHoldingCount.minus(ONE_BI)
-          account.save()
-        }
-      }
     }
   }
 
   // check to address
   const toHolderId = token.id + event.params.to.toHexString()
   const toHolder = HoldingToken.load(toHolderId)
-  if (event.params.to.toHexString() !== ADDRESS_ZERO) {
+  if (isNotZeroAddress(event.params.to.toHexString())) {
     if (toHolder) {
       toHolder.holdingValue.plus(event.params.value)
       toHolder.save()
@@ -787,15 +775,6 @@ export function handleTransfer(event: Transfer): void {
       newHolder.holdingValue = event.params.value
       newHolder.save()
       token.holderCount = token.holderCount.plus(ONE_BI)
-
-      // update account meme token holding count
-      if (fetchTokenPot2PumpAddress(event.params.to).toHexString() == ADDRESS_ZERO) {
-        const account = loadAccount(event.params.to.toHexString())
-        if (account) {
-          account.memeTokenHoldingCount = account.memeTokenHoldingCount.plus(ONE_BI)
-          account.save()
-        }
-      }
     }
   }
 
