@@ -242,7 +242,7 @@ export function handleTransfer(event: TransferEvent): void {
     if (wasHolder && !isHolder) {
       vault.holdersCount = vault.holdersCount - 1
     }
-    vault.totalShares = vault.totalShares.minus(BigInt.fromString(value.toString()))
+    vault.totalShares = vault.totalShares.minus(value)
     fromUserVaultShare.save()
   }
 
@@ -255,7 +255,7 @@ export function handleTransfer(event: TransferEvent): void {
     if (!wasHolder && isHolder) {
       vault.holdersCount = vault.holdersCount + 1
     }
-    vault.totalShares = vault.totalShares.plus(BigInt.fromString(value.toString()))
+    vault.totalShares = vault.totalShares.plus(value)
     toUserVaultShare.save()
   }
 
