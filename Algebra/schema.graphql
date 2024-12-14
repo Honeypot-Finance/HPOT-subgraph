@@ -141,6 +141,7 @@ type Pot2Pump @entity {
   # token address
   id: ID!
   # launch token
+  launchTokenInitialPrice: BigDecimal!
   launchToken: Token!
   DepositLaunchToken: BigInt!
   LaunchTokenTVL: BigDecimal!
