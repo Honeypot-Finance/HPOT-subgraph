@@ -15,7 +15,7 @@ import {
   ICHIVault
 } from './../types/templates/Vault/ICHIVault'
 
-import { BigDecimal } from '@graphprotocol/graph-ts'
+import { BigDecimal, BigInt } from '@graphprotocol/graph-ts'
 
 import {
   VaultAffiliate,
@@ -39,10 +39,11 @@ import { createVaultShare } from '../utils/aquabera'
 
 import { AlgebraPool } from './../types/templates/Vault/AlgebraPool'
 import { createAccount } from '../utils/account'
+import { Vault } from '../types/templates'
 
 export function handleAffiliate(event: AffiliateEvent): void {
   const affiliate = new VaultAffiliate(event.transaction.hash.toHex() + '-' + event.logIndex.toString())
-  affiliate.vault = event.address
+  affiliate.vault = event.address.toHexString()
   affiliate.sender = event.params.sender
   affiliate.affiliate = event.params.affiliate
   affiliate.save()
@@ -50,7 +51,7 @@ export function handleAffiliate(event: AffiliateEvent): void {
 
 export function handleApproval(event: ApprovalEvent): void {
   const approval = new VaultApproval(event.transaction.hash.toHex() + '-' + event.logIndex.toString())
-  approval.vault = event.address
+  approval.vault = event.address.toHexString()
   approval.owner = event.params.owner
   approval.spender = event.params.spender
   approval.value = event.params.value
@@ -61,7 +62,7 @@ export function handleDeployICHIVault(event: DeployICHIVaultEvent): void {
   const deployIchiVault = new DeployICHIVault(event.transaction.hash.toHex() + '-' + event.logIndex.toString())
   deployIchiVault.vault = event.address.toHexString()
   deployIchiVault.sender = event.params.sender
-  deployIchiVault.pool = event.params.pool
+  deployIchiVault.pool = event.params.pool.toHexString()
   deployIchiVault.allowToken0 = event.params.allowToken0
   deployIchiVault.allowToken1 = event.params.allowToken1
   deployIchiVault.owner = event.params.owner
@@ -71,7 +72,7 @@ export function handleDeployICHIVault(event: DeployICHIVaultEvent): void {
 
 export function handleDeposit(event: DepositEvent): void {
   const deposit = new VaultDeposit(event.transaction.hash.toHex() + '-' + event.logIndex.toString())
-  deposit.vault = event.address
+  deposit.vault = event.address.toHexString()
   const vaultContract = ICHIVault.bind(event.address)
   const poolAddress = vaultContract.pool()
   const poolContract = AlgebraPool.bind(poolAddress)
@@ -103,7 +104,7 @@ export function handleDeposit(event: DepositEvent): void {
 
 export function handleDepositMax(event: DepositMaxEvent): void {
   const depositMax = new VaultDepositMax(event.transaction.hash.toHex() + '-' + event.logIndex.toString())
-  depositMax.vault = event.address
+  depositMax.vault = event.address.toHexString()
   depositMax.sender = event.params.sender
   depositMax.deposit0Max = event.params.deposit0Max
   depositMax.deposit1Max = event.params.deposit1Max
@@ -121,7 +122,7 @@ export function handleCollectFees(event: CollectFeesEvent): void {
   const totalSupply = vaultContract.totalSupply()
   const currentTick = vaultContract.currentTick()
 
-  collectFee.vault = event.address
+  collectFee.vault = event.address.toHexString()
   collectFee.sender = event.params.sender
   collectFee.createdAtTimestamp = event.block.timestamp
   collectFee.feeAmount0 = event.params.feeAmount0
@@ -136,7 +137,7 @@ export function handleCollectFees(event: CollectFeesEvent): void {
 
 export function handleHysteresis(event: HysteresisEvent): void {
   const hysteresis = new VaultHysteresis(event.transaction.hash.toHex() + '-' + event.logIndex.toString())
-  hysteresis.vault = event.address
+  hysteresis.vault = event.address.toHexString()
   hysteresis.sender = event.params.sender
   hysteresis.hysteresis = event.params.hysteresis
   hysteresis.save()
@@ -144,7 +145,7 @@ export function handleHysteresis(event: HysteresisEvent): void {
 
 export function handleMaxTotalSupply(event: MaxTotalSupplyEvent): void {
   const maxTotalSupply = new MaxTotalSupply(event.transaction.hash.toHex() + '-' + event.logIndex.toString())
-  maxTotalSupply.vault = event.address
+  maxTotalSupply.vault = event.address.toHexString()
   maxTotalSupply.sender = event.params.sender
   maxTotalSupply.maxTotalSupply = event.params.maxTotalSupply
   maxTotalSupply.save()
@@ -154,7 +155,7 @@ export function handleOwnershipTransferred(event: OwnershipTransferredEvent): vo
   const ownershipTransferred = new VaultOwnershipTransferred(
     event.transaction.hash.toHex() + '-' + event.logIndex.toString()
   )
-  ownershipTransferred.vault = event.address
+  ownershipTransferred.vault = event.address.toHexString()
   ownershipTransferred.previousOwner = event.params.previousOwner
   ownershipTransferred.newOwner = event.params.newOwner
   ownershipTransferred.save()
@@ -168,7 +169,7 @@ export function handleRebalance(event: RebalanceEvent): void {
   const currentTick = vaultContract.currentTick()
 
   rebalance.createdAtTimestamp = event.block.timestamp
-  rebalance.vault = event.address
+  rebalance.vault = event.address.toHexString()
   rebalance.tick = event.params.tick
   rebalance.totalAmount0 = event.params.totalAmount0
   rebalance.totalAmount1 = event.params.totalAmount1
@@ -182,10 +183,9 @@ export function handleRebalance(event: RebalanceEvent): void {
 
 export function handleSetTwapPeriod(event: SetTwapPeriodEvent): void {
   const setTwapPeriod = new VaultSetTwapPeriod(event.transaction.hash.toHex() + '-' + event.logIndex.toString())
-  setTwapPeriod.vault = event.address
+  setTwapPeriod.vault = event.address.toHexString()
   setTwapPeriod.sender = event.params.sender
   setTwapPeriod.newTwapPeriod = event.params.newTwapPeriod
-  setTwapPeriod.vault = event.address
   setTwapPeriod.save()
 }
 
@@ -202,7 +202,7 @@ export function handleTransfer(event: TransferEvent): void {
   const poolContract = AlgebraPool.bind(vaultContract.pool())
 
   const transfer = new VaultTransfer(event.transaction.hash.toHex() + '-' + event.logIndex.toString())
-  transfer.vault = event.address
+  transfer.vault = event.address.toHexString()
   transfer.from = event.params.from
   transfer.to = event.params.to
   transfer.value = event.params.value
@@ -242,6 +242,7 @@ export function handleTransfer(event: TransferEvent): void {
     if (wasHolder && !isHolder) {
       vault.holdersCount = vault.holdersCount - 1
     }
+    vault.totalShares = vault.totalShares.minus(BigInt.fromString(value.toString()))
     fromUserVaultShare.save()
   }
 
@@ -254,6 +255,7 @@ export function handleTransfer(event: TransferEvent): void {
     if (!wasHolder && isHolder) {
       vault.holdersCount = vault.holdersCount + 1
     }
+    vault.totalShares = vault.totalShares.plus(BigInt.fromString(value.toString()))
     toUserVaultShare.save()
   }
 
@@ -262,7 +264,7 @@ export function handleTransfer(event: TransferEvent): void {
 
 export function handleWithdraw(event: WithdrawEvent): void {
   const withdraw = new VaultWithdraw(event.transaction.hash.toHex() + '-' + event.logIndex.toString())
-  withdraw.vault = event.address
+  withdraw.vault = event.address.toHexString()
   const vaultContract = ICHIVault.bind(event.address)
   const poolContract = AlgebraPool.bind(vaultContract.pool())
   const amount0 = event.params.amount0

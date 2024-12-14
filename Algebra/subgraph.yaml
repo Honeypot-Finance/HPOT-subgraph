@@ -113,6 +113,8 @@ dataSources:
       abis:
       - name: ICHIVaultFactory
         file: ./abis/ICHIVaultFactory.json
+      - name: ICHIVault
+        file: ./abis/ICHIVault.json
       eventHandlers:
         - event: ICHIVaultCreated(indexed address,address,address,bool,address,bool,uint256)
           handler: handleICHIVaultCreated

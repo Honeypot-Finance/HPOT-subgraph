@@ -14,7 +14,7 @@ import {
   HoldingToken
 } from '../types/schema'
 import { PluginConfig, Pool as PoolABI } from '../types/Factory/Pool'
-import { BigDecimal, BigInt, ethereum, store } from '@graphprotocol/graph-ts'
+import { Address, BigDecimal, BigInt, ethereum, log, store } from '@graphprotocol/graph-ts'
 
 import {
   Burn as BurnEvent,
@@ -29,7 +29,13 @@ import {
 } from '../types/templates/Pool/Pool'
 import { convertTokenToDecimal, loadTransaction, safeDiv } from '../utils'
 import { FACTORY_ADDRESS, ONE_BI, ZERO_BD, ZERO_BI, pools_list, FEE_DENOMINATOR } from '../utils/constants'
-import { findEthPerToken, getEthPriceInUSD, getTrackedAmountUSD, priceToTokenPrices } from '../utils/pricing'
+import {
+  findEthPerToken,
+  getDerivedPriceUSD,
+  getEthPriceInUSD,
+  getTrackedAmountUSD,
+  priceToTokenPrices
+} from '../utils/pricing'
 import {
   updatePoolDayData,
   updatePoolHourData,
@@ -45,6 +51,7 @@ import { createTick } from '../utils/tick'
 import { Transfer } from '../types/Factory/ERC20'
 import { isNotZeroAddress, isZeroAddress } from '../utils/address'
 import { loadAccount } from '../utils/account'
+import { loadToken } from '../utils/token'
 
 export function handleInitialize(event: Initialize): void {
   let pool = Pool.load(event.address.toHexString())!
@@ -53,8 +60,8 @@ export function handleInitialize(event: Initialize): void {
   pool.tick = BigInt.fromI32(event.params.tick)
   pool.save()
   // update token prices
-  let token0 = Token.load(pool.token0)!
-  let token1 = Token.load(pool.token1)!
+  let token0 = loadToken(Address.fromString(pool.token0))
+  let token1 = loadToken(Address.fromString(pool.token1))
 
   // update Matic price now that prices could have changed
   let bundle = Bundle.load('1')!
@@ -67,6 +74,8 @@ export function handleInitialize(event: Initialize): void {
   // update token prices
   token0.derivedMatic = findEthPerToken(token0 as Token)
   token1.derivedMatic = findEthPerToken(token1 as Token)
+  token0.derivedUSD = getDerivedPriceUSD(token0 as Token)
+  token1.derivedUSD = getDerivedPriceUSD(token1 as Token)
   token0.save()
   token1.save()
 }
@@ -502,6 +511,12 @@ export function handleSwap(event: SwapEvent): void {
   token0.derivedMatic = findEthPerToken(token0 as Token)
   token1.derivedMatic = findEthPerToken(token1 as Token)
 
+  if (token0.id == '0xfc5e3743e9fac8bb60408797607352e24db7d65e') {
+    log.info('token0.: {}', [token0.id])
+    log.info('token0.derivedMatic: {}', [token0.derivedMatic.toString()])
+    log.info('token1.derivedMatic: {}', [token1.derivedMatic.toString()])
+  }
+
   /**
    * Things afffected by new USD rates
    */
@@ -693,6 +708,13 @@ export function handleCollect(event: Collect): void {
 
   // pool data
   pool.txCount = pool.txCount.plus(ONE_BI)
+
+  //account data
+  let account = loadAccount(event.params.recipient.toHexString())
+  if (account) {
+    account.platformTxCount = account.platformTxCount.plus(ONE_BI)
+    account.save()
+  }
 
   token0.save()
   token1.save()

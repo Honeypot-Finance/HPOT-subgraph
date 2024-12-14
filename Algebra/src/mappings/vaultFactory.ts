@@ -1,6 +1,8 @@
 import { ICHIVaultCreated } from './../types/ICHIVaultFactory/ICHIVaultFactory'
-import { IchiVault } from '../types/schema'
+import { IchiVault, Pool } from '../types/schema'
 import { Vault } from '../types/templates'
+import { fetchAlgebraPoolAddress } from '../utils/aquabera'
+import { ZERO_BI } from '../utils/constants'
 
 export function handleICHIVaultCreated(event: ICHIVaultCreated): void {
   const ichiVault = new IchiVault(event.params.ichiVault.toHexString())
@@ -12,6 +14,8 @@ export function handleICHIVaultCreated(event: ICHIVaultCreated): void {
   ichiVault.count = event.params.count
   ichiVault.createdAtTimestamp = event.block.timestamp
   ichiVault.holdersCount = 0
+  ichiVault.pool = fetchAlgebraPoolAddress(event.params.ichiVault).toHexString()
+  ichiVault.totalShares = ZERO_BI
   ichiVault.save()
   Vault.create(event.params.ichiVault)
 }

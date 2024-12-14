@@ -10,25 +10,24 @@ import { ONE_BI, POT2PUMP_FACTORY_ADDRESS, ZERO_BD, ZERO_BI } from './constants'
 import { HoldingToken, Token } from '../types/schema'
 
 export function fetchTokenPot2PumpAddress(tokenAddress: Address): Address {
-  const pot2PumpContract = Pot2PumpFactory.bind(Address.fromString(POT2PUMP_FACTORY_ADDRESS));
-  const pairAddress = pot2PumpContract.try_getPair(tokenAddress);
+  const pot2PumpContract = Pot2PumpFactory.bind(Address.fromString(POT2PUMP_FACTORY_ADDRESS))
+  const pairAddress = pot2PumpContract.try_getPair(tokenAddress)
 
   if (pairAddress.reverted) {
-    return Address.zero();
+    return Address.zero()
   }
-  return pairAddress.value;
+  return pairAddress.value
 }
 
 export function fetchTokenBalance(tokenAddress: Address, userAddress: Address): BigInt {
   let contract = ERC20.bind(tokenAddress)
-  let balanceValue = BigInt.fromString("0")
+  let balanceValue = BigInt.fromString('0')
   let balanceResult = contract.try_balanceOf(userAddress)
   if (!balanceResult.reverted) {
     balanceValue = balanceResult.value
   }
   return balanceValue as BigInt
 }
-
 
 export function fetchTokenSymbol(tokenAddress: Address): string {
   let contract = ERC20.bind(tokenAddress)
@@ -46,7 +45,7 @@ export function fetchTokenSymbol(tokenAddress: Address): string {
       } else {
         // try with the static definition
         let staticTokenDefinition = StaticTokenDefinition.fromAddress(tokenAddress)
-        if(staticTokenDefinition != null) {
+        if (staticTokenDefinition != null) {
           symbolValue = staticTokenDefinition.symbol
         }
       }
@@ -74,7 +73,7 @@ export function fetchTokenName(tokenAddress: Address): string {
       } else {
         // try with the static definition
         let staticTokenDefinition = StaticTokenDefinition.fromAddress(tokenAddress)
-        if(staticTokenDefinition != null) {
+        if (staticTokenDefinition != null) {
           nameValue = staticTokenDefinition.name
         }
       }
@@ -88,8 +87,8 @@ export function fetchTokenName(tokenAddress: Address): string {
 
 export function fetchTokenTotalSupply(tokenAddress: Address): BigInt {
   let contract = ERC20.bind(tokenAddress)
-  let totalSupplyValue = BigInt.fromString("1")
-  let totalSupplyResult = contract.try_totalSupply() 
+  let totalSupplyValue = BigInt.fromString('1')
+  let totalSupplyResult = contract.try_totalSupply()
   if (!totalSupplyResult.reverted) {
     let totalSupply = contract.totalSupply()
     totalSupplyValue = totalSupply
@@ -100,14 +99,14 @@ export function fetchTokenTotalSupply(tokenAddress: Address): BigInt {
 export function fetchTokenDecimals(tokenAddress: Address): BigInt {
   let contract = ERC20.bind(tokenAddress)
   // try types uint8 for decimals
-  let decimalValue = BigInt.fromString("1")
+  let decimalValue = BigInt.fromString('1')
   let decimalResult = contract.try_decimals()
   if (!decimalResult.reverted) {
-    decimalValue = BigInt.fromI32(decimalResult.value) 
+    decimalValue = BigInt.fromI32(decimalResult.value)
   } else {
     // try with the static definition
     let staticTokenDefinition = StaticTokenDefinition.fromAddress(tokenAddress)
-    if(staticTokenDefinition != null) {
+    if (staticTokenDefinition != null) {
       return staticTokenDefinition.decimals
     }
   }
@@ -142,11 +141,10 @@ export function loadToken(tokenAddress: Address): Token {
     token.whitelistPools = []
     token.holderCount = BigInt.fromI32(0)
     token.marketCap = ZERO_BD
-    //token.pot2Pump = fetchTokenPot2PumpAddress(tokenAddress)
-
+    token.derivedUSD = ZERO_BD
+    token.initialUSD = ZERO_BD // initial price in USD only for pot2pump tokens
     token.save()
   }
 
   return token
 }
-

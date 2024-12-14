@@ -118,6 +118,10 @@ type Token @entity {
   totalValueLockedUSDUntracked: BigDecimal!
   # derived price in Matic
   derivedMatic: BigDecimal!
+  # derived price in USD
+  derivedUSD: BigDecimal!
+  # initial price in USD
+  initialUSD: BigDecimal!
   # pools token is in that are white listed for USD pricing
   whitelistPools: [Pool!]!
   # derived fields
@@ -286,6 +290,9 @@ type Pool @entity {
   swaps: [Swap!]! @derivedFrom(field: "pool")
   collects: [Collect!]! @derivedFrom(field: "pool")
   ticks: [Tick!]! @derivedFrom(field: "pool")
+
+  # vaults
+  vaults: IchiVault @derivedFrom(field: "pool")
 }
 
 type Tick @entity {
@@ -1026,6 +1033,20 @@ type IchiVault @entity {
   count: BigInt! # the number of vaults that have been created to date
   createdAtTimestamp: BigInt! # the timestamp at which the vault was created
   holdersCount: Int! # number of vault LP holders
+  pool: Pool!
+  totalShares: BigInt! #current total shares sums allVaultShares
+  vaultShares: [VaultShare!]! @derivedFrom(field: "vault")
+  vaultDeposits: [VaultDeposit!]! @derivedFrom(field: "vault")
+  vaultWithdraws: [VaultWithdraw!]! @derivedFrom(field: "vault")
+  vaultApprovals: [VaultApproval!]! @derivedFrom(field: "vault")
+  vaultAffiliates: [VaultAffiliate!]! @derivedFrom(field: "vault")
+  vaultHysteresis: [VaultHysteresis!]! @derivedFrom(field: "vault")
+  vaultCollectFees: [VaultCollectFee!]! @derivedFrom(field: "vault")
+  maxTotalSupply: [MaxTotalSupply!]! @derivedFrom(field: "vault")
+  vaultOwnershipTransferred: [VaultOwnershipTransferred!]! @derivedFrom(field: "vault")
+  vaultRebalance: [VaultRebalance!]! @derivedFrom(field: "vault")
+  vaultSetTwapPeriod: [VaultSetTwapPeriod!]! @derivedFrom(field: "vault")
+  vaultTransfer: [VaultTransfer!]! @derivedFrom(field: "vault")
 }
 
 type VaultShare @entity {
@@ -1038,14 +1059,14 @@ type VaultShare @entity {
 ######################################################### Vault
 type VaultAffiliate @entity {
   id: ID! # the transaction hash and the log index separated by a hyphen
-  vault: Bytes! # the address of the vault in which the affiliate was set
+  vault: IchiVault!
   sender: Bytes! # the address of the signer of the transaction
   affiliate: Bytes! # the address of the new affiliate that will receive a split of the trading fees
 }
 
 type VaultApproval @entity {
   id: ID! # the transaction hash and the log index separated by a hyphen
-  vault: Bytes! # the address of the vault in which the approval occurred
+  vault: IchiVault!
   owner: Bytes! # the address of the owner of the spender account
   spender: Bytes! # the address for which the allowance is being set
   value: BigInt! # the new allowance
@@ -1053,9 +1074,9 @@ type VaultApproval @entity {
 
 type DeployICHIVault @entity {
   id: ID! # the transaction hash and the log index separated by a hyphen
-  vault: ID! # the address of the vault that was deployed
+  vault: IchiVault!
   sender: Bytes! # the address of the signer, usually the ICHIVaultFactory
-  pool: Bytes! # the address of the UniswapV3 pool that contains the assets in the vault
+  pool: Pool! # the address of the UniswapV3 pool that contains the assets in the vault
   allowToken0: Boolean! # determines if the liquidity provision is one-side or two-sided.
   allowToken1: Boolean! # determines if the liquidity provision is one-side or two-sided.
   owner: Bytes! # the owner of the ichi vault
@@ -1064,7 +1085,7 @@ type DeployICHIVault @entity {
 
 type VaultDeposit @entity {
   id: ID! # the transaction hash and the log index separated by a hyphen
-  vault: Bytes! # the address of the pool in which the deposit occurred
+  vault: IchiVault! # the address of the pool in which the deposit occurred
   sender: Bytes! # the signer of the deposit transaction
   to: Bytes! # the address to which liquidity pool tokens are minted
   shares: BigInt! # the quantity of liquidity tokens minted as a result of deposit
@@ -1082,7 +1103,7 @@ type VaultDeposit @entity {
 
 type VaultCollectFee @entity {
   id: ID! # the transaction hash and the log index separated by a hyphen
-  vault: Bytes! # the address of the pool in which the CollectFees function was called
+  vault: IchiVault! # the address of the pool in which the CollectFees function was called
   sender: Bytes! # the address of the signer of the CollectFees transaction
   tick: Int! # the current price tick
   createdAtTimestamp: BigInt! # the timestamp at which the fee collection occurred
@@ -1096,7 +1117,7 @@ type VaultCollectFee @entity {
 
 type VaultDepositMax @entity {
   id: ID! # the transaction hash and the log index separated by a hyphen
-  vault: Bytes! # the address of the pool in which the DepositMax was set
+  vault: IchiVault! # the address of the pool in which the DepositMax was set
   sender: Bytes! # the address of the signer of the transaction that set the depoist max
   deposit0Max: BigInt! # the depositMax amount of token0
   deposit1Max: BigInt! # the depositMax amount of token1
@@ -1104,28 +1125,28 @@ type VaultDepositMax @entity {
 
 type VaultHysteresis @entity {
   id: ID! # the transaction hash and the log index separated by a hyphen
-  vault: Bytes! # the address of the pool in which the hysteresis was set
+  vault: IchiVault! # the address of the pool in which the hysteresis was set
   sender: Bytes! # the address of the signer of the transaction
   hysteresis: BigInt! # the new hysteresis threshold in percentage
 }
 
 type MaxTotalSupply @entity {
   id: ID! # the transaction hash and the log index separated by a hyphen
-  vault: Bytes! # the address of the vault in which the MaxTotalSupply was set
+  vault: IchiVault! # the address of the vault in which the MaxTotalSupply was set
   sender: Bytes! # the address of signer of the transaction
   maxTotalSupply: BigInt! # the amount that is set as the maxTotalSupply
 }
 
 type VaultOwnershipTransferred @entity {
   id: ID! # the transaction hash and the log index separated by a hyphen
-  vault: Bytes! # the address of the vault in which the ownership has been transferred
+  vault: IchiVault! # the address of the vault in which the ownership has been transferred
   previousOwner: Bytes! # the address of the previous owner
   newOwner: Bytes! # the address of the new owner
 }
 
 type VaultRebalance @entity {
   id: ID! # the transaction hash and the log index separated by a hyphen
-  vault: Bytes! # the vault in which the rebalance has occurred
+  vault: IchiVault! # the vault in which the rebalance has occurred
   tick: Int! # the current price tick
   createdAtTimestamp: BigInt! # the timestamp at which the vault was created
   sqrtPrice: BigInt! # The sqrtPrice at that moment in the pool that corresponds to the vault
@@ -1138,14 +1159,14 @@ type VaultRebalance @entity {
 
 type VaultSetTwapPeriod @entity {
   id: ID! # the transaction hash and the log index separated by a hyphen
-  vault: Bytes! # the vault in which the twap period has been set
+  vault: IchiVault! # the vault in which the twap period has been set
   sender: Bytes! # the address that was the signer of the transaction
   newTwapPeriod: BigInt! # the new twap period of the vault
 }
 
 type VaultTransfer @entity {
   id: ID! # the transaction hash and the log index separated by a hyphen
-  vault: Bytes! # the address of the vault in which the transfer has occurred
+  vault: IchiVault! # the address of the vault in which the transfer has occurred
   from: Bytes! # the address that is the sender of the token
   to: Bytes! # the address that is the recipient of the transfer
   value: BigInt! # the amount of the token that is transferred.
@@ -1159,7 +1180,7 @@ type VaultTransfer @entity {
 
 type VaultWithdraw @entity {
   id: ID! # the transaction hash and the log index separated by a hyphen
-  vault: Bytes! # the address of the vault in which the transfer has occurred
+  vault: IchiVault! # the address of the vault in which the transfer has occurred
   sender: Bytes! # the signer of the transaction in which the withdraw occurred
   to: Bytes! # the address to which the liquidity tokens are minted
   shares: BigInt! # the quantity of liquidity tokens minted as a result of a withdraw
