@@ -465,6 +465,10 @@ enum TransactionType {
   CLAIM_LP
   SWAP
   COLLECT
+  MINT
+  BURN
+  INCREASE_LIQUIDITY
+  DECREASE_LIQUIDITY
 }
 
 type Mint @entity {
@@ -1204,4 +1208,19 @@ type VaultWithdraw @entity {
   totalAmount0BeforeEvent: BigInt! # the total amount of token0 in the vault after the event
   totalAmount1BeforeEvent: BigInt! # the total amount of token1 in the vault after the event
   totalSupply: BigInt! # the total supply of the liquidity pool token that is used by the vault
+}
+
+# MEME Race Event
+type MemeRacer @entity {
+  id: ID! # token address
+  token: Token!
+  hourData: [MemeRacerHourData!]! @derivedFrom(field: "racer")
+  currentScore: BigDecimal! # current market cap
+}
+
+type MemeRacerHourData @entity {
+  id: ID! # token address + timestamp
+  racer: MemeRacer!
+  timestamp: BigInt! # start of hour timestamp
+  score: BigDecimal! # market cap at this hour
 }

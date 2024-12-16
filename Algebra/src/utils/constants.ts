@@ -19,3 +19,23 @@ export let BI_18 = BigInt.fromI32(18)
 export let factoryContract = FactoryContract.bind(Address.fromString(FACTORY_ADDRESS))
 
 export let pools_list = ['']
+
+export class TransactionType {
+  static DEPOSIT: string = 'DEPOSIT'
+  static REFUND: string = 'REFUND'
+  static CLAIM_LP: string = 'CLAIM_LP'
+  static SWAP: string = 'SWAP'
+  static COLLECT: string = 'COLLECT'
+  static MINT: string = 'MINT'
+  static BURN: string = 'BURN'
+  static INCREASE_LIQUIDITY: string = 'INCREASE_LIQUIDITY'
+  static DECREASE_LIQUIDITY: string = 'DECREASE_LIQUIDITY'
+}
+
+export const MEME_RACERS = [
+  '0x150bcee57b23a79c9dd5e707c8a64c65016215d0',
+  '0x5b0c7cccc718ee837238be9323ccb63aee538ff4',
+  '0x8b045d02c581284295be33d4f261f8e1e6f78f18',
+  '0xff4abcd6d4cea557e4267bc81f1d2064615cb49e',
+  '0x3F7AAE503000A08A8d4A9AFefa738b565f3A6CD6'
+]

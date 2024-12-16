@@ -28,7 +28,15 @@ import {
   Plugin as PluginEvent
 } from '../types/templates/Pool/Pool'
 import { convertTokenToDecimal, loadTransaction, safeDiv } from '../utils'
-import { FACTORY_ADDRESS, ONE_BI, ZERO_BD, ZERO_BI, pools_list, FEE_DENOMINATOR } from '../utils/constants'
+import {
+  FACTORY_ADDRESS,
+  ONE_BI,
+  ZERO_BD,
+  ZERO_BI,
+  pools_list,
+  FEE_DENOMINATOR,
+  TransactionType
+} from '../utils/constants'
 import {
   findEthPerToken,
   getDerivedPriceUSD,
@@ -52,6 +60,7 @@ import { Transfer } from '../types/Factory/ERC20'
 import { isNotZeroAddress, isZeroAddress } from '../utils/address'
 import { loadAccount } from '../utils/account'
 import { loadToken } from '../utils/token'
+import { updateMemeRacerHourData } from '../utils/memeRacer'
 
 export function handleInitialize(event: Initialize): void {
   let pool = Pool.load(event.address.toHexString())!
@@ -140,7 +149,7 @@ export function handleMint(event: MintEvent): void {
   factory.totalValueLockedMatic = factory.totalValueLockedMatic.plus(pool.totalValueLockedMatic)
   factory.totalValueLockedUSD = factory.totalValueLockedMatic.times(bundle.maticPriceUSD)
 
-  let transaction = loadTransaction(event)
+  let transaction = loadTransaction(event, TransactionType.MINT)
   let account = loadAccount(transaction.account)
   let mint = new Mint(transaction.id.toString() + '#' + pool.txCount.toString())
   mint.transaction = transaction.id
@@ -301,7 +310,7 @@ export function handleBurn(event: BurnEvent): void {
   factory.totalValueLockedUSD = factory.totalValueLockedMatic.times(bundle.maticPriceUSD)
 
   // burn entity
-  let transaction = loadTransaction(event)
+  let transaction = loadTransaction(event, TransactionType.BURN)
   let account = loadAccount(transaction.account)
   let burn = new Burn(transaction.id + '#' + pool.txCount.toString())
   burn.transaction = transaction.id
@@ -532,7 +541,7 @@ export function handleSwap(event: SwapEvent): void {
   token1.totalValueLockedUSD = token1.totalValueLocked.times(token1.derivedMatic).times(bundle.maticPriceUSD)
 
   // create Swap event
-  let transaction = loadTransaction(event)
+  let transaction = loadTransaction(event, TransactionType.SWAP)
   let account = loadAccount(transaction.account)
   let swap = new Swap(transaction.id + '#' + pool.txCount.toString())
   swap.transaction = transaction.id
@@ -679,6 +688,10 @@ export function handleSwap(event: SwapEvent): void {
       loadTickUpdateFeeVarsAndSave(i.toI32(), event)
     }
   }
+
+  // Update meme racer data if token is in race
+  updateMemeRacerHourData(token0 as Token, event.block.timestamp)
+  updateMemeRacerHourData(token1 as Token, event.block.timestamp)
 }
 
 export function handleSetCommunityFee(event: CommunityFee): void {
