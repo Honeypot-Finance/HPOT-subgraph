@@ -70,7 +70,6 @@ type Account @entity {
   # aquabera
   vaultShares: [VaultShare!] @derivedFrom(field: "user")
 }
-
 type HoldingToken @entity {
   # account address + token address
   id: ID!
@@ -169,6 +168,9 @@ type Pot2Pump @entity {
 
   # transactions
   participantTransactionHistorys: [ParticipantTransactionHistory!]! @derivedFrom(field: "pot2Pump")
+
+  # Search string combining address and token symbols
+  searchString: String!
 }
 
 type Participant @entity {
@@ -201,7 +203,7 @@ type ParticipantTransactionHistory @entity {
   refundAmount: BigInt!
   # claim LP amount, 1 mean claim all, 0 mean no claim
   claimLqAmount: BigInt!
-  actionType: UserPot2PumpActionType!
+  actionType: TransactionType!
   createdAt: BigInt!
 
   participant: Participant!
@@ -293,6 +295,9 @@ type Pool @entity {
 
   # vaults
   vaults: IchiVault @derivedFrom(field: "pool")
+
+  # Search string combining address and token symbols
+  searchString: String!
 }
 
 type Tick @entity {
@@ -431,6 +436,8 @@ type PositionSnapshot @entity {
 type Transaction @entity {
   # txn hash
   id: ID!
+  # type
+  type: TransactionType!
   # account
   account: Account!
   # block txn was included in
@@ -449,6 +456,14 @@ type Transaction @entity {
   depositRaisedTokens: [DepositRaisedToken!]! @derivedFrom(field: "transaction")
   refunds: [Refund!]! @derivedFrom(field: "transaction")
   claimLps: [ClaimLp!]! @derivedFrom(field: "transaction")
+}
+
+enum TransactionType {
+  DEPOSIT
+  REFUND
+  CLAIM_LP
+  SWAP
+  COLLECT
 }
 
 type Mint @entity {
@@ -1014,12 +1029,6 @@ type FeeHourData @entity {
   startFee: BigInt!
   #
   endFee: BigInt!
-}
-
-enum UserPot2PumpActionType {
-  DEPOSIT
-  REFUND
-  CLAIM
 }
 
 ######################################################### ICHIVaultFactory

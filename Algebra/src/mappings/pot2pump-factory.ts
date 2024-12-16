@@ -30,7 +30,6 @@ export function handlePairCreated(event: PairCreated): void {
     newPair.LaunchTokenMarketCap = ZERO_BD
     newPair.LaunchTokenTVL = ZERO_BD
     newPair.creator = fetchCreator(event.params.pair).toHexString()
-
     //increase account creation count
     let account = loadAccount(fetchCreator(event.params.pair).toHexString())
     if (account != null) {
@@ -40,7 +39,6 @@ export function handlePairCreated(event: PairCreated): void {
     }
 
     Pot2PumpTemplate.create(event.params.pair)
-    newPair.save()
   }
 
   // Update the if launch is meme token and register it to ERC20 listener
@@ -50,5 +48,9 @@ export function handlePairCreated(event: PairCreated): void {
     TokenTemplate.create(event.params.launchedToken)
   }
 
+  newPair.searchString =
+    newPair.id.toLowerCase() + ' ' + launchToken.symbol.toLowerCase() + ' ' + newPair.raisedToken.toLowerCase()
+
   launchToken.save()
+  newPair.save()
 }

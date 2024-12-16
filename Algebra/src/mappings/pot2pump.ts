@@ -37,7 +37,8 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
     event.block.timestamp,
     event.transaction.gasLimit,
     event.transaction.gasPrice,
-    event.params.depositor.toHexString()
+    event.params.depositor.toHexString(),
+    'DEPOSIT_RAISED_TOKEN'
   )
   let depositRaisedToken = new DepositRaisedToken(
     event.transaction.hash.toHexString() + '#' + event.logIndex.toString()
@@ -86,6 +87,8 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
   if (pair.DepositRaisedToken >= pair.raisedTokenMinCap) {
     pair.raisedTokenReachingMinCap = true
     pair.state = new BigInt(0)
+    launchToken.derivedUSD = raiseToken.derivedUSD.times(pair.DepositRaisedToken.toBigDecimal())
+    launchToken.initialUSD = raiseToken.derivedUSD.times(pair.raisedTokenMinCap.toBigDecimal())
     pair.participants.entries.map<Participant>(entry => {
       let participantId = entry.key
       let participant = Participant.load(participantId)
@@ -110,6 +113,8 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
   participantTransactionHistory.save()
   participant.save()
   pair.save()
+  launchToken.save()
+  raiseToken.save()
 }
 
 export function handleRefund(event: TRefund): void {
@@ -132,7 +137,8 @@ export function handleRefund(event: TRefund): void {
     event.block.timestamp,
     event.transaction.gasLimit,
     event.transaction.gasPrice,
-    event.params.depositor.toHexString()
+    event.params.depositor.toHexString(),
+    'REFUND'
   )
   let refund = new Refund(event.transaction.hash.toHexString() + '#' + event.logIndex.toString())
   refund.transaction = transaction.id
@@ -188,7 +194,8 @@ export function handleClaimLP(event: TClaimLP): void {
     event.block.timestamp,
     event.transaction.gasLimit,
     event.transaction.gasPrice,
-    event.params.claimer.toHexString()
+    event.params.claimer.toHexString(),
+    'CLAIM_LP'
   )
   const claimLp = new ClaimLp(event.transaction.hash.toHexString() + '#' + event.logIndex.toString())
   claimLp.amount = event.params.param1
@@ -245,7 +252,8 @@ export function createTransaction(
   timestamp: BigInt,
   gasLimit: BigInt,
   gasPrice: BigInt,
-  account: string
+  account: string,
+  type: string
 ): Transaction {
   let transaction = new Transaction(hash)
   transaction.blockNumber = blockNumber
@@ -253,6 +261,7 @@ export function createTransaction(
   transaction.gasLimit = gasLimit
   transaction.gasPrice = gasPrice
   transaction.account = account
+  transaction.type = type
 
   transaction.save()
 

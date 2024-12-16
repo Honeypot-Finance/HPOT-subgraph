@@ -53,6 +53,7 @@ export function handlePoolCreated(event: PoolEvent): void {
   pool.createdAtTimestamp = event.block.timestamp
   pool.createdAtBlockNumber = event.block.number
   pool.communityFee = factory.defaultCommunityFee
+  pool.searchString = pool.id.toLowerCase() + ' ' + token0.symbol.toLowerCase() + ' ' + token1.symbol.toLowerCase()
 
   pool.save()
   // create the tracked contract based on the template
@@ -99,6 +100,7 @@ export function handleCustomPoolCreated(event: CustomPool): void {
   pool.createdAtTimestamp = event.block.timestamp
   pool.createdAtBlockNumber = event.block.number
   pool.communityFee = factory.defaultCommunityFee
+  pool.searchString = pool.id.toLowerCase() + ' ' + token0.symbol.toLowerCase() + ' ' + token1.symbol.toLowerCase()
 
   pool.save()
   // create the tracked contract based on the template
