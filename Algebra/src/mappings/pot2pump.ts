@@ -8,7 +8,7 @@ import {
   ClaimLp
 } from '../types/schema'
 import { Pot2Pump as Pot2PumpTemplate } from '../types/templates'
-import { Address, BigInt } from '@graphprotocol/graph-ts'
+import { Address, BigDecimal, BigInt } from '@graphprotocol/graph-ts'
 import {
   ClaimLP as TClaimLP,
   DepositRaisedToken as TDepositRaisedToken,
@@ -87,8 +87,12 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
   if (pair.DepositRaisedToken >= pair.raisedTokenMinCap) {
     pair.raisedTokenReachingMinCap = true
     pair.state = new BigInt(0)
-    launchToken.derivedUSD = raiseToken.derivedUSD.times(pair.DepositRaisedToken.toBigDecimal())
-    launchToken.initialUSD = raiseToken.derivedUSD.times(pair.raisedTokenMinCap.toBigDecimal())
+    const initPriceUSD = pair.DepositRaisedToken.toBigDecimal()
+      .div(pair.DepositLaunchToken.toBigDecimal())
+      .times(raiseToken.derivedUSD)
+    launchToken.derivedUSD = initPriceUSD
+    launchToken.initialUSD = initPriceUSD
+    pot2Pump.launchTokenInitialPrice = initPriceUSD
     pair.participants.entries.map<Participant>(entry => {
       let participantId = entry.key
       let participant = Participant.load(participantId)
@@ -99,6 +103,7 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
       return participant as Participant
     })
   }
+
   // save participant transaction history
   let participantTransactionHistory = new ParticipantTransactionHistory(event.transaction.hash.toHexString())
   participantTransactionHistory.pot2Pump = pair.id
