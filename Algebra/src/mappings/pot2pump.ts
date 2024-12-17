@@ -17,7 +17,7 @@ import {
 } from '../types/templates/Pot2Pump/Pot2PumpPair'
 import { fetchState } from '../utils/pot2pump'
 import { loadAccount } from '../utils/account'
-import { ONE_BI, TransactionType, ZERO_BI } from '../utils/constants'
+import { ONE_BI, TransactionType, TransactionTypeToString, ZERO_BI } from '../utils/constants'
 import { ADDRESS_ZERO } from '../utils/constants'
 import { loadToken } from '../utils/token'
 
@@ -38,7 +38,7 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
     event.transaction.gasLimit,
     event.transaction.gasPrice,
     event.params.depositor.toHexString(),
-    'DEPOSIT_RAISED_TOKEN'
+    TransactionTypeToString(TransactionType.DEPOSIT)
   )
   let depositRaisedToken = new DepositRaisedToken(
     event.transaction.hash.toHexString() + '#' + event.logIndex.toString()
@@ -112,7 +112,7 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
   participantTransactionHistory.claimLqAmount = ZERO_BI
   participantTransactionHistory.createdAt = event.block.timestamp
   participantTransactionHistory.account = event.params.depositor.toHexString()
-  participantTransactionHistory.actionType = TransactionType.DEPOSIT
+  participantTransactionHistory.actionType = TransactionTypeToString(TransactionType.DEPOSIT)
   participantTransactionHistory.participant = participant.id
 
   participantTransactionHistory.save()
@@ -171,7 +171,7 @@ export function handleRefund(event: TRefund): void {
   participantTransactionHistory.claimLqAmount = new BigInt(0)
   participantTransactionHistory.createdAt = event.block.timestamp
   participantTransactionHistory.account = event.params.depositor.toHexString()
-  participantTransactionHistory.actionType = TransactionType.REFUND
+  participantTransactionHistory.actionType = TransactionTypeToString(TransactionType.REFUND)
   participantTransactionHistory.participant = participant.id
 
   let account = loadAccount(event.params.depositor.toHexString())
@@ -226,7 +226,7 @@ export function handleClaimLP(event: TClaimLP): void {
   participantTransactionHistory.pot2Pump = pair.id
   participantTransactionHistory.createdAt = event.block.timestamp
   participantTransactionHistory.account = event.params.claimer.toHexString()
-  participantTransactionHistory.actionType = TransactionType.CLAIM_LP
+  participantTransactionHistory.actionType = TransactionTypeToString(TransactionType.CLAIM_LP)
   participantTransactionHistory.claimLqAmount = new BigInt(1)
   participantTransactionHistory.refundAmount = new BigInt(0)
   participantTransactionHistory.depositAmount = new BigInt(0)

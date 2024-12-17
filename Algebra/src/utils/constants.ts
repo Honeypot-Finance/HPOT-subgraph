@@ -20,22 +20,50 @@ export let factoryContract = FactoryContract.bind(Address.fromString(FACTORY_ADD
 
 export let pools_list = ['']
 
-export class TransactionType {
-  static DEPOSIT: string = 'DEPOSIT'
-  static REFUND: string = 'REFUND'
-  static CLAIM_LP: string = 'CLAIM_LP'
-  static SWAP: string = 'SWAP'
-  static COLLECT: string = 'COLLECT'
-  static MINT: string = 'MINT'
-  static BURN: string = 'BURN'
-  static INCREASE_LIQUIDITY: string = 'INCREASE_LIQUIDITY'
-  static DECREASE_LIQUIDITY: string = 'DECREASE_LIQUIDITY'
+export enum TransactionType {
+  DEPOSIT, // 0
+  REFUND, // 1
+  CLAIM_LP, // 2
+  SWAP, // 3
+  COLLECT, // 4
+  MINT, // 5
+  BURN, // 6
+  INCREASE_LIQUIDITY, // 7
+  DECREASE_LIQUIDITY // 8
+}
+
+export const TransactionTypeToString = (type: i32): string => {
+  switch (type) {
+    case TransactionType.DEPOSIT:
+      return 'DEPOSIT'
+    case TransactionType.REFUND:
+      return 'REFUND'
+    case TransactionType.CLAIM_LP:
+      return 'CLAIM_LP'
+    case TransactionType.SWAP:
+      return 'SWAP'
+    case TransactionType.COLLECT:
+      return 'COLLECT'
+    case TransactionType.MINT:
+      return 'MINT'
+    case TransactionType.BURN:
+      return 'BURN'
+    case TransactionType.INCREASE_LIQUIDITY:
+      return 'INCREASE_LIQUIDITY'
+    case TransactionType.DECREASE_LIQUIDITY:
+      return 'DECREASE_LIQUIDITY'
+    default:
+      return 'UNKNOWN'
+  }
 }
 
 export const MEME_RACERS = [
-  '0x150bcee57b23a79c9dd5e707c8a64c65016215d0',
-  '0x5b0c7cccc718ee837238be9323ccb63aee538ff4',
-  '0x8b045d02c581284295be33d4f261f8e1e6f78f18',
-  '0xff4abcd6d4cea557e4267bc81f1d2064615cb49e',
-  '0x3F7AAE503000A08A8d4A9AFefa738b565f3A6CD6'
+  '0x0C9a7895a7d93cDAC09079eb37dfBb186ce664d1'.toLowerCase(),
+  '0xea2148fcf19a75f0066b4a58967b6a46260db911'.toLowerCase(),
+  '0x0de0da199f7702f9a012e0b44c416738134392c2'.toLowerCase(),
+  '0xf5936c007541a428a7bcde997dcf92e4a3648728'.toLowerCase(),
+  '0xa675885b5a767a9c5afec6ecfb4076d0f6a2322a'.toLowerCase(),
+  '0xa57bb140c490fb01ce02ff6ee7596d47b52abaa5'.toLowerCase(),
+  '0x0fb4a8e6f3d19449d5a5ba46e89bdeb218f627ef'.toLowerCase(),
+  '0xe8d36edc13c1c687a3eb88a737c0fa34213d5aa7'.toLowerCase()
 ]

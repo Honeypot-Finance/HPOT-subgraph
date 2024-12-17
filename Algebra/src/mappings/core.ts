@@ -35,7 +35,8 @@ import {
   ZERO_BI,
   pools_list,
   FEE_DENOMINATOR,
-  TransactionType
+  TransactionType,
+  ADDRESS_ZERO
 } from '../utils/constants'
 import {
   findEthPerToken,
@@ -85,6 +86,8 @@ export function handleInitialize(event: Initialize): void {
   token1.derivedMatic = findEthPerToken(token1 as Token)
   token0.derivedUSD = getDerivedPriceUSD(token0 as Token)
   token1.derivedUSD = getDerivedPriceUSD(token1 as Token)
+  updateMemeRacerHourData(token0.id, event.block.timestamp)
+  updateMemeRacerHourData(token1.id, event.block.timestamp)
   token0.save()
   token1.save()
 }
@@ -168,6 +171,9 @@ export function handleMint(event: MintEvent): void {
   mint.tickUpper = BigInt.fromI32(event.params.topTick)
   if (account) {
     account.platformTxCount = account.platformTxCount.plus(ONE_BI)
+    if (pool.totalValueLockedUSD.lt(ZERO_BD)) {
+      account.holdingPoolCount = account.holdingPoolCount.minus(ONE_BI)
+    }
     account.save()
   }
 
@@ -328,6 +334,9 @@ export function handleBurn(event: BurnEvent): void {
   burn.tickUpper = BigInt.fromI32(event.params.topTick)
   if (account) {
     account.platformTxCount = account.platformTxCount.plus(ONE_BI)
+    if (pool.totalValueLockedMatic.times(bundle.maticPriceUSD).lt(ZERO_BD)) {
+      account.holdingPoolCount = account.holdingPoolCount.minus(ONE_BI)
+    }
     account.save()
   }
 
@@ -520,12 +529,6 @@ export function handleSwap(event: SwapEvent): void {
   token0.derivedMatic = findEthPerToken(token0 as Token)
   token1.derivedMatic = findEthPerToken(token1 as Token)
 
-  if (token0.id == '0xfc5e3743e9fac8bb60408797607352e24db7d65e') {
-    log.info('token0.: {}', [token0.id])
-    log.info('token0.derivedMatic: {}', [token0.derivedMatic.toString()])
-    log.info('token1.derivedMatic: {}', [token1.derivedMatic.toString()])
-  }
-
   /**
    * Things afffected by new USD rates
    */
@@ -690,8 +693,8 @@ export function handleSwap(event: SwapEvent): void {
   }
 
   // Update meme racer data if token is in race
-  updateMemeRacerHourData(token0 as Token, event.block.timestamp)
-  updateMemeRacerHourData(token1 as Token, event.block.timestamp)
+  updateMemeRacerHourData(token1.id, event.block.timestamp)
+  updateMemeRacerHourData(token1.id, event.block.timestamp)
 }
 
 export function handleSetCommunityFee(event: CommunityFee): void {
@@ -801,7 +804,8 @@ export function handleTransfer(event: Transfer): void {
   if (!event || !event.address || isZeroAddress(event.address.toHexString())) {
     return
   }
-  const token = Token.load(event.address.toHexString())
+  const token = loadToken(Address.fromString(event.address.toHexString()))
+  const account = loadAccount(event.params.from.toHexString())
 
   if (!token || !token.pot2Pump) {
     return
@@ -817,6 +821,9 @@ export function handleTransfer(event: Transfer): void {
     if (fromHolder.holdingValue.equals(ZERO_BI)) {
       store.remove('HoldingToken', fromHolderId)
       token.holderCount = token.holderCount.minus(ONE_BI)
+      if (account && token.pot2Pump._id != ADDRESS_ZERO) {
+        account.memeTokenHoldingCount = account.memeTokenHoldingCount.minus(ONE_BI)
+      }
     }
   }
 
@@ -834,10 +841,18 @@ export function handleTransfer(event: Transfer): void {
       newHolder.holdingValue = event.params.value
       newHolder.save()
       token.holderCount = token.holderCount.plus(ONE_BI)
+      if (account && token.pot2Pump._id != ADDRESS_ZERO) {
+        account.memeTokenHoldingCount = account.memeTokenHoldingCount.plus(ONE_BI)
+      }
     }
   }
 
   token.save()
+  if (account) {
+    account.save()
+  }
+
+  updateMemeRacerHourData(token.id, event.block.timestamp)
 }
 
 function loadTickUpdateFeeVarsAndSave(tickId: i32, event: ethereum.Event): void {

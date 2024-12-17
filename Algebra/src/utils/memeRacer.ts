@@ -1,9 +1,11 @@
-import { BigInt, BigDecimal } from '@graphprotocol/graph-ts'
+import { BigInt, BigDecimal, log, Address } from '@graphprotocol/graph-ts'
 import { MemeRacer, MemeRacerHourData, Token } from '../types/schema'
 import { MEME_RACERS, ZERO_BD } from './constants'
+import { loadToken } from './token'
 
 export function getMemeRacer(tokenAddress: string): MemeRacer | null {
-  if (!MEME_RACERS.includes(tokenAddress)) return null
+  log.info('MEME_RACERS: {}, tokenAddress: {}', [MEME_RACERS.join(', '), tokenAddress])
+  if (!MEME_RACERS.includes(tokenAddress.toLowerCase())) return null
 
   let racer = MemeRacer.load(tokenAddress)
   if (racer === null) {
@@ -12,16 +14,21 @@ export function getMemeRacer(tokenAddress: string): MemeRacer | null {
     racer.currentScore = ZERO_BD
     racer.save()
   }
+  log.info('racer found: {}', [racer.id])
   return racer
 }
 
-export function updateMemeRacerHourData(token: Token, timestamp: BigInt): void {
+export function updateMemeRacerHourData(tokenAddress: string, timestamp: BigInt): void {
+  let token = loadToken(Address.fromString(tokenAddress))
+  log.info('racer token: {}', [token.symbol])
   let racer = getMemeRacer(token.id)
   if (!racer) return
 
   // Round timestamp to current hour
   let hourTimestamp = timestamp.div(BigInt.fromI32(3600)).times(BigInt.fromI32(3600))
-  let hourID = token.id + '-' + hourTimestamp.toString()
+  let hourID = tokenAddress + '-' + hourTimestamp.toString()
+
+  log.info('hourID: {}', [hourID])
 
   let hourData = MemeRacerHourData.load(hourID)
   if (hourData === null) {
