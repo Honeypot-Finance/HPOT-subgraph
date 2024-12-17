@@ -11,7 +11,8 @@ import {
   Plugin,
   Token,
   PoolFeeData,
-  HoldingToken
+  HoldingToken,
+  Pot2Pump
 } from '../types/schema'
 import { PluginConfig, Pool as PoolABI } from '../types/Factory/Pool'
 import { Address, BigDecimal, BigInt, ethereum, log, store } from '@graphprotocol/graph-ts'
@@ -101,6 +102,9 @@ export function handleMint(event: MintEvent): void {
   let token0 = Token.load(pool.token0)!
   let token1 = Token.load(pool.token1)!
 
+  let token0Pot2Pump = Pot2Pump.load(token0.pot2Pump._id)
+  let token1Pot2Pump = Pot2Pump.load(token1.pot2Pump._id)
+
   let amount0 = convertTokenToDecimal(event.params.amount0, token0.decimals)
   let amount1 = convertTokenToDecimal(event.params.amount1, token1.decimals)
 
@@ -123,11 +127,17 @@ export function handleMint(event: MintEvent): void {
   token0.txCount = token0.txCount.plus(ONE_BI)
   token0.totalValueLocked = token0.totalValueLocked.plus(amount0)
   token0.totalValueLockedUSD = token0.totalValueLocked.times(token0.derivedMatic.times(bundle.maticPriceUSD))
+  if (token0Pot2Pump) {
+    token0Pot2Pump.LaunchTokenTVLUSD = token0.totalValueLockedUSD
+  }
 
   // update token1 data
   token1.txCount = token1.txCount.plus(ONE_BI)
   token1.totalValueLocked = token1.totalValueLocked.plus(amount1)
   token1.totalValueLockedUSD = token1.totalValueLocked.times(token1.derivedMatic.times(bundle.maticPriceUSD))
+  if (token1Pot2Pump) {
+    token1Pot2Pump.LaunchTokenTVLUSD = token1.totalValueLockedUSD
+  }
 
   // pool data
   pool.txCount = pool.txCount.plus(ONE_BI)
@@ -239,6 +249,12 @@ export function handleMint(event: MintEvent): void {
   poolPosition.save()
   factory.save()
   mint.save()
+  if (token0Pot2Pump != null) {
+    token0Pot2Pump.save()
+  }
+  if (token1Pot2Pump != null) {
+    token1Pot2Pump.save()
+  }
 
   // Update inner tick vars and save the ticks
   updateTickFeeVarsAndSave(lowerTick, event)
@@ -255,6 +271,9 @@ export function handleBurn(event: BurnEvent): void {
 
   let token0 = Token.load(pool.token0)!
   let token1 = Token.load(pool.token1)!
+
+  let token0Pot2Pump = Pot2Pump.load(token0.pot2Pump._id)
+  let token1Pot2Pump = Pot2Pump.load(token1.pot2Pump._id)
 
   let amount0 = convertTokenToDecimal(event.params.amount0, token0.decimals)
   let amount1 = convertTokenToDecimal(event.params.amount1, token1.decimals)
@@ -286,11 +305,17 @@ export function handleBurn(event: BurnEvent): void {
   token0.txCount = token0.txCount.plus(ONE_BI)
   token0.totalValueLocked = token0.totalValueLocked.minus(amount0)
   token0.totalValueLockedUSD = token0.totalValueLocked.times(token0.derivedMatic.times(bundle.maticPriceUSD))
+  if (token0Pot2Pump) {
+    token0Pot2Pump.LaunchTokenTVLUSD = token0.totalValueLockedUSD
+  }
 
   // update token1 data
   token1.txCount = token1.txCount.plus(ONE_BI)
   token1.totalValueLocked = token1.totalValueLocked.minus(amount1)
   token1.totalValueLockedUSD = token1.totalValueLocked.times(token1.derivedMatic.times(bundle.maticPriceUSD))
+  if (token1Pot2Pump) {
+    token1Pot2Pump.LaunchTokenTVLUSD = token1.totalValueLockedUSD
+  }
 
   // pool data
   pool.txCount = pool.txCount.plus(ONE_BI)
@@ -389,6 +414,12 @@ export function handleBurn(event: BurnEvent): void {
   pool.save()
   factory.save()
   burn.save()
+  if (token0Pot2Pump != null) {
+    token0Pot2Pump.save()
+  }
+  if (token1Pot2Pump != null) {
+    token1Pot2Pump.save()
+  }
 }
 
 export function handleSwap(event: SwapEvent): void {
@@ -398,6 +429,8 @@ export function handleSwap(event: SwapEvent): void {
   let oldTick = pool.tick
   let token0 = Token.load(pool.token0)!
   let token1 = Token.load(pool.token1)!
+  let token0Pot2Pump = Pot2Pump.load(token0.pot2Pump._id)
+  let token1Pot2Pump = Pot2Pump.load(token1.pot2Pump._id)
   let recipientAccount = loadAccount(event.params.recipient.toHexString())
 
   // update recipient account
@@ -482,6 +515,9 @@ export function handleSwap(event: SwapEvent): void {
   token0.untrackedVolumeUSD = token0.untrackedVolumeUSD.plus(amountTotalUSDUntracked)
   token0.feesUSD = token0.feesUSD.plus(feesUSD)
   token0.txCount = token0.txCount.plus(ONE_BI)
+  if (token0Pot2Pump) {
+    token0Pot2Pump.LaunchTokenTVLUSD = token0.totalValueLockedUSD
+  }
 
   // update token1 data
   token1.volume = token1.volume.plus(amount1Abs)
@@ -490,6 +526,9 @@ export function handleSwap(event: SwapEvent): void {
   token1.untrackedVolumeUSD = token1.untrackedVolumeUSD.plus(amountTotalUSDUntracked)
   token1.feesUSD = token1.feesUSD.plus(feesUSD)
   token1.txCount = token1.txCount.plus(ONE_BI)
+  if (token1Pot2Pump) {
+    token1Pot2Pump.LaunchTokenTVLUSD = token1.totalValueLockedUSD
+  }
 
   // updated pool ratess
   let prices = priceToTokenPrices(pool.sqrtPrice, token0 as Token, token1 as Token)
@@ -542,6 +581,12 @@ export function handleSwap(event: SwapEvent): void {
 
   token0.totalValueLockedUSD = token0.totalValueLocked.times(token0.derivedMatic).times(bundle.maticPriceUSD)
   token1.totalValueLockedUSD = token1.totalValueLocked.times(token1.derivedMatic).times(bundle.maticPriceUSD)
+  if (token0Pot2Pump) {
+    token0Pot2Pump.LaunchTokenTVLUSD = token0.totalValueLockedUSD
+  }
+  if (token1Pot2Pump) {
+    token1Pot2Pump.LaunchTokenTVLUSD = token1.totalValueLockedUSD
+  }
 
   // create Swap event
   let transaction = loadTransaction(event, TransactionType.SWAP)
@@ -657,6 +702,12 @@ export function handleSwap(event: SwapEvent): void {
   pool.save()
   token0.save()
   token1.save()
+  if (token0Pot2Pump != null) {
+    token0Pot2Pump.save()
+  }
+  if (token1Pot2Pump != null) {
+    token1Pot2Pump.save()
+  }
   if (recipientAccount != null) {
     recipientAccount.save()
   }
