@@ -58,12 +58,12 @@ export const TransactionTypeToString = (type: i32): string => {
 }
 
 export const MEME_RACERS = [
-  '0x0C9a7895a7d93cDAC09079eb37dfBb186ce664d1'.toLowerCase(),
-  '0xea2148fcf19a75f0066b4a58967b6a46260db911'.toLowerCase(),
-  '0x0de0da199f7702f9a012e0b44c416738134392c2'.toLowerCase(),
-  '0xf5936c007541a428a7bcde997dcf92e4a3648728'.toLowerCase(),
-  '0xa675885b5a767a9c5afec6ecfb4076d0f6a2322a'.toLowerCase(),
-  '0xa57bb140c490fb01ce02ff6ee7596d47b52abaa5'.toLowerCase(),
-  '0x0fb4a8e6f3d19449d5a5ba46e89bdeb218f627ef'.toLowerCase(),
-  '0xe8d36edc13c1c687a3eb88a737c0fa34213d5aa7'.toLowerCase()
+  '0x2004116f5bbc9f8df3cf46be48d0788fd284f979'.toLowerCase(),
+  '0xd92e5d89cfe82bb0c0f95a3f4b0ee5ddb22e5e87'.toLowerCase(),
+  '0x04457d8063168e7008df0f6d10961622a316dd1c'.toLowerCase(),
+  '0x3d7c362411b39ae2d1aae1088759711cb1c5f0f3'.toLowerCase(),
+  '0x6f82653a5f95f8d4215cfa6cbc07de2429989b1d'.toLowerCase(),
+  '0x223c1ee6fae816e430ada62a1e5a20c3060f0b4f'.toLowerCase(),
+  '0x6e504fcb8519820499ec2518bd912016b373c5dc'.toLowerCase(),
+  '0x24dc27d117aca1d8c0aace33bd840026c9a52e28'.toLowerCase()
 ]
