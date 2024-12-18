@@ -18,9 +18,8 @@ export function getMemeRacer(tokenAddress: string): MemeRacer | null {
   return racer
 }
 
-export function updateMemeRacerHourData(tokenAddress: string, timestamp: BigInt): void {
+export function updateMemeRacerHourData(tokenAddress: string, timestamp: BigInt, force: boolean = false): void {
   let token = loadToken(Address.fromString(tokenAddress))
-  log.info('racer token: {}', [token.symbol])
   let racer = getMemeRacer(token.id)
   if (!racer) return
 
@@ -39,6 +38,11 @@ export function updateMemeRacerHourData(tokenAddress: string, timestamp: BigInt)
 
   // Calculate current market cap as score
   let marketCap = token.totalSupply.toBigDecimal().times(token.derivedUSD)
+  log.info('Calculate current market cap as score: token.totalSupply:{}, token.derivedUSD:{}, marketCap: {}', [
+    token.totalSupply.toString(),
+    token.derivedUSD.toString(),
+    marketCap.toString()
+  ])
 
   hourData.score = marketCap
   hourData.save()
