@@ -63,6 +63,8 @@ import { isNotZeroAddress, isZeroAddress } from '../utils/address'
 import { loadAccount } from '../utils/account'
 import { loadToken } from '../utils/token'
 import { updateMemeRacerHourData } from '../utils/memeRacer'
+import { updateMonthDataAPR, updatePoolAPR, updateWeekDataAPR } from '../utils/apr'
+import { updateDayDataAPR } from '../utils/apr'
 
 export function handleInitialize(event: Initialize): void {
   let pool = Pool.load(event.address.toHexString())!
@@ -451,20 +453,20 @@ export function handleSwap(event: SwapEvent): void {
 
   let pluginFee = BigInt.fromI32(event.params.pluginFee)
 
-  // need absolute amounts for volume
+  // need absolute amounts for volume - fix abs calculations
+  let amount0Abs = amount0.lt(ZERO_BD) ? amount0.times(BigDecimal.fromString('-1')) : amount0
+  let amount1Abs = amount1.lt(ZERO_BD) ? amount1.times(BigDecimal.fromString('-1')) : amount1
+
   let amount0withFee = amount0.lt(ZERO_BD)
     ? amount0
     : amount0.times(FEE_DENOMINATOR.minus(swapFee.plus(pluginFee).toBigDecimal())).div(FEE_DENOMINATOR)
-  let amount0Abs = amount0.times(BigDecimal.fromString('-1'))
 
   let amount1withFee = amount1.lt(ZERO_BD)
     ? amount1
     : amount1.times(FEE_DENOMINATOR.minus(swapFee.plus(pluginFee).toBigDecimal())).div(FEE_DENOMINATOR)
-  let amount1Abs = amount1.times(BigDecimal.fromString('-1'))
 
   let amount0Matic = amount0Abs.times(token0.derivedMatic)
   let amount1Matic = amount1Abs.times(token1.derivedMatic)
-
   let amount0USD = amount0Matic.times(bundle.maticPriceUSD)
   let amount1USD = amount1Matic.times(bundle.maticPriceUSD)
 
@@ -567,6 +569,8 @@ export function handleSwap(event: SwapEvent): void {
 
   token0.derivedMatic = findEthPerToken(token0 as Token)
   token1.derivedMatic = findEthPerToken(token1 as Token)
+  token0.derivedUSD = token0.derivedMatic.times(bundle.maticPriceUSD)
+  token1.derivedUSD = token1.derivedMatic.times(bundle.maticPriceUSD)
 
   /**
    * Things afffected by new USD rates
@@ -689,7 +693,6 @@ export function handleSwap(event: SwapEvent): void {
   token1HourData.volumeUSD = token1HourData.volumeUSD.plus(amountTotalUSDTracked)
   token1HourData.untrackedVolumeUSD = token1HourData.untrackedVolumeUSD.plus(amountTotalUSDTracked)
   token1HourData.feesUSD = token1HourData.feesUSD.plus(feesUSD)
-
   swap.save()
   token0DayData.save()
   token1DayData.save()
@@ -746,6 +749,12 @@ export function handleSwap(event: SwapEvent): void {
   // Update meme racer data if token is in race
   updateMemeRacerHourData(token1.id, event.block.timestamp)
   updateMemeRacerHourData(token1.id, event.block.timestamp)
+
+  // Update APR
+  updatePoolAPR(pool)
+  updateDayDataAPR(poolDayData)
+  updateWeekDataAPR(poolWeekData)
+  updateMonthDataAPR(poolMonthData)
 }
 
 export function handleSetCommunityFee(event: CommunityFee): void {

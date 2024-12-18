@@ -19,12 +19,11 @@ import {
 import { FACTORY_ADDRESS } from './constants'
 import { ethereum, BigInt } from '@graphprotocol/graph-ts'
 
-
 /**
  * Tracks global aggregate data over daily windows
  * @param event
  */
-export function updateAlgebraDayData (event: ethereum.Event): AlgebraDayData {
+export function updateAlgebraDayData(event: ethereum.Event): AlgebraDayData {
   let algebra = Factory.load(FACTORY_ADDRESS)!
   let timestamp = event.block.timestamp.toI32()
   let dayID = timestamp / 86400 // rounded
@@ -44,8 +43,7 @@ export function updateAlgebraDayData (event: ethereum.Event): AlgebraDayData {
   return algebraDayData as AlgebraDayData
 }
 
-
-export function updatePoolDayData (event: ethereum.Event): PoolDayData {
+export function updatePoolDayData(event: ethereum.Event): PoolDayData {
   let timestamp = event.block.timestamp.toI32()
   let dayID = timestamp / 86400
   let dayStartTimestamp = dayID * 86400
@@ -74,6 +72,8 @@ export function updatePoolDayData (event: ethereum.Event): PoolDayData {
     poolDayData.high = pool.token0Price
     poolDayData.low = pool.token0Price
     poolDayData.close = pool.token0Price
+    poolDayData.aprPercentage = ZERO_BD
+    poolDayData.dailyFeeUSD = ZERO_BD
   }
 
   if (pool.token0Price.gt(poolDayData.high)) {
@@ -97,9 +97,8 @@ export function updatePoolDayData (event: ethereum.Event): PoolDayData {
   return poolDayData as PoolDayData
 }
 
-
-export function updatePoolWeekData (event: ethereum.Event): PoolWeekData {
-  const secondePerWeek = 60 * 60 * 24 * 7;
+export function updatePoolWeekData(event: ethereum.Event): PoolWeekData {
+  const secondePerWeek = 60 * 60 * 24 * 7
   let timestamp = event.block.timestamp.toI32()
   let weekID = timestamp / secondePerWeek
   let weekStartTimestamp = weekID * secondePerWeek
@@ -127,6 +126,8 @@ export function updatePoolWeekData (event: ethereum.Event): PoolWeekData {
     poolWeekData.high = pool.token0Price
     poolWeekData.low = pool.token0Price
     poolWeekData.close = pool.token0Price
+    poolWeekData.aprPercentage = ZERO_BD
+    poolWeekData.weeklyFeeUSD = ZERO_BD
   }
 
   if (pool.token0Price.gt(poolWeekData.high)) {
@@ -145,13 +146,14 @@ export function updatePoolWeekData (event: ethereum.Event): PoolWeekData {
   poolWeekData.tick = pool.tick
   poolWeekData.tvlUSD = pool.totalValueLockedUSD
   poolWeekData.txCount = poolWeekData.txCount.plus(ONE_BI)
+
   poolWeekData.save()
 
   return poolWeekData
 }
 
-export function updatePoolMonthData (event: ethereum.Event): PoolMonthData {
-  const secondPerMonth = 60 * 60 * 24 * 30;
+export function updatePoolMonthData(event: ethereum.Event): PoolMonthData {
+  const secondPerMonth = 60 * 60 * 24 * 30
   let timestamp = event.block.timestamp.toI32()
   let monthID = timestamp / secondPerMonth
   let monthStartTimestamp = monthID * secondPerMonth
@@ -179,6 +181,8 @@ export function updatePoolMonthData (event: ethereum.Event): PoolMonthData {
     poolMonthData.high = pool.token0Price
     poolMonthData.low = pool.token0Price
     poolMonthData.close = pool.token0Price
+    poolMonthData.aprPercentage = ZERO_BD
+    poolMonthData.monthlyFeeUSD = ZERO_BD
   }
 
   if (pool.token0Price.gt(poolMonthData.high)) {
@@ -202,7 +206,7 @@ export function updatePoolMonthData (event: ethereum.Event): PoolMonthData {
   return poolMonthData
 }
 
-export function updateFeeHourData (event: ethereum.Event, Fee: BigInt): void {
+export function updateFeeHourData(event: ethereum.Event, Fee: BigInt): void {
   let timestamp = event.block.timestamp.toI32()
   let hourIndex = timestamp / 3600
   let hourStartUnix = hourIndex * 3600
@@ -218,8 +222,7 @@ export function updateFeeHourData (event: ethereum.Event, Fee: BigInt): void {
     if (FeeHourDataEntity.maxFee < Fee) FeeHourDataEntity.maxFee = Fee
     if (FeeHourDataEntity.minFee > Fee) FeeHourDataEntity.minFee = Fee
     FeeHourDataEntity.endFee = Fee
-  }
-  else {
+  } else {
     FeeHourDataEntity = new FeeHourData(hourFeeID)
     FeeHourDataEntity.timestamp = BigInt.fromI32(hourStartUnix)
     FeeHourDataEntity.fee = Fee
@@ -231,12 +234,11 @@ export function updateFeeHourData (event: ethereum.Event, Fee: BigInt): void {
       FeeHourDataEntity.maxFee = Fee
       FeeHourDataEntity.minFee = Fee
     }
-
   }
   FeeHourDataEntity.save()
 }
 
-export function updatePoolHourData (event: ethereum.Event): PoolHourData {
+export function updatePoolHourData(event: ethereum.Event): PoolHourData {
   let timestamp = event.block.timestamp.toI32()
   let hourIndex = timestamp / 3600 // get unique hour within unix history
   let hourStartUnix = hourIndex * 3600 // want the rounded effect
@@ -288,7 +290,7 @@ export function updatePoolHourData (event: ethereum.Event): PoolHourData {
   return poolHourData as PoolHourData
 }
 
-export function updateTokenDayData (token: Token, event: ethereum.Event): TokenDayData {
+export function updateTokenDayData(token: Token, event: ethereum.Event): TokenDayData {
   let bundle = Bundle.load('1')!
   let timestamp = event.block.timestamp.toI32()
   let dayID = timestamp / 86400
@@ -331,8 +333,7 @@ export function updateTokenDayData (token: Token, event: ethereum.Event): TokenD
   return tokenDayData as TokenDayData
 }
 
-
-export function updateTokenHourData (token: Token, event: ethereum.Event): TokenHourData {
+export function updateTokenHourData(token: Token, event: ethereum.Event): TokenHourData {
   let bundle = Bundle.load('1')!
   let timestamp = event.block.timestamp.toI32()
   let hourIndex = timestamp / 3600 // get unique hour within unix history
@@ -375,7 +376,7 @@ export function updateTokenHourData (token: Token, event: ethereum.Event): Token
   return tokenHourData as TokenHourData
 }
 
-export function updateTickDayData (tick: Tick, event: ethereum.Event): TickDayData {
+export function updateTickDayData(tick: Tick, event: ethereum.Event): TickDayData {
   let timestamp = event.block.timestamp.toI32()
   let dayID = timestamp / 86400
   let dayStartTimestamp = dayID * 86400

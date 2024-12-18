@@ -144,7 +144,7 @@ type Pot2Pump @entity {
   launchToken: Token!
   DepositLaunchToken: BigInt!
   LaunchTokenTVLUSD: BigDecimal!
-  LaunchTokenMarketCap: BigDecimal!
+  LaunchTokenMCAPUSD: BigDecimal!
   # raised token
   raisedTokenMinCap: BigInt!
   raisedToken: Token!
@@ -299,6 +299,13 @@ type Pool @entity {
 
   # Search string combining address and token symbols
   searchString: String!
+
+  # APR calculations
+  aprPercentage: BigDecimal!
+  # Historical APR data points
+  aprDayData: [PoolDayData!]! @derivedFrom(field: "pool")
+  aprWeekData: [PoolWeekData!]! @derivedFrom(field: "pool")
+  aprMonthData: [PoolMonthData!]! @derivedFrom(field: "pool")
 }
 
 type Tick @entity {
@@ -692,6 +699,9 @@ type PoolDayData @entity {
   low: BigDecimal!
   # close price of token0
   close: BigDecimal!
+  # APR calculations
+  aprPercentage: BigDecimal!
+  dailyFeeUSD: BigDecimal!
 }
 
 type PoolFeeData @entity {
@@ -794,6 +804,9 @@ type PoolWeekData @entity {
   low: BigDecimal!
   # close price of token0
   close: BigDecimal!
+  # APR calculations
+  aprPercentage: BigDecimal!
+  weeklyFeeUSD: BigDecimal!
 }
 
 type PoolMonthData @entity {
@@ -841,6 +854,9 @@ type PoolMonthData @entity {
   low: BigDecimal!
   # close price of token0
   close: BigDecimal!
+  # APR calculations
+  aprPercentage: BigDecimal!
+  monthlyFeeUSD: BigDecimal!
 }
 
 type TickHourData @entity {

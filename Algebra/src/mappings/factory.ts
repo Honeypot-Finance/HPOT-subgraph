@@ -203,6 +203,7 @@ function loadDefaultPool(id: string): Pool {
   pool.collectedFeesToken0 = ZERO_BD
   pool.collectedFeesToken1 = ZERO_BD
   pool.collectedFeesUSD = ZERO_BD
+  pool.aprPercentage = ZERO_BD
 
   return pool
 }
