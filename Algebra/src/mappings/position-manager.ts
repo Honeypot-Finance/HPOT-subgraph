@@ -133,12 +133,14 @@ export function handleIncreaseLiquidity (event: IncreaseLiquidity): void {
 
   let transaction = loadTransaction(event, TransactionType.INCREASE_LIQUIDITY)
   let account = loadAccount(transaction.account)
-  const liquidatorId = `${transaction.account}#${event.params.pool.toHex()}`
+  const liquidatorId = `${event.transaction.from.toHex()}#${event.params.pool.toHex()}`
   let liquidator = LiquidatorData.load(liquidatorId)
   if (!liquidator) {
     liquidator = new LiquidatorData(liquidatorId)
     liquidator.token0 = token0!.id
     liquidator.token1 = token1!.id
+    liquidator.account = event.transaction.from.toHex()
+
   }
   liquidator.amount0 = liquidator.amount0.plus(amount0)
   liquidator.amount1 = liquidator.amount1.plus(amount1)
@@ -151,7 +153,6 @@ export function handleIncreaseLiquidity (event: IncreaseLiquidity): void {
 
   if (account != null) {
     account.platformTxCount = account.platformTxCount.plus(BigInt.fromI32(1))
-    liquidator.account = account!.id
     account.save()
   }
 
@@ -169,6 +170,9 @@ export function handleDecreaseLiquidity (event: DecreaseLiquidity): void {
   if (position == null) {
     return
   }
+  let bundle = Bundle.load('1')!
+  bundle.maticPriceUSD = getEthPriceInUSD()
+  bundle.save()
 
   let token0 = Token.load(position.token0)
   let token1 = Token.load(position.token1)
@@ -191,6 +195,21 @@ export function handleDecreaseLiquidity (event: DecreaseLiquidity): void {
 
   let transaction = loadTransaction(event, TransactionType.DECREASE_LIQUIDITY)
   let account = loadAccount(transaction.account)
+  const liquidatorId = `${event.transaction.from.toHex()}#${position.pool}`
+  let liquidator = LiquidatorData.load(liquidatorId)
+  if (!liquidator) {
+    liquidator = new LiquidatorData(liquidatorId)
+    liquidator.token0 = token0!.id
+    liquidator.token1 = token1!.id
+    liquidator.account = event.transaction.from.toHex()
+  }
+  liquidator.amount0 = liquidator.amount0.minus(amount0)
+  liquidator.amount1 = liquidator.amount1.minus(amount1)
+
+  let amountUSD = amount0
+    .times(token0!.derivedMatic.times(bundle.maticPriceUSD))
+    .plus(amount1.times(token1!.derivedMatic.times(bundle.maticPriceUSD)))
+  liquidator.totalLiquidityUsd = liquidator.totalLiquidityUsd.minus(amountUSD)
 
   if (account != null) {
     account.platformTxCount = account.platformTxCount.plus(BigInt.fromI32(1))
