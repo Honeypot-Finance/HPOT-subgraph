@@ -89,10 +89,11 @@ export function handleInitialize(event: Initialize): void {
   token1.derivedMatic = findEthPerToken(token1 as Token)
   token0.derivedUSD = getDerivedPriceUSD(token0 as Token)
   token1.derivedUSD = getDerivedPriceUSD(token1 as Token)
-  updateMemeRacerHourData(token0.id, event.block.timestamp)
-  updateMemeRacerHourData(token1.id, event.block.timestamp)
   token0.save()
   token1.save()
+
+  updateMemeRacerHourData(token0, event.block.timestamp, true)
+  updateMemeRacerHourData(token1, event.block.timestamp, true)
 }
 
 export function handleMint(event: MintEvent): void {
@@ -747,8 +748,8 @@ export function handleSwap(event: SwapEvent): void {
   }
 
   // Update meme racer data if token is in race
-  updateMemeRacerHourData(token1.id, event.block.timestamp)
-  updateMemeRacerHourData(token1.id, event.block.timestamp)
+  updateMemeRacerHourData(token0, event.block.timestamp)
+  updateMemeRacerHourData(token1, event.block.timestamp)
 
   // Update APR
   updatePoolAPR(pool)
@@ -912,7 +913,7 @@ export function handleTransfer(event: Transfer): void {
     account.save()
   }
 
-  updateMemeRacerHourData(token.id, event.block.timestamp)
+  updateMemeRacerHourData(token, event.block.timestamp)
 }
 
 function loadTickUpdateFeeVarsAndSave(tickId: i32, event: ethereum.Event): void {

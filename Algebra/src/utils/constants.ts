@@ -57,6 +57,7 @@ export const TransactionTypeToString = (type: i32): string => {
   }
 }
 
+export const MEME_RACE_START_TIME = BigInt.fromI32(1734523200)
 export const MEME_RACERS = [
   '0x2004116f5bbc9f8df3cf46be48d0788fd284f979'.toLowerCase(),
   '0xd92e5d89cfe82bb0c0f95a3f4b0ee5ddb22e5e87'.toLowerCase(),

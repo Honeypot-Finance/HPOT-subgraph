@@ -1232,11 +1232,13 @@ type MemeRacer @entity {
   token: Token!
   hourData: [MemeRacerHourData!]! @derivedFrom(field: "racer")
   currentScore: BigDecimal! # current market cap
+  totalSupply: BigInt!
 }
 
 type MemeRacerHourData @entity {
   id: ID! # token address + timestamp
   racer: MemeRacer!
+  usdAtThisHour: BigDecimal!
   timestamp: BigInt! # start of hour timestamp
   score: BigDecimal! # market cap at this hour
 }
