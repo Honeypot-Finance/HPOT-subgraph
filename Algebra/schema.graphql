@@ -843,6 +843,25 @@ type PoolMonthData @entity {
   close: BigDecimal!
 }
 
+type LiquidatorData @entity {
+  # user addresss # pool address
+  id: ID!
+  # address of token 0
+  token0: Token!
+  # address of token 1
+  token1: Token!
+  # amount of token 0 in user deposited
+  amount0: BigDecimal!
+  # amount of token 0 in user deposited
+  amount1: BigDecimal!
+  #total amount of liquidity in USD
+  totalLiquidityUsd: BigDecimal!
+  # pool address
+  pool: Pool!
+  # user address
+  account: Account!
+}
+
 type TickHourData @entity {
   # format: <pool address>-<tick index>-<timestamp>
   id: ID!
