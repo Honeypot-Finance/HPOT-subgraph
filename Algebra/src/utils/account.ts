@@ -1,8 +1,9 @@
 import { Address, BigDecimal, BigInt, bigInt, store } from '@graphprotocol/graph-ts'
-import { ADDRESS_ZERO, HUNDRED_BD, ONE_BI, ZERO_BD, ZERO_BI } from './constants'
-import { Account } from '../types/schema'
+import { ADDRESS_ZERO, FACTORY_ADDRESS, HUNDRED_BD, ONE_BI, ZERO_BD, ZERO_BI } from './constants'
+import { Account, Factory } from '../types/schema'
 
 export const createAccount = (account: string): Account => {
+  const factory = Factory.load(FACTORY_ADDRESS)!
   const loadedAccount = Account.load(account)
   if (loadedAccount) {
     return loadedAccount
@@ -33,6 +34,8 @@ export const createAccount = (account: string): Account => {
   newAcc.totalSpendUSD = ZERO_BD
 
   newAcc.save()
+  factory.accountCount = factory.accountCount.plus(ONE_BI)
+  factory.save()
 
   return newAcc
 }

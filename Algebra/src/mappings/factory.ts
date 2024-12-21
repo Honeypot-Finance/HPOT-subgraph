@@ -111,28 +111,7 @@ export function handleCustomPoolCreated(event: CustomPool): void {
 }
 
 export function handleNewCommunityFee(event: DefaultCommunityFee): void {
-  let factory = Factory.load(FACTORY_ADDRESS)
-  if (factory == null) {
-    factory = new Factory(FACTORY_ADDRESS)
-    factory.poolCount = ZERO_BI
-    factory.totalVolumeMatic = ZERO_BD
-    factory.totalVolumeUSD = ZERO_BD
-    factory.untrackedVolumeUSD = ZERO_BD
-    factory.totalFeesUSD = ZERO_BD
-    factory.totalFeesMatic = ZERO_BD
-    factory.totalValueLockedMatic = ZERO_BD
-    factory.totalValueLockedUSD = ZERO_BD
-    factory.totalValueLockedUSDUntracked = ZERO_BD
-    factory.totalValueLockedMaticUntracked = ZERO_BD
-    factory.txCount = ZERO_BI
-    factory.owner = ADDRESS_ZERO
-
-    // create new bundle for tracking matic price
-    let bundle = new Bundle('1')
-    bundle.maticPriceUSD = ZERO_BD
-    bundle.save()
-  }
-
+  let factory = loadFactory()
   factory.defaultCommunityFee = BigInt.fromI32(event.params.newDefaultCommunityFee as i32)
   factory.save()
 }
@@ -154,7 +133,7 @@ function loadFactory(): Factory {
     factory.totalValueLockedMaticUntracked = ZERO_BD
     factory.txCount = ZERO_BI
     factory.owner = ADDRESS_ZERO
-
+    factory.accountCount = ZERO_BI
     // create new bundle for tracking matic price
     let bundle = new Bundle('1')
     bundle.maticPriceUSD = ZERO_BD

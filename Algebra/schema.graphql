@@ -27,6 +27,8 @@ type Factory @entity {
   totalValueLockedMaticUntracked: BigDecimal!
   # current owner of the factory
   owner: ID!
+  # total Account count
+  accountCount: BigInt!
 }
 
 type Account @entity {

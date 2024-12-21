@@ -878,14 +878,15 @@ export function handleTransfer(event: Transfer): void {
   const fromHolder = HoldingToken.load(fromHolderId)
   if (fromHolder && isNotZeroAddress(event.params.from.toHexString())) {
     //check user token balance
-    fromHolder.holdingValue.minus(event.params.value)
-    if (fromHolder.holdingValue.equals(ZERO_BI)) {
+    fromHolder.holdingValue = fromHolder.holdingValue.minus(event.params.value)
+    if (fromHolder.holdingValue.minus(event.params.value).equals(ZERO_BI)) {
       store.remove('HoldingToken', fromHolderId)
       token.holderCount = token.holderCount.minus(ONE_BI)
       if (account && token.pot2Pump._id != ADDRESS_ZERO) {
         account.memeTokenHoldingCount = account.memeTokenHoldingCount.minus(ONE_BI)
       }
     }
+    fromHolder.save()
   }
 
   // check to address
@@ -893,18 +894,18 @@ export function handleTransfer(event: Transfer): void {
   const toHolder = HoldingToken.load(toHolderId)
   if (isNotZeroAddress(event.params.to.toHexString())) {
     if (toHolder) {
-      toHolder.holdingValue.plus(event.params.value)
+      toHolder.holdingValue = toHolder.holdingValue.plus(event.params.value)
       toHolder.save()
     } else {
       let newHolder = new HoldingToken(toHolderId)
       newHolder.account = event.params.to.toHexString()
       newHolder.token = token.id
       newHolder.holdingValue = event.params.value
-      newHolder.save()
       token.holderCount = token.holderCount.plus(ONE_BI)
       if (account && token.pot2Pump._id != ADDRESS_ZERO) {
         account.memeTokenHoldingCount = account.memeTokenHoldingCount.plus(ONE_BI)
       }
+      newHolder.save()
     }
   }
 
