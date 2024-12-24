@@ -6,13 +6,14 @@ import {
   NonfungiblePositionManager,
   Transfer
 } from '../types/NonfungiblePositionManager/NonfungiblePositionManager'
-import { Position, PositionSnapshot, Token } from '../types/schema'
+import { Bundle, LiquidatorData, Position, PositionSnapshot, Token } from '../types/schema'
 import { ADDRESS_ZERO, factoryContract, ZERO_BD, ZERO_BI, pools_list, TransactionType } from '../utils/constants'
 import { Address, BigInt, ethereum } from '@graphprotocol/graph-ts'
 import { convertTokenToDecimal, loadTransaction } from '../utils'
 import { loadAccount } from '../utils/account'
+import { getEthPriceInUSD } from '../utils/pricing'
 
-function getPosition(event: ethereum.Event, tokenId: BigInt): Position | null {
+function getPosition (event: ethereum.Event, tokenId: BigInt): Position | null {
   let position = Position.load(tokenId.toString())
   if (position === null) {
     let contract = NonfungiblePositionManager.bind(event.address)
@@ -58,7 +59,7 @@ function getPosition(event: ethereum.Event, tokenId: BigInt): Position | null {
   return null
 }
 
-function updateFeeVars(position: Position, event: ethereum.Event, tokenId: BigInt): Position {
+function updateFeeVars (position: Position, event: ethereum.Event, tokenId: BigInt): Position {
   let positionManagerContract = NonfungiblePositionManager.bind(event.address)
   let positionResult = positionManagerContract.try_positions(tokenId)
   if (!positionResult.reverted) {
@@ -68,7 +69,7 @@ function updateFeeVars(position: Position, event: ethereum.Event, tokenId: BigIn
   return position
 }
 
-function savePositionSnapshot(position: Position, event: ethereum.Event): void {
+function savePositionSnapshot (position: Position, event: ethereum.Event): void {
   let positionSnapshot = new PositionSnapshot(position.id.concat('#').concat(event.block.number.toString()))
   positionSnapshot.owner = position.owner
   positionSnapshot.pool = position.pool
@@ -102,9 +103,11 @@ function savePositionSnapshot(position: Position, event: ethereum.Event): void {
   positionSnapshot.save()
 }
 
-export function handleIncreaseLiquidity(event: IncreaseLiquidity): void {
+export function handleIncreaseLiquidity (event: IncreaseLiquidity): void {
   let position = getPosition(event, event.params.tokenId)
-
+  let bundle = Bundle.load('1')!
+  bundle.maticPriceUSD = getEthPriceInUSD()
+  bundle.save()
   // position was not able to be fetched
   if (position == null) {
     return
@@ -130,6 +133,23 @@ export function handleIncreaseLiquidity(event: IncreaseLiquidity): void {
 
   let transaction = loadTransaction(event, TransactionType.INCREASE_LIQUIDITY)
   let account = loadAccount(transaction.account)
+  const liquidatorId = `${event.transaction.from.toHex()}#${event.params.pool.toHex()}`
+  let liquidator = LiquidatorData.load(liquidatorId)
+  if (!liquidator) {
+    liquidator = new LiquidatorData(liquidatorId)
+    liquidator.token0 = token0!.id
+    liquidator.token1 = token1!.id
+    liquidator.account = event.transaction.from.toHex()
+
+  }
+  liquidator.amount0 = liquidator.amount0.plus(amount0)
+  liquidator.amount1 = liquidator.amount1.plus(amount1)
+
+  let amountUSD = amount0
+    .times(token0!.derivedMatic.times(bundle.maticPriceUSD))
+    .plus(amount1.times(token1!.derivedMatic.times(bundle.maticPriceUSD)))
+
+  liquidator.totalLiquidityUsd = liquidator.totalLiquidityUsd.plus(amountUSD)
 
   if (account != null) {
     account.platformTxCount = account.platformTxCount.plus(BigInt.fromI32(1))
@@ -138,17 +158,21 @@ export function handleIncreaseLiquidity(event: IncreaseLiquidity): void {
 
   transaction.save()
   position.save()
+  liquidator.save()
 
   savePositionSnapshot(position, event)
 }
 
-export function handleDecreaseLiquidity(event: DecreaseLiquidity): void {
+export function handleDecreaseLiquidity (event: DecreaseLiquidity): void {
   let position = getPosition(event, event.params.tokenId)
 
   // position was not able to be fetched
   if (position == null) {
     return
   }
+  let bundle = Bundle.load('1')!
+  bundle.maticPriceUSD = getEthPriceInUSD()
+  bundle.save()
 
   let token0 = Token.load(position.token0)
   let token1 = Token.load(position.token1)
@@ -171,6 +195,21 @@ export function handleDecreaseLiquidity(event: DecreaseLiquidity): void {
 
   let transaction = loadTransaction(event, TransactionType.DECREASE_LIQUIDITY)
   let account = loadAccount(transaction.account)
+  const liquidatorId = `${event.transaction.from.toHex()}#${position.pool}`
+  let liquidator = LiquidatorData.load(liquidatorId)
+  if (!liquidator) {
+    liquidator = new LiquidatorData(liquidatorId)
+    liquidator.token0 = token0!.id
+    liquidator.token1 = token1!.id
+    liquidator.account = event.transaction.from.toHex()
+  }
+  liquidator.amount0 = liquidator.amount0.minus(amount0)
+  liquidator.amount1 = liquidator.amount1.minus(amount1)
+
+  let amountUSD = amount0
+    .times(token0!.derivedMatic.times(bundle.maticPriceUSD))
+    .plus(amount1.times(token1!.derivedMatic.times(bundle.maticPriceUSD)))
+  liquidator.totalLiquidityUsd = liquidator.totalLiquidityUsd.minus(amountUSD)
 
   if (account != null) {
     account.platformTxCount = account.platformTxCount.plus(BigInt.fromI32(1))
@@ -183,7 +222,7 @@ export function handleDecreaseLiquidity(event: DecreaseLiquidity): void {
   savePositionSnapshot(position, event)
 }
 
-export function handleCollect(event: Collect): void {
+export function handleCollect (event: Collect): void {
   let position = getPosition(event, event.params.tokenId)
 
   // position was not able to be fetched
@@ -227,7 +266,7 @@ export function handleCollect(event: Collect): void {
   savePositionSnapshot(position, event)
 }
 
-export function handleTransfer(event: Transfer): void {
+export function handleTransfer (event: Transfer): void {
   let position = getPosition(event, event.params.tokenId)
 
   // position was not able to be fetched
