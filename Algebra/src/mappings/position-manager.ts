@@ -206,6 +206,7 @@ export function handleDecreaseLiquidity (event: DecreaseLiquidity): void {
   }
   liquidator.amount0 = liquidator.amount0.minus(amount0)
   liquidator.amount1 = liquidator.amount1.minus(amount1)
+  liquidator.pool = position.pool
 
   let amountUSD = amount0
     .times(token0!.derivedMatic.times(bundle.maticPriceUSD))
@@ -219,6 +220,7 @@ export function handleDecreaseLiquidity (event: DecreaseLiquidity): void {
 
   transaction.save()
   position.save()
+  liquidator.save()
 
   savePositionSnapshot(position, event)
 }
