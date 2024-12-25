@@ -441,6 +441,13 @@ export function handleSwap(event: SwapEvent): void {
     recipientAccount.swapCount = recipientAccount.swapCount.plus(ONE_BI)
   }
 
+  if (token0Pot2Pump) {
+    token0Pot2Pump.buyCount = token0Pot2Pump.buyCount.plus(ONE_BI)
+  }
+  if (token1Pot2Pump) {
+    token1Pot2Pump.sellCount = token1Pot2Pump.sellCount.plus(ONE_BI)
+  }
+
   let amount0: BigDecimal
   let amount1: BigDecimal
   if (pools_list.includes(event.address.toHexString())) {

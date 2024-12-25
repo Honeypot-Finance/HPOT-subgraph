@@ -55,6 +55,7 @@ type Account @entity {
   # aquabera
   vaultShares: [VaultShare!] @derivedFrom(field: "user")
 }
+
 type HoldingToken @entity {
   # account address + token address
   id: ID!
@@ -148,12 +149,15 @@ type Pot2Pump @entity {
   totalRefundAmount: BigInt!
   # total claimLP amount of pair
   totalClaimLpAmount: BigInt!
+
   createdAt: BigInt!
   endTime: BigInt!
   state: BigInt!
 
   # transactions
   participantTransactionHistorys: [ParticipantTransactionHistory!]! @derivedFrom(field: "pot2Pump")
+  buyCount: BigInt!
+  sellCount: BigInt!
 
   # Search string combining address and token symbols
   searchString: String!
