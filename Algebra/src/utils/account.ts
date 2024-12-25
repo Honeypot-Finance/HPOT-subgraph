@@ -18,19 +18,6 @@ export const createAccount = (account: string): Account => {
   newAcc.participateCount = ZERO_BI
   newAcc.swapCount = ZERO_BI
   newAcc.holdingPoolCount = ZERO_BI
-  newAcc.totalEarningUSDDay = ZERO_BD
-  newAcc.totalEarningPercentageDay = ZERO_BD
-  newAcc.totalEarningUSDWeek = ZERO_BD
-  newAcc.totalEarningPercentageWeek = ZERO_BD
-  newAcc.totalEarningUSDMonth = ZERO_BD
-  newAcc.totalEarningPercentageMonth = ZERO_BD
-  newAcc.totalEarningUSDYear = ZERO_BD
-  newAcc.totalEarningPercentageYear = ZERO_BD
-  newAcc.accountBalanceUSD = ZERO_BD
-  newAcc.accountBalanceUSDDay = ZERO_BD
-  newAcc.accountBalanceUSDWeek = ZERO_BD
-  newAcc.accountBalanceUSDMonth = ZERO_BD
-  newAcc.accountBalanceUSDYear = ZERO_BD
   newAcc.totalSpendUSD = ZERO_BD
 
   newAcc.save()

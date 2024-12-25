@@ -52,23 +52,6 @@ type Account @entity {
   # dex total profit
   totalSpendUSD: BigDecimal!
 
-  # earning (calculate all pot2pump, holding token, pool) derived in USD
-  totalEarningUSDDay: BigDecimal!
-  totalEarningPercentageDay: BigDecimal!
-  totalEarningUSDWeek: BigDecimal!
-  totalEarningPercentageWeek: BigDecimal!
-  totalEarningUSDMonth: BigDecimal!
-  totalEarningPercentageMonth: BigDecimal!
-  totalEarningUSDYear: BigDecimal!
-  totalEarningPercentageYear: BigDecimal!
-
-  # balance (calculate all pot2pump, holding token, pool) derived in USD
-  accountBalanceUSD: BigDecimal!
-  accountBalanceUSDDay: BigDecimal!
-  accountBalanceUSDWeek: BigDecimal!
-  accountBalanceUSDMonth: BigDecimal!
-  accountBalanceUSDYear: BigDecimal!
-
   # aquabera
   vaultShares: [VaultShare!] @derivedFrom(field: "user")
 }
