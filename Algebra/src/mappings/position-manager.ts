@@ -150,6 +150,7 @@ export function handleIncreaseLiquidity (event: IncreaseLiquidity): void {
     .plus(amount1.times(token1!.derivedMatic.times(bundle.maticPriceUSD)))
 
   liquidator.totalLiquidityUsd = liquidator.totalLiquidityUsd.plus(amountUSD)
+  liquidator.pool = position.pool
 
   if (account != null) {
     account.platformTxCount = account.platformTxCount.plus(BigInt.fromI32(1))
