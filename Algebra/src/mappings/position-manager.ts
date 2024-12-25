@@ -8,7 +8,7 @@ import {
 } from '../types/NonfungiblePositionManager/NonfungiblePositionManager'
 import { Bundle, LiquidatorData, Position, PositionSnapshot, Token } from '../types/schema'
 import { ADDRESS_ZERO, factoryContract, ZERO_BD, ZERO_BI, pools_list, TransactionType } from '../utils/constants'
-import { Address, BigInt, ethereum } from '@graphprotocol/graph-ts'
+import { Address, BigDecimal, BigInt, ethereum } from '@graphprotocol/graph-ts'
 import { convertTokenToDecimal, loadTransaction } from '../utils'
 import { loadAccount } from '../utils/account'
 import { getEthPriceInUSD } from '../utils/pricing'
@@ -140,7 +140,9 @@ export function handleIncreaseLiquidity (event: IncreaseLiquidity): void {
     liquidator.token0 = token0!.id
     liquidator.token1 = token1!.id
     liquidator.account = event.transaction.from.toHex()
-
+    liquidator.amount0 = new BigDecimal(new BigInt(0))
+    liquidator.amount1 = new BigDecimal(new BigInt(0))
+    liquidator.totalLiquidityUsd = new BigDecimal(new BigInt(0))
   }
   liquidator.amount0 = liquidator.amount0.plus(amount0)
   liquidator.amount1 = liquidator.amount1.plus(amount1)
@@ -203,6 +205,9 @@ export function handleDecreaseLiquidity (event: DecreaseLiquidity): void {
     liquidator.token0 = token0!.id
     liquidator.token1 = token1!.id
     liquidator.account = event.transaction.from.toHex()
+    liquidator.amount0 = new BigDecimal(new BigInt(0))
+    liquidator.amount1 = new BigDecimal(new BigInt(0))
+    liquidator.totalLiquidityUsd = new BigDecimal(new BigInt(0))
   }
   liquidator.amount0 = liquidator.amount0.minus(amount0)
   liquidator.amount1 = liquidator.amount1.minus(amount1)
