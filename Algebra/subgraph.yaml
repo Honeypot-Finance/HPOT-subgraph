@@ -63,6 +63,8 @@ dataSources:
           file: ./abis/factory.json
         - name: ERC20
           file: ./abis/ERC20.json
+        - name: Pot2PumpFactory 
+          file: ./abis/pot2PumpFactory.json
       eventHandlers:
         - event: Collect(indexed uint256,address,uint256,uint256)
           handler: handleCollect
@@ -141,6 +143,8 @@ templates:
           file: ./abis/factory.json
         - name: ERC20
           file: ./abis/ERC20.json
+        - name: Pot2PumpFactory
+          file: ./abis/pot2PumpFactory.json
       eventHandlers:
         - event: Initialize(uint160,int24)
           handler: handleInitialize

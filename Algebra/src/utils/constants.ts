@@ -58,13 +58,13 @@ export const TransactionTypeToString = (type: i32): string => {
 }
 
 export const MEME_RACE_START_TIME = BigInt.fromI32(1734523200)
-export const MEME_RACERS = [
-  '0x2004116f5bbc9f8df3cf46be48d0788fd284f979'.toLowerCase(),
-  '0xd92e5d89cfe82bb0c0f95a3f4b0ee5ddb22e5e87'.toLowerCase(),
-  '0x04457d8063168e7008df0f6d10961622a316dd1c'.toLowerCase(),
-  '0x3d7c362411b39ae2d1aae1088759711cb1c5f0f3'.toLowerCase(),
-  '0x6f82653a5f95f8d4215cfa6cbc07de2429989b1d'.toLowerCase(),
-  '0x223c1ee6fae816e430ada62a1e5a20c3060f0b4f'.toLowerCase(),
-  '0x6e504fcb8519820499ec2518bd912016b373c5dc'.toLowerCase(),
-  '0x24dc27d117aca1d8c0aace33bd840026c9a52e28'.toLowerCase()
+export const MEME_RACERS: string[] = [
+  // '0x2004116f5bbc9f8df3cf46be48d0788fd284f979'.toLowerCase(),
+  // '0xd92e5d89cfe82bb0c0f95a3f4b0ee5ddb22e5e87'.toLowerCase(),
+  // '0x04457d8063168e7008df0f6d10961622a316dd1c'.toLowerCase(),
+  // '0x3d7c362411b39ae2d1aae1088759711cb1c5f0f3'.toLowerCase(),
+  // '0x6f82653a5f95f8d4215cfa6cbc07de2429989b1d'.toLowerCase(),
+  // '0x223c1ee6fae816e430ada62a1e5a20c3060f0b4f'.toLowerCase(),
+  // '0x6e504fcb8519820499ec2518bd912016b373c5dc'.toLowerCase(),
+  // '0x24dc27d117aca1d8c0aace33bd840026c9a52e28'.toLowerCase()
 ]

@@ -61,7 +61,7 @@ import { createTick } from '../utils/tick'
 import { Transfer } from '../types/Factory/ERC20'
 import { isNotZeroAddress, isZeroAddress } from '../utils/address'
 import { loadAccount } from '../utils/account'
-import { loadToken } from '../utils/token'
+import { fetchTokenPot2PumpAddress, loadToken } from '../utils/token'
 import { updateMemeRacerHourData } from '../utils/memeRacer'
 import { updateMonthDataAPR, updatePoolAPR, updateWeekDataAPR } from '../utils/apr'
 import { updateDayDataAPR } from '../utils/apr'
@@ -432,30 +432,40 @@ export function handleSwap(event: SwapEvent): void {
   let oldTick = pool.tick
   let token0 = Token.load(pool.token0)!
   let token1 = Token.load(pool.token1)!
-  let token0Pot2Pump = Pot2Pump.load(token0.pot2Pump._id)
-  let token1Pot2Pump = Pot2Pump.load(token1.pot2Pump._id)
+  let token0Pot2Pump = Pot2Pump.load(fetchTokenPot2PumpAddress(Address.fromString(token0.id)).toHexString())
+  let token1Pot2Pump = Pot2Pump.load(fetchTokenPot2PumpAddress(Address.fromString(token1.id)).toHexString())
   let recipientAccount = loadAccount(event.params.recipient.toHexString())
-
-  // update recipient account
-  if (recipientAccount != null) {
-    recipientAccount.swapCount = recipientAccount.swapCount.plus(ONE_BI)
-  }
-
-  if (token0Pot2Pump) {
-    token0Pot2Pump.buyCount = token0Pot2Pump.buyCount.plus(ONE_BI)
-  }
-  if (token1Pot2Pump) {
-    token1Pot2Pump.sellCount = token1Pot2Pump.sellCount.plus(ONE_BI)
-  }
-
   let amount0: BigDecimal
   let amount1: BigDecimal
+
+  // get amount0 and amount1
   if (pools_list.includes(event.address.toHexString())) {
     amount0 = convertTokenToDecimal(event.params.amount1, token0.decimals)
     amount1 = convertTokenToDecimal(event.params.amount0, token1.decimals)
   } else {
     amount0 = convertTokenToDecimal(event.params.amount0, token0.decimals)
     amount1 = convertTokenToDecimal(event.params.amount1, token1.decimals)
+  }
+
+  // update recipient account
+  if (recipientAccount != null) {
+    recipientAccount.swapCount = recipientAccount.swapCount.plus(ONE_BI)
+  }
+
+  // update pot2pump buy/sell count
+  if (token0Pot2Pump) {
+    if (amount0.lt(ZERO_BD)) {
+      token0Pot2Pump.buyCount = token0Pot2Pump.buyCount.plus(ONE_BI)
+    } else {
+      token0Pot2Pump.sellCount = token0Pot2Pump.sellCount.plus(ONE_BI)
+    }
+  }
+  if (token1Pot2Pump) {
+    if (amount1.lt(ZERO_BD)) {
+      token1Pot2Pump.buyCount = token1Pot2Pump.buyCount.plus(ONE_BI)
+    } else {
+      token1Pot2Pump.sellCount = token1Pot2Pump.sellCount.plus(ONE_BI)
+    }
   }
   let swapFee = event.params.overrideFee > 0 ? BigInt.fromI32(event.params.overrideFee) : pool.fee
 
