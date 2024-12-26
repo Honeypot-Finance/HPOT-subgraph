@@ -105,8 +105,8 @@ export function handleMint(event: MintEvent): void {
   let token0 = Token.load(pool.token0)!
   let token1 = Token.load(pool.token1)!
 
-  let token0Pot2Pump = Pot2Pump.load(token0.pot2Pump._id)
-  let token1Pot2Pump = Pot2Pump.load(token1.pot2Pump._id)
+  let token0Pot2Pump = Pot2Pump.load(fetchTokenPot2PumpAddress(Address.fromString(token0.id)).toHexString())
+  let token1Pot2Pump = Pot2Pump.load(fetchTokenPot2PumpAddress(Address.fromString(token1.id)).toHexString())
 
   let amount0 = convertTokenToDecimal(event.params.amount0, token0.decimals)
   let amount1 = convertTokenToDecimal(event.params.amount1, token1.decimals)
@@ -275,8 +275,8 @@ export function handleBurn(event: BurnEvent): void {
   let token0 = Token.load(pool.token0)!
   let token1 = Token.load(pool.token1)!
 
-  let token0Pot2Pump = Pot2Pump.load(token0.pot2Pump._id)
-  let token1Pot2Pump = Pot2Pump.load(token1.pot2Pump._id)
+  let token0Pot2Pump = Pot2Pump.load(fetchTokenPot2PumpAddress(Address.fromString(token0.id)).toHexString())
+  let token1Pot2Pump = Pot2Pump.load(fetchTokenPot2PumpAddress(Address.fromString(token1.id)).toHexString())
 
   let amount0 = convertTokenToDecimal(event.params.amount0, token0.decimals)
   let amount1 = convertTokenToDecimal(event.params.amount1, token1.decimals)
@@ -893,13 +893,14 @@ export function handleTransfer(event: Transfer): void {
   // check from address
   const fromHolderId = token.id + event.params.from.toHexString()
   const fromHolder = HoldingToken.load(fromHolderId)
+  const fromTokenPot2Pump = Pot2Pump.load(fetchTokenPot2PumpAddress(Address.fromString(token.id)).toHexString())
   if (fromHolder && isNotZeroAddress(event.params.from.toHexString())) {
     //check user token balance
     fromHolder.holdingValue = fromHolder.holdingValue.minus(event.params.value)
     if (fromHolder.holdingValue.minus(event.params.value).equals(ZERO_BI)) {
       store.remove('HoldingToken', fromHolderId)
       token.holderCount = token.holderCount.minus(ONE_BI)
-      if (account && token.pot2Pump._id != ADDRESS_ZERO) {
+      if (account && fromTokenPot2Pump && fromTokenPot2Pump.id != ADDRESS_ZERO) {
         account.memeTokenHoldingCount = account.memeTokenHoldingCount.minus(ONE_BI)
       }
     }
@@ -909,6 +910,7 @@ export function handleTransfer(event: Transfer): void {
   // check to address
   const toHolderId = token.id + event.params.to.toHexString()
   const toHolder = HoldingToken.load(toHolderId)
+  const toTokenPot2Pump = Pot2Pump.load(fetchTokenPot2PumpAddress(Address.fromString(token.id)).toHexString())
   if (isNotZeroAddress(event.params.to.toHexString())) {
     if (toHolder) {
       toHolder.holdingValue = toHolder.holdingValue.plus(event.params.value)
@@ -919,7 +921,7 @@ export function handleTransfer(event: Transfer): void {
       newHolder.token = token.id
       newHolder.holdingValue = event.params.value
       token.holderCount = token.holderCount.plus(ONE_BI)
-      if (account && token.pot2Pump._id != ADDRESS_ZERO) {
+      if (account && toTokenPot2Pump && toTokenPot2Pump.id != ADDRESS_ZERO) {
         account.memeTokenHoldingCount = account.memeTokenHoldingCount.plus(ONE_BI)
       }
       newHolder.save()
