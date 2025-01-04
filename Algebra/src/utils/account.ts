@@ -2,16 +2,16 @@ import { Address, BigDecimal, BigInt, bigInt, store } from '@graphprotocol/graph
 import { ADDRESS_ZERO, FACTORY_ADDRESS, HUNDRED_BD, ONE_BI, ZERO_BD, ZERO_BI } from './constants'
 import { Account, Factory } from '../types/schema'
 
-export const createAccount = (account: string): Account => {
+export const createAccount = (account: Address): Account => {
   const factory = Factory.load(FACTORY_ADDRESS)!
-  const loadedAccount = Account.load(account)
+  const loadedAccount = Account.load(account.toHexString())
   if (loadedAccount) {
     return loadedAccount
   }
 
-  const newAcc = new Account(account)
+  const newAcc = new Account(account.toHexString())
 
-  newAcc.id = account
+  newAcc.id = account.toHexString()
   newAcc.memeTokenHoldingCount = ZERO_BI
   newAcc.pot2PumpLaunchCount = ZERO_BI
   newAcc.platformTxCount = ZERO_BI
@@ -27,11 +27,11 @@ export const createAccount = (account: string): Account => {
   return newAcc
 }
 
-export const loadAccount = (account: string): Account | null => {
-  if (account === ADDRESS_ZERO) {
+export const loadAccount = (account: Address): Account | null => {
+  if (account.toHexString() === ADDRESS_ZERO) {
     return null
   }
-  const loadedAccount = Account.load(account)
+  const loadedAccount = Account.load(account.toHexString())
   if (loadedAccount) {
     return loadedAccount
   } else {

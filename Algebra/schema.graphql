@@ -134,6 +134,7 @@ type Pot2Pump @entity {
   # raised token
   raisedTokenMinCap: BigInt!
   raisedToken: Token!
+  depositRaisedTokenPercentageToMinCap: BigDecimal!
   raisedTokenReachingMinCap: Boolean!
   DepositRaisedToken: BigInt!
 
@@ -174,7 +175,8 @@ type Participant @entity {
   # total claim LP amount , 1 mean claim all, 0 mean no claim
   totalclaimLqAmount: BigInt!
 
-  canClaim: Boolean!
+  claimed: Boolean!
+  refunded: Boolean!
 
   createdAt: BigInt!
 

@@ -217,9 +217,9 @@ export function handleTransfer(event: TransferEvent): void {
   // - - - - - update account balances - - - - -
 
   const from = event.params.from
-  createAccount(from.toString())
+  createAccount(from)
   const to = event.params.to
-  createAccount(to.toString())
+  createAccount(to)
 
   // since the ICHIVault emitted the Transfer event
   const ichiVaultId = event.address.toHexString()

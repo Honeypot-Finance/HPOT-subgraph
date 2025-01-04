@@ -98,12 +98,12 @@ export function handleInitialize(event: Initialize): void {
 
 export function handleMint(event: MintEvent): void {
   let bundle = Bundle.load('1')!
-  let poolAddress = event.address.toHexString()
-  let pool = Pool.load(poolAddress)!
+  let poolAddress = event.address
+  let pool = Pool.load(poolAddress.toHexString())!
   let factory = Factory.load(FACTORY_ADDRESS)!
 
-  let token0 = Token.load(pool.token0)!
-  let token1 = Token.load(pool.token1)!
+  let token0 = loadToken(Address.fromString(pool.token0))
+  let token1 = loadToken(Address.fromString(pool.token1))
 
   let token0Pot2Pump = Pot2Pump.load(fetchTokenPot2PumpAddress(Address.fromString(token0.id)).toHexString())
   let token1Pot2Pump = Pot2Pump.load(fetchTokenPot2PumpAddress(Address.fromString(token1.id)).toHexString())
@@ -119,6 +119,10 @@ export function handleMint(event: MintEvent): void {
   let amountUSD = amount0
     .times(token0.derivedMatic.times(bundle.maticPriceUSD))
     .plus(amount1.times(token1.derivedMatic.times(bundle.maticPriceUSD)))
+
+  // update token pool count
+  token0.poolCount = token0.poolCount.plus(ONE_BI)
+  token1.poolCount = token1.poolCount.plus(ONE_BI)
 
   // reset tvl aggregates until new amounts calculated
   factory.totalValueLockedMatic = factory.totalValueLockedMatic.minus(pool.totalValueLockedMatic)
@@ -166,7 +170,7 @@ export function handleMint(event: MintEvent): void {
   factory.totalValueLockedUSD = factory.totalValueLockedMatic.times(bundle.maticPriceUSD)
 
   let transaction = loadTransaction(event, TransactionType.MINT)
-  let account = loadAccount(transaction.account)
+  let account = loadAccount(Address.fromString(transaction.account))
   let mint = new Mint(transaction.id.toString() + '#' + pool.txCount.toString())
   mint.transaction = transaction.id
   mint.timestamp = transaction.timestamp
@@ -194,18 +198,24 @@ export function handleMint(event: MintEvent): void {
   let lowerTickIdx = event.params.bottomTick
   let upperTickIdx = event.params.topTick
 
-  let lowerTickId = poolAddress + '#' + BigInt.fromI32(event.params.bottomTick).toString()
-  let upperTickId = poolAddress + '#' + BigInt.fromI32(event.params.topTick).toString()
+  let lowerTickId = poolAddress
+    .toHexString()
+    .concat('#')
+    .concat(BigInt.fromI32(event.params.bottomTick).toString())
+  let upperTickId = poolAddress
+    .toHexString()
+    .concat('#')
+    .concat(BigInt.fromI32(event.params.topTick).toString())
 
   let lowerTick = Tick.load(lowerTickId)
   let upperTick = Tick.load(upperTickId)
 
   if (lowerTick === null) {
-    lowerTick = createTick(lowerTickId.toLowerCase(), lowerTickIdx, pool.id, event)
+    lowerTick = createTick(lowerTickId, lowerTickIdx, pool.id, event)
   }
 
   if (upperTick === null) {
-    upperTick = createTick(upperTickId.toLowerCase(), upperTickIdx, pool.id, event)
+    upperTick = createTick(upperTickId, upperTickIdx, pool.id, event)
   }
 
   let amount = event.params.liquidityAmount
@@ -298,6 +308,10 @@ export function handleBurn(event: BurnEvent): void {
 
   plugin.save()
 
+  // update token pool count
+  token0.poolCount = token0.poolCount.minus(ONE_BI)
+  token1.poolCount = token1.poolCount.minus(ONE_BI)
+
   // reset tvl aggregates until new amounts calculated
   factory.totalValueLockedMatic = factory.totalValueLockedMatic.minus(pool.totalValueLockedMatic)
 
@@ -345,7 +359,7 @@ export function handleBurn(event: BurnEvent): void {
 
   // burn entity
   let transaction = loadTransaction(event, TransactionType.BURN)
-  let account = loadAccount(transaction.account)
+  let account = loadAccount(Address.fromString(transaction.account))
   let burn = new Burn(transaction.id + '#' + pool.txCount.toString())
   burn.transaction = transaction.id
   burn.timestamp = transaction.timestamp
@@ -434,7 +448,7 @@ export function handleSwap(event: SwapEvent): void {
   let token1 = Token.load(pool.token1)!
   let token0Pot2Pump = Pot2Pump.load(fetchTokenPot2PumpAddress(Address.fromString(token0.id)).toHexString())
   let token1Pot2Pump = Pot2Pump.load(fetchTokenPot2PumpAddress(Address.fromString(token1.id)).toHexString())
-  let recipientAccount = loadAccount(event.params.recipient.toHexString())
+  let recipientAccount = loadAccount(event.params.recipient)
   let amount0: BigDecimal
   let amount1: BigDecimal
 
@@ -612,7 +626,7 @@ export function handleSwap(event: SwapEvent): void {
 
   // create Swap event
   let transaction = loadTransaction(event, TransactionType.SWAP)
-  let account = loadAccount(transaction.account)
+  let account = loadAccount(Address.fromString(transaction.account))
   let swap = new Swap(transaction.id + '#' + pool.txCount.toString())
   swap.transaction = transaction.id
   swap.timestamp = transaction.timestamp
@@ -804,7 +818,7 @@ export function handleCollect(event: Collect): void {
   pool.txCount = pool.txCount.plus(ONE_BI)
 
   //account data
-  let account = loadAccount(event.params.recipient.toHexString())
+  let account = loadAccount(event.params.recipient)
   if (account) {
     account.platformTxCount = account.platformTxCount.plus(ONE_BI)
     account.save()
@@ -883,7 +897,9 @@ export function handleTransfer(event: Transfer): void {
     return
   }
   const token = loadToken(Address.fromString(event.address.toHexString()))
-  const account = loadAccount(event.params.from.toHexString())
+  const fromAccount = loadAccount(event.params.from)
+  const toAccount = loadAccount(event.params.to)
+  const tokenPot2Pump = Pot2Pump.load(fetchTokenPot2PumpAddress(Address.fromString(token.id)).toHexString())
 
   if (!token || !token.pot2Pump) {
     return
@@ -893,15 +909,14 @@ export function handleTransfer(event: Transfer): void {
   // check from address
   const fromHolderId = token.id + event.params.from.toHexString()
   const fromHolder = HoldingToken.load(fromHolderId)
-  const fromTokenPot2Pump = Pot2Pump.load(fetchTokenPot2PumpAddress(Address.fromString(token.id)).toHexString())
   if (fromHolder && isNotZeroAddress(event.params.from.toHexString())) {
     //check user token balance
     fromHolder.holdingValue = fromHolder.holdingValue.minus(event.params.value)
     if (fromHolder.holdingValue.minus(event.params.value).equals(ZERO_BI)) {
       store.remove('HoldingToken', fromHolderId)
       token.holderCount = token.holderCount.minus(ONE_BI)
-      if (account && fromTokenPot2Pump && fromTokenPot2Pump.id != ADDRESS_ZERO) {
-        account.memeTokenHoldingCount = account.memeTokenHoldingCount.minus(ONE_BI)
+      if (fromAccount && tokenPot2Pump && tokenPot2Pump.id != ADDRESS_ZERO) {
+        fromAccount.memeTokenHoldingCount = fromAccount.memeTokenHoldingCount.minus(ONE_BI)
       }
     }
     fromHolder.save()
@@ -910,7 +925,6 @@ export function handleTransfer(event: Transfer): void {
   // check to address
   const toHolderId = token.id + event.params.to.toHexString()
   const toHolder = HoldingToken.load(toHolderId)
-  const toTokenPot2Pump = Pot2Pump.load(fetchTokenPot2PumpAddress(Address.fromString(token.id)).toHexString())
   if (isNotZeroAddress(event.params.to.toHexString())) {
     if (toHolder) {
       toHolder.holdingValue = toHolder.holdingValue.plus(event.params.value)
@@ -921,16 +935,19 @@ export function handleTransfer(event: Transfer): void {
       newHolder.token = token.id
       newHolder.holdingValue = event.params.value
       token.holderCount = token.holderCount.plus(ONE_BI)
-      if (account && toTokenPot2Pump && toTokenPot2Pump.id != ADDRESS_ZERO) {
-        account.memeTokenHoldingCount = account.memeTokenHoldingCount.plus(ONE_BI)
+      if (toAccount && tokenPot2Pump && tokenPot2Pump.id != ADDRESS_ZERO) {
+        toAccount.memeTokenHoldingCount = toAccount.memeTokenHoldingCount.plus(ONE_BI)
       }
       newHolder.save()
     }
   }
 
   token.save()
-  if (account) {
-    account.save()
+  if (fromAccount) {
+    fromAccount.save()
+  }
+  if (toAccount) {
+    toAccount.save()
   }
 
   updateMemeRacerHourData(token, event.block.timestamp)

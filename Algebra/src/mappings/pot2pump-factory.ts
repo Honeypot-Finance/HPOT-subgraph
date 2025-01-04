@@ -32,9 +32,10 @@ export function handlePairCreated(event: PairCreated): void {
     newPair.launchTokenInitialPrice = ZERO_BD
     newPair.buyCount = ZERO_BI
     newPair.sellCount = ZERO_BI
+    newPair.depositRaisedTokenPercentageToMinCap = ZERO_BD
     newPair.creator = fetchCreator(event.params.pair).toHexString()
     //increase account creation count
-    let account = loadAccount(fetchCreator(event.params.pair).toHexString())
+    let account = loadAccount(fetchCreator(event.params.pair))
     if (account != null) {
       account.pot2PumpLaunchCount = account.pot2PumpLaunchCount.plus(ONE_BI)
       account.platformTxCount = account.platformTxCount.plus(ONE_BI)

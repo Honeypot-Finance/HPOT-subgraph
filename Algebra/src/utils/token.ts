@@ -6,8 +6,8 @@ import { StaticTokenDefinition } from './staticTokenDefinition'
 import { BigInt, Address, store, log } from '@graphprotocol/graph-ts'
 import { isNullEthValue } from '.'
 import { Pot2PumpFactory } from '../types/Factory/Pot2PumpFactory'
-import { ONE_BI, POT2PUMP_FACTORY_ADDRESS, ZERO_BD, ZERO_BI } from './constants'
-import { HoldingToken, Token } from '../types/schema'
+import { POT2PUMP_FACTORY_ADDRESS, ZERO_BD, ZERO_BI } from './constants'
+import { Token } from '../types/schema'
 
 export function fetchTokenPot2PumpAddress(tokenAddress: Address): Address {
   const pot2PumpContract = Pot2PumpFactory.bind(Address.fromString(POT2PUMP_FACTORY_ADDRESS))

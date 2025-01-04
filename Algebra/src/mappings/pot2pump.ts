@@ -27,9 +27,15 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
     return
   }
 
-  const pot2Pump = Pot2Pump.load(event.address.toHexString())!
-  const raiseToken = loadToken(Address.fromString(pot2Pump.raisedToken))
-  const launchToken = loadToken(Address.fromString(pot2Pump.launchToken))
+  const raiseToken = loadToken(Address.fromString(pair.raisedToken))
+  const launchToken = loadToken(Address.fromString(pair.launchToken))
+
+  // update pot2Pump depositRaisedToken info
+  const newRaisedTokenAmount = pair.DepositRaisedToken.plus(event.params.depositAmount)
+  pair.DepositRaisedToken = newRaisedTokenAmount
+  pair.depositRaisedTokenPercentageToMinCap = newRaisedTokenAmount
+    .toBigDecimal()
+    .div(pair.raisedTokenMinCap.toBigDecimal())
 
   const transaction = createTransaction(
     event.transaction.hash.toHexString(),
@@ -65,12 +71,13 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
     participant.amount = ZERO_BI
     participant.totalRefundAmount = ZERO_BI
     participant.totalclaimLqAmount = ZERO_BI
-    participant.canClaim = false
+    participant.claimed = false
+    participant.refunded = false
     participant.createdAt = event.block.timestamp
 
     pair.participantsCount = pair.participantsCount.plus(ONE_BI)
 
-    let account = loadAccount(event.params.depositor.toHexString())
+    let account = loadAccount(event.params.depositor)
     if (account != null) {
       account.participateCount = account.participateCount.plus(ONE_BI)
       account.platformTxCount = account.platformTxCount.plus(ONE_BI)
@@ -80,9 +87,9 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
       account.save()
     }
   }
+
   participant.amount = participant.amount.plus(event.params.depositAmount)
 
-  // update all participants canClaim if raisedTokenReachingMinCap
   pair.DepositRaisedToken = pair.DepositRaisedToken.plus(event.params.depositAmount)
   if (pair.DepositRaisedToken >= pair.raisedTokenMinCap) {
     pair.raisedTokenReachingMinCap = true
@@ -92,16 +99,7 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
       .times(raiseToken.derivedUSD)
     launchToken.derivedUSD = initPriceUSD
     launchToken.initialUSD = initPriceUSD
-    pot2Pump.launchTokenInitialPrice = initPriceUSD
-    pair.participants.entries.map<Participant>(entry => {
-      let participantId = entry.key
-      let participant = Participant.load(participantId)
-      if (participant != null) {
-        participant.canClaim = true
-        participant.save()
-      }
-      return participant as Participant
-    })
+    pair.launchTokenInitialPrice = initPriceUSD
   }
 
   // save participant transaction history
@@ -161,6 +159,7 @@ export function handleRefund(event: TRefund): void {
     return
   }
   participant.totalRefundAmount = participant.totalRefundAmount.plus(event.params.refundAmount)
+  participant.refunded = true
   participant.save()
 
   // save participant transaction history
@@ -174,7 +173,7 @@ export function handleRefund(event: TRefund): void {
   participantTransactionHistory.actionType = TransactionTypeToString(TransactionType.REFUND)
   participantTransactionHistory.participant = participant.id
 
-  let account = loadAccount(event.params.depositor.toHexString())
+  let account = loadAccount(event.params.depositor)
   if (account != null) {
     account.platformTxCount = account.platformTxCount.plus(ONE_BI)
     account.save()
@@ -218,7 +217,7 @@ export function handleClaimLP(event: TClaimLP): void {
     return
   }
   participant.totalclaimLqAmount = new BigInt(1)
-  participant.canClaim = false
+  participant.claimed = true
   participant.save()
 
   // save participant transaction history
@@ -232,7 +231,7 @@ export function handleClaimLP(event: TClaimLP): void {
   participantTransactionHistory.depositAmount = new BigInt(0)
   participantTransactionHistory.participant = participant.id
 
-  let account = loadAccount(event.params.claimer.toHexString())
+  let account = loadAccount(event.params.claimer)
 
   if (account != null) {
     account.platformTxCount = account.platformTxCount.plus(ONE_BI)
