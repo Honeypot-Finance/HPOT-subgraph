@@ -20,8 +20,9 @@ export const createAccount = (account: Address): Account => {
   newAcc.holdingPoolCount = ZERO_BI
   newAcc.totalSpendUSD = ZERO_BD
 
-  newAcc.save()
   factory.accountCount = factory.accountCount.plus(ONE_BI)
+
+  newAcc.save()
   factory.save()
 
   return newAcc

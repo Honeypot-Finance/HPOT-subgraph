@@ -90,7 +90,6 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
 
   participant.amount = participant.amount.plus(event.params.depositAmount)
 
-  pair.DepositRaisedToken = pair.DepositRaisedToken.plus(event.params.depositAmount)
   if (pair.DepositRaisedToken >= pair.raisedTokenMinCap) {
     pair.raisedTokenReachingMinCap = true
     pair.state = new BigInt(0)
