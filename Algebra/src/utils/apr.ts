@@ -1,6 +1,7 @@
-import { BigDecimal, BigInt } from '@graphprotocol/graph-ts'
-import { ZERO_BD, ONE_BD } from './constants'
-import { Pool, PoolDayData, PoolWeekData, PoolMonthData } from '../types/schema'
+import { BigDecimal, BigInt, ethereum } from '@graphprotocol/graph-ts'
+import { ZERO_BD, ONE_BD, ZERO_BI } from './constants'
+import { Pool, PoolDayData, PoolWeekData, PoolMonthData, PoolHourData } from '../types/schema'
+import { LoadPoolDayData, LoadPoolHourData, LoadPoolMonthData, LoadPoolWeekData } from './liquidityPools'
 
 // Calculate APR based on fees and TVL
 export function calculateAPR(feeUSD: BigDecimal, tvlUSD: BigDecimal, periodInDays: BigInt): BigDecimal {
@@ -14,32 +15,27 @@ export function calculateAPR(feeUSD: BigDecimal, tvlUSD: BigDecimal, periodInDay
 }
 
 // Update APR for pool
-export function updatePoolAPR(pool: Pool): void {
+export function updatePoolAPR(pool: Pool, event: ethereum.Event): void {
   // Use 24h fees for APR calculation
-  let dayData = PoolDayData.load(pool.id)
-  if (!dayData) {
-    pool.aprPercentage = ZERO_BD
-    return
-  }
+  let poolHourData = LoadPoolHourData(pool, event)
+  let poolDayData = LoadPoolDayData(pool, event)
+  let poolWeekData = LoadPoolWeekData(pool, event)
+  let poolMonthData = LoadPoolMonthData(pool, event)
 
-  pool.aprPercentage = calculateAPR(
-    dayData.feesUSD,
-    pool.totalValueLockedUSD,
-    BigInt.fromI32(1) // 1 day period
-  )
-}
+  const aprHourPercentage = calculateAPR(poolHourData.feesUSD, poolHourData.volumeUSD, BigInt.fromI32(1))
+  const aprDayPercentage = calculateAPR(poolDayData.feesUSD, poolDayData.volumeUSD, BigInt.fromI32(1))
+  const aprWeekPercentage = calculateAPR(poolWeekData.feesUSD, poolWeekData.volumeUSD, BigInt.fromI32(1))
+  const aprMonthPercentage = calculateAPR(poolMonthData.feesUSD, poolMonthData.volumeUSD, BigInt.fromI32(1))
 
-// Update day data APR
-export function updateDayDataAPR(dayData: PoolDayData): void {
-  dayData.aprPercentage = calculateAPR(dayData.feesUSD, dayData.tvlUSD, BigInt.fromI32(1))
-}
+  poolHourData.aprPercentage = aprHourPercentage
+  poolDayData.aprPercentage = aprDayPercentage
+  poolWeekData.aprPercentage = aprWeekPercentage
+  poolMonthData.aprPercentage = aprMonthPercentage
+  pool.aprPercentage = aprHourPercentage
 
-// Update week data APR
-export function updateWeekDataAPR(weekData: PoolWeekData): void {
-  weekData.aprPercentage = calculateAPR(weekData.feesUSD, weekData.tvlUSD, BigInt.fromI32(7))
-}
-
-// Update month data APR
-export function updateMonthDataAPR(monthData: PoolMonthData): void {
-  monthData.aprPercentage = calculateAPR(monthData.feesUSD, monthData.tvlUSD, BigInt.fromI32(30))
+  pool.save()
+  poolHourData.save()
+  poolDayData.save()
+  poolWeekData.save()
+  poolMonthData.save()
 }

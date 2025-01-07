@@ -63,8 +63,8 @@ import { isNotZeroAddress, isZeroAddress } from '../utils/address'
 import { loadAccount } from '../utils/account'
 import { fetchTokenPot2PumpAddress, loadToken } from '../utils/token'
 import { updateMemeRacerHourData } from '../utils/memeRacer'
-import { updateMonthDataAPR, updatePoolAPR, updateWeekDataAPR } from '../utils/apr'
-import { updateDayDataAPR } from '../utils/apr'
+import { updatePoolAPR } from '../utils/apr'
+import { updatePoolFees } from '../utils/liquidityPools'
 
 export function handleInitialize(event: Initialize): void {
   let pool = Pool.load(event.address.toHexString())!
@@ -725,6 +725,7 @@ export function handleSwap(event: SwapEvent): void {
   token1HourData.volumeUSD = token1HourData.volumeUSD.plus(amountTotalUSDTracked)
   token1HourData.untrackedVolumeUSD = token1HourData.untrackedVolumeUSD.plus(amountTotalUSDTracked)
   token1HourData.feesUSD = token1HourData.feesUSD.plus(feesUSD)
+
   swap.save()
   token0DayData.save()
   token1DayData.save()
@@ -782,11 +783,11 @@ export function handleSwap(event: SwapEvent): void {
   updateMemeRacerHourData(token0, event.block.timestamp)
   updateMemeRacerHourData(token1, event.block.timestamp)
 
+  //update pool fees
+  updatePoolFees(pool)
+
   // Update APR
-  updatePoolAPR(pool)
-  updateDayDataAPR(poolDayData)
-  updateWeekDataAPR(poolWeekData)
-  updateMonthDataAPR(poolMonthData)
+  updatePoolAPR(pool, event)
 }
 
 export function handleSetCommunityFee(event: CommunityFee): void {

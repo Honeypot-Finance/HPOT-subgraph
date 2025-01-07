@@ -18,6 +18,7 @@ import {
 } from './../types/schema'
 import { FACTORY_ADDRESS } from './constants'
 import { ethereum, BigInt } from '@graphprotocol/graph-ts'
+import { LoadPoolHourData } from './liquidityPools'
 
 /**
  * Tracks global aggregate data over daily windows
@@ -239,33 +240,8 @@ export function updateFeeHourData(event: ethereum.Event, Fee: BigInt): void {
 }
 
 export function updatePoolHourData(event: ethereum.Event): PoolHourData {
-  let timestamp = event.block.timestamp.toI32()
-  let hourIndex = timestamp / 3600 // get unique hour within unix history
-  let hourStartUnix = hourIndex * 3600 // want the rounded effect
-  let hourPoolID = event.address
-    .toHexString()
-    .concat('-')
-    .concat(hourIndex.toString())
   let pool = Pool.load(event.address.toHexString())!
-  let poolHourData = PoolHourData.load(hourPoolID)
-  if (poolHourData === null) {
-    poolHourData = new PoolHourData(hourPoolID)
-    poolHourData.periodStartUnix = hourStartUnix
-    poolHourData.pool = pool.id
-    // things that dont get initialized always
-    poolHourData.volumeToken0 = ZERO_BD
-    poolHourData.volumeToken1 = ZERO_BD
-    poolHourData.volumeUSD = ZERO_BD
-    poolHourData.untrackedVolumeUSD = ZERO_BD
-    poolHourData.txCount = ZERO_BI
-    poolHourData.feesUSD = ZERO_BD
-    poolHourData.feeGrowthGlobal0X128 = ZERO_BI
-    poolHourData.feeGrowthGlobal1X128 = ZERO_BI
-    poolHourData.open = pool.token0Price
-    poolHourData.high = pool.token0Price
-    poolHourData.low = pool.token0Price
-    poolHourData.close = pool.token0Price
-  }
+  let poolHourData = LoadPoolHourData(pool, event)
 
   if (pool.token0Price.gt(poolHourData.high)) {
     poolHourData.high = pool.token0Price

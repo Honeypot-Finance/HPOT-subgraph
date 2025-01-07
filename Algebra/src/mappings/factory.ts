@@ -15,6 +15,7 @@ import {
   loadToken
 } from '../utils/token'
 import { log, BigInt, Address } from '@graphprotocol/graph-ts'
+import { updatePoolFees } from '../utils/liquidityPools'
 
 export function handlePoolCreated(event: PoolEvent): void {
   // load factory
@@ -61,6 +62,8 @@ export function handlePoolCreated(event: PoolEvent): void {
   token0.save()
   token1.save()
   factory.save()
+
+  updatePoolFees(pool)
 }
 
 export function handleCustomPoolCreated(event: CustomPool): void {
@@ -108,6 +111,8 @@ export function handleCustomPoolCreated(event: CustomPool): void {
   token0.save()
   token1.save()
   factory.save()
+
+  updatePoolFees(pool)
 }
 
 export function handleNewCommunityFee(event: DefaultCommunityFee): void {
