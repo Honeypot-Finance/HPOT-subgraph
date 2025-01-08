@@ -143,6 +143,8 @@ export function loadToken(tokenAddress: Address): Token {
     token.marketCap = ZERO_BD
     token.derivedUSD = ZERO_BD
     token.initialUSD = ZERO_BD // initial price in USD only for pot2pump tokens
+    token.priceChange24h = ZERO_BD
+    token.priceChange24hPercentage = ZERO_BD
     token.save()
   }
 

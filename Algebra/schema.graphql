@@ -107,6 +107,10 @@ type Token @entity {
   derivedUSD: BigDecimal!
   # initial price in USD
   initialUSD: BigDecimal!
+  # 24 hour price change
+  priceChange24h: BigDecimal!
+  # 24 hour price change percentage
+  priceChange24hPercentage: BigDecimal!
   # pools token is in that are white listed for USD pricing
   whitelistPools: [Pool!]!
   # derived fields
@@ -132,6 +136,8 @@ type Pot2Pump @entity {
   DepositLaunchToken: BigInt!
   LaunchTokenTVLUSD: BigDecimal!
   LaunchTokenMCAPUSD: BigDecimal!
+  LaunchTokenPriceChange24h: BigDecimal!
+  LaunchTokenPriceChange24hPercentage: BigDecimal!
   # raised token
   raisedTokenMinCap: BigInt!
   raisedToken: Token!

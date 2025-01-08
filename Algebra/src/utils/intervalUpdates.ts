@@ -14,11 +14,13 @@ import {
   FeeHourData,
   Tick,
   PoolWeekData,
-  PoolMonthData
+  PoolMonthData,
+  Pot2Pump
 } from './../types/schema'
 import { FACTORY_ADDRESS } from './constants'
-import { ethereum, BigInt } from '@graphprotocol/graph-ts'
-import { LoadPoolHourData } from './liquidityPools'
+import { ethereum, BigInt, BigDecimal, Address } from '@graphprotocol/graph-ts'
+import { LoadPoolDayData, LoadPoolHourData, LoadPoolMonthData, LoadPoolWeekData } from './liquidityPools'
+import { fetchTokenPot2PumpAddress } from './token'
 
 /**
  * Tracks global aggregate data over daily windows
@@ -45,37 +47,8 @@ export function updateAlgebraDayData(event: ethereum.Event): AlgebraDayData {
 }
 
 export function updatePoolDayData(event: ethereum.Event): PoolDayData {
-  let timestamp = event.block.timestamp.toI32()
-  let dayID = timestamp / 86400
-  let dayStartTimestamp = dayID * 86400
-  let dayPoolID = event.address
-    .toHexString()
-    .concat('-')
-    .concat(dayID.toString())
   let pool = Pool.load(event.address.toHexString())!
-  let poolDayData = PoolDayData.load(dayPoolID)
-  if (poolDayData === null) {
-    poolDayData = new PoolDayData(dayPoolID)
-    poolDayData.date = dayStartTimestamp
-    poolDayData.pool = pool.id
-    // things that dont get initialized always
-    poolDayData.volumeToken0 = ZERO_BD
-    poolDayData.volumeToken1 = ZERO_BD
-    poolDayData.feesToken0 = ZERO_BD
-    poolDayData.feesToken1 = ZERO_BD
-    poolDayData.volumeUSD = ZERO_BD
-    poolDayData.untrackedVolumeUSD = ZERO_BD
-    poolDayData.feesUSD = ZERO_BD
-    poolDayData.txCount = ZERO_BI
-    poolDayData.feeGrowthGlobal0X128 = ZERO_BI
-    poolDayData.feeGrowthGlobal1X128 = ZERO_BI
-    poolDayData.open = pool.token0Price
-    poolDayData.high = pool.token0Price
-    poolDayData.low = pool.token0Price
-    poolDayData.close = pool.token0Price
-    poolDayData.aprPercentage = ZERO_BD
-    poolDayData.dailyFeeUSD = ZERO_BD
-  }
+  let poolDayData = LoadPoolDayData(pool, event)
 
   if (pool.token0Price.gt(poolDayData.high)) {
     poolDayData.high = pool.token0Price
@@ -99,37 +72,8 @@ export function updatePoolDayData(event: ethereum.Event): PoolDayData {
 }
 
 export function updatePoolWeekData(event: ethereum.Event): PoolWeekData {
-  const secondePerWeek = 60 * 60 * 24 * 7
-  let timestamp = event.block.timestamp.toI32()
-  let weekID = timestamp / secondePerWeek
-  let weekStartTimestamp = weekID * secondePerWeek
-  let weekPoolID = event.address
-    .toHexString()
-    .concat('-')
-    .concat(weekID.toString())
   let pool = Pool.load(event.address.toHexString())!
-  let poolWeekData = PoolWeekData.load(weekPoolID)
-  if (poolWeekData === null) {
-    poolWeekData = new PoolWeekData(weekPoolID)
-    poolWeekData.week = weekStartTimestamp
-    poolWeekData.pool = pool.id
-    poolWeekData.volumeToken0 = ZERO_BD
-    poolWeekData.volumeToken1 = ZERO_BD
-    poolWeekData.feesToken0 = ZERO_BD
-    poolWeekData.feesToken1 = ZERO_BD
-    poolWeekData.volumeUSD = ZERO_BD
-    poolWeekData.untrackedVolumeUSD = ZERO_BD
-    poolWeekData.feesUSD = ZERO_BD
-    poolWeekData.txCount = ZERO_BI
-    poolWeekData.feeGrowthGlobal0X128 = ZERO_BI
-    poolWeekData.feeGrowthGlobal1X128 = ZERO_BI
-    poolWeekData.open = pool.token0Price
-    poolWeekData.high = pool.token0Price
-    poolWeekData.low = pool.token0Price
-    poolWeekData.close = pool.token0Price
-    poolWeekData.aprPercentage = ZERO_BD
-    poolWeekData.weeklyFeeUSD = ZERO_BD
-  }
+  let poolWeekData = LoadPoolWeekData(pool, event)
 
   if (pool.token0Price.gt(poolWeekData.high)) {
     poolWeekData.high = pool.token0Price
@@ -154,37 +98,8 @@ export function updatePoolWeekData(event: ethereum.Event): PoolWeekData {
 }
 
 export function updatePoolMonthData(event: ethereum.Event): PoolMonthData {
-  const secondPerMonth = 60 * 60 * 24 * 30
-  let timestamp = event.block.timestamp.toI32()
-  let monthID = timestamp / secondPerMonth
-  let monthStartTimestamp = monthID * secondPerMonth
-  let monthPoolID = event.address
-    .toHexString()
-    .concat('-')
-    .concat(monthID.toString())
   let pool = Pool.load(event.address.toHexString())!
-  let poolMonthData = PoolMonthData.load(monthPoolID)
-  if (poolMonthData === null) {
-    poolMonthData = new PoolMonthData(monthPoolID)
-    poolMonthData.month = monthStartTimestamp
-    poolMonthData.pool = pool.id
-    poolMonthData.volumeToken0 = pool.volumeToken0
-    poolMonthData.volumeToken1 = pool.volumeToken1
-    poolMonthData.feesToken0 = ZERO_BD
-    poolMonthData.feesToken1 = ZERO_BD
-    poolMonthData.volumeUSD = ZERO_BD
-    poolMonthData.untrackedVolumeUSD = ZERO_BD
-    poolMonthData.feesUSD = ZERO_BD
-    poolMonthData.txCount = ZERO_BI
-    poolMonthData.feeGrowthGlobal0X128 = ZERO_BI
-    poolMonthData.feeGrowthGlobal1X128 = ZERO_BI
-    poolMonthData.open = pool.token0Price
-    poolMonthData.high = pool.token0Price
-    poolMonthData.low = pool.token0Price
-    poolMonthData.close = pool.token0Price
-    poolMonthData.aprPercentage = ZERO_BD
-    poolMonthData.monthlyFeeUSD = ZERO_BD
-  }
+  let poolMonthData = LoadPoolMonthData(pool, event)
 
   if (pool.token0Price.gt(poolMonthData.high)) {
     poolMonthData.high = pool.token0Price
@@ -271,13 +186,22 @@ export function updateTokenDayData(token: Token, event: ethereum.Event): TokenDa
   let timestamp = event.block.timestamp.toI32()
   let dayID = timestamp / 86400
   let dayStartTimestamp = dayID * 86400
+  let lastDayID = dayID - 1
+  let lastDayStartTimestamp = lastDayID * 86400
   let tokenDayID = token.id
     .toString()
     .concat('-')
     .concat(dayID.toString())
-  let tokenPrice = token.derivedMatic.times(bundle.maticPriceUSD)
-
+  let lastTokenDayID = token.id
+    .toString()
+    .concat('-')
+    .concat(lastDayID.toString())
   let tokenDayData = TokenDayData.load(tokenDayID)
+  let lastTokenDayData = TokenDayData.load(lastTokenDayID)
+  let tokenPrice = token.derivedMatic.times(bundle.maticPriceUSD)
+  let pot2pumpAddress = fetchTokenPot2PumpAddress(Address.fromString(token.id))
+  let pot2pump = Pot2Pump.load(pot2pumpAddress.toHexString())
+
   if (tokenDayData === null) {
     tokenDayData = new TokenDayData(tokenDayID)
     tokenDayData.date = dayStartTimestamp
@@ -304,7 +228,25 @@ export function updateTokenDayData(token: Token, event: ethereum.Event): TokenDa
   tokenDayData.priceUSD = token.derivedMatic.times(bundle.maticPriceUSD)
   tokenDayData.totalValueLocked = token.totalValueLocked
   tokenDayData.totalValueLockedUSD = token.totalValueLockedUSD
+
+  if (lastTokenDayData && lastTokenDayData.priceUSD.gt(ZERO_BD)) {
+    const priceChange24h = tokenDayData.priceUSD.minus(lastTokenDayData.priceUSD)
+    const priceChange24hPercentage = priceChange24h.div(lastTokenDayData.priceUSD).times(BigDecimal.fromString('100'))
+    token.priceChange24h = priceChange24h
+    token.priceChange24hPercentage = priceChange24hPercentage
+
+    if (pot2pump) {
+      pot2pump.LaunchTokenPriceChange24h = priceChange24h
+      pot2pump.LaunchTokenPriceChange24hPercentage = priceChange24hPercentage
+      pot2pump.save()
+    }
+  }
+
   tokenDayData.save()
+  token.save()
+  if (pot2pump) {
+    pot2pump.save()
+  }
 
   return tokenDayData as TokenDayData
 }
