@@ -101,6 +101,8 @@ export function handleMint(event: MintEvent): void {
   let poolAddress = event.address
   let pool = Pool.load(poolAddress.toHexString())!
   let factory = Factory.load(FACTORY_ADDRESS)!
+  let ownerAccount = loadAccount(event.params.owner)
+  let senderAccount = loadAccount(event.params.sender)
 
   let token0 = loadToken(Address.fromString(pool.token0))
   let token1 = loadToken(Address.fromString(pool.token1))
@@ -187,7 +189,6 @@ export function handleMint(event: MintEvent): void {
   mint.tickLower = BigInt.fromI32(event.params.bottomTick)
   mint.tickUpper = BigInt.fromI32(event.params.topTick)
   if (account) {
-    account.platformTxCount = account.platformTxCount.plus(ONE_BI)
     if (pool.totalValueLockedUSD.lt(ZERO_BD)) {
       account.holdingPoolCount = account.holdingPoolCount.minus(ONE_BI)
     }
@@ -281,6 +282,7 @@ export function handleBurn(event: BurnEvent): void {
   let pool = Pool.load(poolAddress)!
   let plugin = Plugin.load(pool.plugin.toHexString())!
   let factory = Factory.load(FACTORY_ADDRESS)!
+  let ownerAccount = loadAccount(event.params.owner)
 
   let token0 = Token.load(pool.token0)!
   let token1 = Token.load(pool.token1)!
@@ -375,7 +377,6 @@ export function handleBurn(event: BurnEvent): void {
   burn.tickLower = BigInt.fromI32(event.params.bottomTick)
   burn.tickUpper = BigInt.fromI32(event.params.topTick)
   if (account) {
-    account.platformTxCount = account.platformTxCount.plus(ONE_BI)
     if (pool.totalValueLockedMatic.times(bundle.maticPriceUSD).lt(ZERO_BD)) {
       account.holdingPoolCount = account.holdingPoolCount.minus(ONE_BI)
     }
@@ -448,6 +449,7 @@ export function handleSwap(event: SwapEvent): void {
   let token1 = Token.load(pool.token1)!
   let token0Pot2Pump = Pot2Pump.load(fetchTokenPot2PumpAddress(Address.fromString(token0.id)).toHexString())
   let token1Pot2Pump = Pot2Pump.load(fetchTokenPot2PumpAddress(Address.fromString(token1.id)).toHexString())
+  let senderAccount = loadAccount(event.params.sender)
   let recipientAccount = loadAccount(event.params.recipient)
   let amount0: BigDecimal
   let amount1: BigDecimal
@@ -642,11 +644,6 @@ export function handleSwap(event: SwapEvent): void {
   swap.amountUSD = amountTotalUSDTracked
   swap.tick = BigInt.fromI32(event.params.tick)
   swap.price = event.params.price
-  if (account) {
-    account.platformTxCount = account.platformTxCount.plus(ONE_BI)
-    account.save()
-  }
-
   // update fee growth
   let poolContract = PoolABI.bind(event.address)
   let feeGrowthGlobal0X128 = poolContract.totalFeeGrowth0Token()
@@ -738,6 +735,7 @@ export function handleSwap(event: SwapEvent): void {
   pool.save()
   token0.save()
   token1.save()
+
   if (token0Pot2Pump != null) {
     token0Pot2Pump.save()
   }
@@ -802,6 +800,8 @@ export function handleCollect(event: Collect): void {
   let poolAddress = event.address.toHexString()
   let pool = Pool.load(poolAddress)!
   let factory = Factory.load(FACTORY_ADDRESS)!
+  let ownerAccount = loadAccount(event.params.owner)
+  let recipientAccount = loadAccount(event.params.recipient)
 
   let token0 = Token.load(pool.token0)!
   let token1 = Token.load(pool.token1)!
@@ -818,11 +818,13 @@ export function handleCollect(event: Collect): void {
   // pool data
   pool.txCount = pool.txCount.plus(ONE_BI)
 
-  //account data
-  let account = loadAccount(event.params.recipient)
-  if (account) {
-    account.platformTxCount = account.platformTxCount.plus(ONE_BI)
-    account.save()
+  if (recipientAccount != null) {
+    recipientAccount.platformTxCount = recipientAccount.platformTxCount.plus(ONE_BI)
+    recipientAccount.save()
+  }
+
+  if (ownerAccount != null) {
+    ownerAccount.save()
   }
 
   token0.save()

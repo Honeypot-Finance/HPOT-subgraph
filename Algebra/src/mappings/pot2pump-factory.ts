@@ -10,6 +10,7 @@ import { loadAccount } from '../utils/account'
 
 export function handlePairCreated(event: PairCreated): void {
   let newPair = Pot2Pump.load(event.params.pair.toHexString())
+  let creatorAccount = loadAccount(fetchCreator(event.params.pair))
 
   if (newPair == null) {
     newPair = new Pot2Pump(event.params.pair.toHexString())
@@ -37,11 +38,10 @@ export function handlePairCreated(event: PairCreated): void {
     newPair.LaunchTokenPriceChange24h = ZERO_BD
     newPair.LaunchTokenPriceChange24hPercentage = ZERO_BD
     //increase account creation count
-    let account = loadAccount(fetchCreator(event.params.pair))
-    if (account != null) {
-      account.pot2PumpLaunchCount = account.pot2PumpLaunchCount.plus(ONE_BI)
-      account.platformTxCount = account.platformTxCount.plus(ONE_BI)
-      account.save()
+    if (creatorAccount != null) {
+      creatorAccount.pot2PumpLaunchCount = creatorAccount.pot2PumpLaunchCount.plus(ONE_BI)
+      creatorAccount.platformTxCount = creatorAccount.platformTxCount.plus(ONE_BI)
+      creatorAccount.save()
     }
 
     Pot2PumpTemplate.create(event.params.pair)

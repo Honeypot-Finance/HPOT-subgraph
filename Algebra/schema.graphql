@@ -1085,6 +1085,7 @@ type IchiVault @entity {
   holdersCount: Int! # number of vault LP holders
   pool: Pool!
   totalShares: BigDecimal! #current total shares sums allVaultShares
+  searchString: String!
   vaultShares: [VaultShare!]! @derivedFrom(field: "vault")
   vaultDeposits: [VaultDeposit!]! @derivedFrom(field: "vault")
   vaultWithdraws: [VaultWithdraw!]! @derivedFrom(field: "vault")

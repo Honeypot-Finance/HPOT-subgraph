@@ -27,6 +27,7 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
     return
   }
 
+  const account = loadAccount(event.params.depositor)
   const raiseToken = loadToken(Address.fromString(pair.raisedToken))
   const launchToken = loadToken(Address.fromString(pair.launchToken))
 
@@ -77,14 +78,12 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
 
     pair.participantsCount = pair.participantsCount.plus(ONE_BI)
 
-    let account = loadAccount(event.params.depositor)
     if (account != null) {
       account.participateCount = account.participateCount.plus(ONE_BI)
       account.platformTxCount = account.platformTxCount.plus(ONE_BI)
 
       const Spending = depositRaisedToken.amount.toBigDecimal().times(raiseToken.derivedMatic)
       account.totalSpendUSD = account.totalSpendUSD.plus(Spending)
-      account.save()
     }
   }
 
@@ -117,6 +116,9 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
   pair.save()
   launchToken.save()
   raiseToken.save()
+  if (account != null) {
+    account.save()
+  }
 }
 
 export function handleRefund(event: TRefund): void {
@@ -132,6 +134,7 @@ export function handleRefund(event: TRefund): void {
   const pot2Pump = Pot2Pump.load(event.address.toHexString())!
   const raiseToken = loadToken(Address.fromString(pot2Pump.raisedToken))
   const launchToken = loadToken(Address.fromString(pot2Pump.launchToken))
+  const account = loadAccount(event.params.depositor)
 
   const transaction = createTransaction(
     event.transaction.hash.toHexString(),
@@ -172,7 +175,6 @@ export function handleRefund(event: TRefund): void {
   participantTransactionHistory.actionType = TransactionTypeToString(TransactionType.REFUND)
   participantTransactionHistory.participant = participant.id
 
-  let account = loadAccount(event.params.depositor)
   if (account != null) {
     account.platformTxCount = account.platformTxCount.plus(ONE_BI)
     account.save()
@@ -190,6 +192,7 @@ export function handleClaimLP(event: TClaimLP): void {
   const pot2Pump = Pot2Pump.load(event.address.toHexString())!
   const raiseToken = loadToken(Address.fromString(pot2Pump.raisedToken))
   const launchToken = loadToken(Address.fromString(pot2Pump.launchToken))
+  const account = loadAccount(event.params.claimer)
 
   const transaction = createTransaction(
     event.transaction.hash.toHexString(),
@@ -230,14 +233,14 @@ export function handleClaimLP(event: TClaimLP): void {
   participantTransactionHistory.depositAmount = new BigInt(0)
   participantTransactionHistory.participant = participant.id
 
-  let account = loadAccount(event.params.claimer)
-
   if (account != null) {
     account.platformTxCount = account.platformTxCount.plus(ONE_BI)
-    account.save()
   }
 
   participantTransactionHistory.save()
+  if (account != null) {
+    account.save()
+  }
 }
 
 export function handlePerform(event: Perform): void {

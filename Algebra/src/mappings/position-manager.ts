@@ -154,11 +154,6 @@ export function handleIncreaseLiquidity(event: IncreaseLiquidity): void {
   liquidator.totalLiquidityUsd = liquidator.totalLiquidityUsd.plus(amountUSD)
   liquidator.pool = position.pool
 
-  if (account != null) {
-    account.platformTxCount = account.platformTxCount.plus(BigInt.fromI32(1))
-    account.save()
-  }
-
   transaction.save()
   position.save()
   liquidator.save()
@@ -218,11 +213,6 @@ export function handleDecreaseLiquidity(event: DecreaseLiquidity): void {
     .plus(amount1.times(token1!.derivedMatic.times(bundle.maticPriceUSD)))
   liquidator.totalLiquidityUsd = liquidator.totalLiquidityUsd.minus(amountUSD)
 
-  if (account != null) {
-    account.platformTxCount = account.platformTxCount.plus(BigInt.fromI32(1))
-    account.save()
-  }
-
   transaction.save()
   position.save()
   liquidator.save()
@@ -262,11 +252,6 @@ export function handleCollect(event: Collect): void {
 
   let transaction = loadTransaction(event, TransactionType.COLLECT)
   let account = loadAccount(Address.fromString(transaction.account))
-
-  if (account != null) {
-    account.platformTxCount = account.platformTxCount.plus(BigInt.fromI32(1))
-    account.save()
-  }
 
   transaction.save()
   position.save()
