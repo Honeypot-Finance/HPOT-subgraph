@@ -272,7 +272,6 @@ export function handleMint(event: MintEvent): void {
   // Update inner tick vars and save the ticks
   updateTickFeeVarsAndSave(lowerTick, event)
   updateTickFeeVarsAndSave(upperTick, event)
-  updateTickFeeVarsAndSave(lowerTick, event)
 }
 
 export function handleBurn(event: BurnEvent): void {
@@ -738,6 +737,7 @@ export function handleSwap(event: SwapEvent): void {
   pool.save()
   token0.save()
   token1.save()
+
   if (token0Pot2Pump != null) {
     token0Pot2Pump.save()
   }

@@ -34,8 +34,6 @@ export function handlePairCreated(event: PairCreated): void {
     newPair.sellCount = ZERO_BI
     newPair.depositRaisedTokenPercentageToMinCap = ZERO_BD
     newPair.creator = fetchCreator(event.params.pair).toHexString()
-    newPair.LaunchTokenPriceChange24h = ZERO_BD
-    newPair.LaunchTokenPriceChange24hPercentage = ZERO_BD
     //increase account creation count
     let account = loadAccount(fetchCreator(event.params.pair))
     if (account != null) {
