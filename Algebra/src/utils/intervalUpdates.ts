@@ -234,12 +234,6 @@ export function updateTokenDayData(token: Token, event: ethereum.Event): TokenDa
     const priceChange24hPercentage = priceChange24h.div(lastTokenDayData.priceUSD).times(BigDecimal.fromString('100'))
     token.priceChange24h = priceChange24h
     token.priceChange24hPercentage = priceChange24hPercentage
-
-    if (pot2pump) {
-      pot2pump.LaunchTokenPriceChange24h = priceChange24h
-      pot2pump.LaunchTokenPriceChange24hPercentage = priceChange24hPercentage
-      pot2pump.save()
-    }
   }
 
   tokenDayData.save()

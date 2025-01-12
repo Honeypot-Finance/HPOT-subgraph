@@ -273,7 +273,6 @@ export function handleMint(event: MintEvent): void {
   // Update inner tick vars and save the ticks
   updateTickFeeVarsAndSave(lowerTick, event)
   updateTickFeeVarsAndSave(upperTick, event)
-  updateTickFeeVarsAndSave(lowerTick, event)
 }
 
 export function handleBurn(event: BurnEvent): void {
