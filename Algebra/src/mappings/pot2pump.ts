@@ -34,26 +34,12 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
   const raiseToken = loadToken(Address.fromString(pair.raisedToken))
   const launchToken = loadToken(Address.fromString(pair.launchToken))
 
-  const Spending = event.params.depositAmount
-    .toBigDecimal()
-    .div(BigDecimal.fromString((10 ** raiseToken.decimals.toI32()).toString()))
-    .times(raiseToken.derivedUSD)
-
-  const SpendingNative = event.params.depositAmount
-    .toBigDecimal()
-    .div(BigDecimal.fromString((10 ** raiseToken.decimals.toI32()).toString()))
-    .times(raiseToken.derivedMatic)
-
   // update pot2Pump depositRaisedToken info
   const newRaisedTokenAmount = pair.DepositRaisedToken.plus(event.params.depositAmount)
   pair.DepositRaisedToken = newRaisedTokenAmount
   pair.depositRaisedTokenPercentageToMinCap = newRaisedTokenAmount
     .toBigDecimal()
     .div(pair.raisedTokenMinCap.toBigDecimal())
-
-  //update factory
-  factory.totalVolumeMatic = factory.totalVolumeMatic.plus(SpendingNative)
-  factory.totalVolumeUSD = factory.totalVolumeUSD.plus(Spending)
 
   const transaction = createTransaction(
     event.transaction.hash.toHexString(),
@@ -98,8 +84,6 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
     if (account != null) {
       account.participateCount = account.participateCount.plus(ONE_BI)
       account.platformTxCount = account.platformTxCount.plus(ONE_BI)
-
-      account.totalSpendUSD = account.totalSpendUSD.plus(Spending)
     }
   }
 
