@@ -5,7 +5,8 @@ import {
   DepositRaisedToken,
   Transaction,
   Refund,
-  ClaimLp
+  ClaimLp,
+  Factory
 } from '../types/schema'
 import { Pot2Pump as Pot2PumpTemplate } from '../types/templates'
 import { Address, BigDecimal, BigInt } from '@graphprotocol/graph-ts'
@@ -20,6 +21,7 @@ import { loadAccount } from '../utils/account'
 import { ONE_BI, TransactionType, TransactionTypeToString, ZERO_BI } from '../utils/constants'
 import { ADDRESS_ZERO } from '../utils/constants'
 import { loadToken } from '../utils/token'
+import { loadFactory } from './factory'
 
 export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
   let pair = Pot2Pump.load(event.address.toHexString())
@@ -27,9 +29,20 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
     return
   }
 
+  const factory = loadFactory()
   const account = loadAccount(event.params.depositor)
   const raiseToken = loadToken(Address.fromString(pair.raisedToken))
   const launchToken = loadToken(Address.fromString(pair.launchToken))
+
+  const Spending = event.params.depositAmount
+    .toBigDecimal()
+    .div(BigDecimal.fromString((10 ** raiseToken.decimals.toI32()).toString()))
+    .times(raiseToken.derivedUSD)
+
+  const SpendingNative = event.params.depositAmount
+    .toBigDecimal()
+    .div(BigDecimal.fromString((10 ** raiseToken.decimals.toI32()).toString()))
+    .times(raiseToken.derivedMatic)
 
   // update pot2Pump depositRaisedToken info
   const newRaisedTokenAmount = pair.DepositRaisedToken.plus(event.params.depositAmount)
@@ -37,6 +50,10 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
   pair.depositRaisedTokenPercentageToMinCap = newRaisedTokenAmount
     .toBigDecimal()
     .div(pair.raisedTokenMinCap.toBigDecimal())
+
+  //update factory
+  factory.totalVolumeMatic = factory.totalVolumeMatic.plus(SpendingNative)
+  factory.totalVolumeUSD = factory.totalVolumeUSD.plus(Spending)
 
   const transaction = createTransaction(
     event.transaction.hash.toHexString(),
@@ -82,7 +99,6 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
       account.participateCount = account.participateCount.plus(ONE_BI)
       account.platformTxCount = account.platformTxCount.plus(ONE_BI)
 
-      const Spending = depositRaisedToken.amount.toBigDecimal().times(raiseToken.derivedMatic)
       account.totalSpendUSD = account.totalSpendUSD.plus(Spending)
     }
   }
@@ -119,6 +135,7 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
   if (account != null) {
     account.save()
   }
+  factory.save()
 }
 
 export function handleRefund(event: TRefund): void {

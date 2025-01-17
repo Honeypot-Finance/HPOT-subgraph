@@ -121,7 +121,7 @@ export function handleNewCommunityFee(event: DefaultCommunityFee): void {
   factory.save()
 }
 
-function loadFactory(): Factory {
+export function loadFactory(): Factory {
   let factory = Factory.load(FACTORY_ADDRESS)
   if (factory == null) {
     factory = new Factory(FACTORY_ADDRESS)

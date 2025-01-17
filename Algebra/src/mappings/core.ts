@@ -462,11 +462,6 @@ export function handleSwap(event: SwapEvent): void {
     amount1 = convertTokenToDecimal(event.params.amount1, token1.decimals)
   }
 
-  // update recipient account
-  if (recipientAccount != null) {
-    recipientAccount.swapCount = recipientAccount.swapCount.plus(ONE_BI)
-  }
-
   // update pot2pump buy/sell count
   if (token0Pot2Pump) {
     if (amount0.lt(ZERO_BD)) {
@@ -522,6 +517,12 @@ export function handleSwap(event: SwapEvent): void {
   factory.untrackedVolumeUSD = factory.untrackedVolumeUSD.plus(amountTotalUSDUntracked)
   factory.totalFeesMatic = factory.totalFeesMatic.plus(feesMatic)
   factory.totalFeesUSD = factory.totalFeesUSD.plus(feesUSD)
+
+  // update accounts
+  if (recipientAccount != null) {
+    recipientAccount.swapCount = recipientAccount.swapCount.plus(ONE_BI)
+    recipientAccount.totalSpendUSD = recipientAccount.totalSpendUSD.plus(amountTotalUSDUntracked)
+  }
 
   // reset aggregate tvl before individual pool tvl updates
   let currentPoolTvlMatic = pool.totalValueLockedMatic
@@ -740,6 +741,9 @@ export function handleSwap(event: SwapEvent): void {
   }
   if (token1Pot2Pump != null) {
     token1Pot2Pump.save()
+  }
+  if (senderAccount != null) {
+    senderAccount.save()
   }
   if (recipientAccount != null) {
     recipientAccount.save()

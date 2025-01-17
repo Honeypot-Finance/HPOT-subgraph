@@ -23,11 +23,11 @@ import { ZERO_BI } from './constants'
 
 export function fetchPoolFees(pool: Pool): BigInt {
   const poolContract = PoolContract.bind(Address.fromString(pool.id))
-  const globalState = poolContract.try_globalState()
+  const fetchedFee = poolContract.try_fee()
   let fee = pool.fee ? pool.fee : BigInt.fromI32(0)
 
-  if (!globalState.reverted) {
-    fee = BigInt.fromI32(globalState.value.value2)
+  if (!fetchedFee.reverted) {
+    fee = BigInt.fromI32(fetchedFee.value)
     pool.fee = fee
     pool.save()
   }

@@ -22,7 +22,9 @@ let MINIMUM_Matic_LOCKED = BigDecimal.fromString('0')
 let Q192 = Math.pow(2, 192)
 
 let STABLE_COINS: string[] = [
-  '0x0E4aaF1351de4c0264C5c7056Ef3777b41BD8e03'.toLowerCase() // Honey
+  '0x0E4aaF1351de4c0264C5c7056Ef3777b41BD8e03'.toLowerCase(), // Honey
+  '0xd6D83aF58a19Cd14eF3CF6fe848C9A4d21e5727c'.toLowerCase(), // USDC
+  '0x05d0dd5135e3ef3ade32a9ef9cb06e8d37a6795d'.toLowerCase() // USDT
 ]
 
 export function priceToTokenPrices(price: BigInt, token0: Token, token1: Token): BigDecimal[] {
