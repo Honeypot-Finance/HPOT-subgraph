@@ -15,7 +15,7 @@ import {
   ICHIVault
 } from './../types/templates/Vault/ICHIVault'
 
-import { BigDecimal, BigInt } from '@graphprotocol/graph-ts'
+import { Address, BigDecimal, BigInt } from '@graphprotocol/graph-ts'
 
 import {
   VaultAffiliate,
@@ -38,7 +38,7 @@ import { convertTokenToDecimal } from '../utils'
 import { createVaultShare } from '../utils/aquabera'
 
 import { AlgebraPool } from './../types/templates/Vault/AlgebraPool'
-import { createAccount } from '../utils/account'
+import { createAccount, loadAccount } from '../utils/account'
 import { Vault } from '../types/templates'
 
 export function handleAffiliate(event: AffiliateEvent): void {
@@ -60,6 +60,8 @@ export function handleApproval(event: ApprovalEvent): void {
 
 export function handleDeployICHIVault(event: DeployICHIVaultEvent): void {
   const deployIchiVault = new DeployICHIVault(event.transaction.hash.toHex() + '-' + event.logIndex.toString())
+  const senderAccount = loadAccount(event.params.sender)
+  const fromAccount = loadAccount(event.transaction.from)
   deployIchiVault.vault = event.address.toHexString()
   deployIchiVault.sender = event.params.sender
   deployIchiVault.pool = event.params.pool.toHexString()
@@ -72,6 +74,8 @@ export function handleDeployICHIVault(event: DeployICHIVaultEvent): void {
 
 export function handleDeposit(event: DepositEvent): void {
   const deposit = new VaultDeposit(event.transaction.hash.toHex() + '-' + event.logIndex.toString())
+  const senderAccount = loadAccount(event.params.sender)
+  const toAccount = loadAccount(event.params.to)
   deposit.vault = event.address.toHexString()
   const vaultContract = ICHIVault.bind(event.address)
   const poolAddress = vaultContract.pool()
@@ -191,6 +195,9 @@ export function handleSetTwapPeriod(event: SetTwapPeriodEvent): void {
 
 export function handleTransfer(event: TransferEvent): void {
   // - - - - - create and store VaultTransfer entity - - - - -
+  // - - - - - update account balances - - - - -
+  const senderAccount = loadAccount(event.params.from)
+  const toAccount = loadAccount(event.params.to)
 
   const vaultContract = ICHIVault.bind(event.address)
   const totalSupply = vaultContract.totalSupply()
@@ -214,13 +221,6 @@ export function handleTransfer(event: TransferEvent): void {
   transfer.sqrtPrice = poolContract.globalState().value0
   transfer.save()
 
-  // - - - - - update account balances - - - - -
-
-  const from = event.params.from
-  createAccount(from)
-  const to = event.params.to
-  createAccount(to)
-
   // since the ICHIVault emitted the Transfer event
   const ichiVaultId = event.address.toHexString()
 
@@ -234,8 +234,8 @@ export function handleTransfer(event: TransferEvent): void {
   }
 
   // we only care about updating the "from" balance if it is NOT address(0) and also not the ICHIVault
-  if (from.toHexString() != ADDRESS_ZERO && from.toHexString() != ichiVaultId) {
-    const fromUserVaultShare = createVaultShare(event.address, from)
+  if (senderAccount != null && senderAccount.id != ADDRESS_ZERO && senderAccount.id != ichiVaultId) {
+    const fromUserVaultShare = createVaultShare(event.address, Address.fromString(senderAccount.id))
     const wasHolder = !fromUserVaultShare.vaultShareBalance.equals(BigDecimal.fromString('0'))
     fromUserVaultShare.vaultShareBalance = fromUserVaultShare.vaultShareBalance.minus(value)
     const isHolder = !fromUserVaultShare.vaultShareBalance.equals(BigDecimal.fromString('0'))
@@ -247,8 +247,8 @@ export function handleTransfer(event: TransferEvent): void {
   }
 
   // we only care about updating the "to" balance if it is NOT address(0) and also not the ICHIVault
-  if (to.toHexString() != ADDRESS_ZERO && to.toHexString() != ichiVaultId) {
-    const toUserVaultShare = createVaultShare(event.address, to)
+  if (toAccount != null && toAccount.id != ADDRESS_ZERO && toAccount.id != ichiVaultId) {
+    const toUserVaultShare = createVaultShare(event.address, Address.fromString(toAccount.id))
     const wasHolder = !toUserVaultShare.vaultShareBalance.equals(BigDecimal.fromString('0'))
     toUserVaultShare.vaultShareBalance = toUserVaultShare.vaultShareBalance.plus(value)
     const isHolder = !toUserVaultShare.vaultShareBalance.equals(BigDecimal.fromString('0'))

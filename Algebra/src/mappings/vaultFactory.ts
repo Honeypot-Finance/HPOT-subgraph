@@ -4,11 +4,14 @@ import { Vault } from '../types/templates'
 import { fetchAlgebraPoolAddress } from '../utils/aquabera'
 import { ZERO_BD, ZERO_BI } from '../utils/constants'
 import { loadToken } from '../utils/token'
+import { loadAccount } from '../utils/account'
 
 export function handleICHIVaultCreated(event: ICHIVaultCreated): void {
   const ichiVault = new IchiVault(event.params.ichiVault.toHexString())
   const tokenA = loadToken(event.params.tokenA)
   const tokenB = loadToken(event.params.tokenB)
+  const senderAccount = loadAccount(event.params.sender)
+  const fromAccount = loadAccount(event.transaction.from)
   ichiVault.sender = event.params.sender
   ichiVault.tokenA = event.params.tokenA
   ichiVault.allowTokenA = event.params.allowTokenA
