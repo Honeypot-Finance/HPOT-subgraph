@@ -5,7 +5,7 @@ import { BigDecimal, BigInt, log } from '@graphprotocol/graph-ts'
 import { exponentToBigDecimal, safeDiv } from '../utils/index'
 
 const WMatic_ADDRESS = '0x7507c1dc16935B82698e4C63f2746A2fCf994dF8'.toLowerCase()
-const USDC_WMatic_03_POOL = '0x22a8a2b8baf11bd188655b801e6ccbe561acdccb'.toLowerCase()
+const Honey_WBera_POOL = '0x84f4b14b036f29310ff200ca60e98f9c83300fb1'.toLowerCase()
 
 // token where amounts should contribute to tracked volume and liquidity
 // usually tokens that many tokens are paired with s
@@ -40,7 +40,7 @@ export function priceToTokenPrices(price: BigInt, token0: Token, token1: Token):
 }
 
 export function getEthPriceInUSD(): BigDecimal {
-  let usdcPool = Pool.load(USDC_WMatic_03_POOL) // dai is token0
+  let usdcPool = Pool.load(Honey_WBera_POOL)
   if (usdcPool !== null) {
     return usdcPool.token0Price
   } else {
