@@ -99,11 +99,58 @@ dataSources:
       eventHandlers:
         - event: PairCreated(indexed address,indexed address,address,uint256)
           handler: handlePairCreated
+  - kind: ethereum/contract
+    name: Pot2PumpFactory2
+    network: berachain-bartio
+    source:
+      address: '0x7e92408E41765080434b6d3297a46fC67344f819'
+      abi: Pot2PumpFactory
+      startBlock: 6901471
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/pot2pump-factory.ts
+      entities:
+        - Pot2Pump
+        - Token
+      abis:
+        - name: Pot2PumpFactory
+          file: ./abis/pot2PumpFactory.json
+        - name: Pot2PumpPair
+          file: ./abis/pot2PumpPair.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: PairCreated(indexed address,indexed address,address,uint256)
+          handler: handlePairCreated
   - kind: ethereum
     name: ICHIVaultFactory
     network: berachain-bartio
     source:
       address: "0x228e956D8bf3E33b796b024A664933755A999808"
+      abi: ICHIVaultFactory
+      startBlock: 5115130
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - IchiVault
+      abis:
+      - name: ICHIVaultFactory
+        file: ./abis/ICHIVaultFactory.json
+      - name: ICHIVault
+        file: ./abis/ICHIVault.json
+      eventHandlers:
+        - event: ICHIVaultCreated(indexed address,address,address,bool,address,bool,uint256)
+          handler: handleICHIVaultCreated
+      file: ./src/mappings/vaultFactory.ts
+  - kind: ethereum
+    name: ICHIVaultFactory2
+    network: berachain-bartio
+    source:
+      address: "0x14a59DeB312696EFA637466C4Fc22E6ECb847327"
       abi: ICHIVaultFactory
       startBlock: 5115130
     mapping:

@@ -605,6 +605,8 @@ export function handleSwap(event: SwapEvent): void {
   token1.derivedMatic = findEthPerToken(token1 as Token)
   token0.derivedUSD = token0.derivedMatic.times(bundle.maticPriceUSD)
   token1.derivedUSD = token1.derivedMatic.times(bundle.maticPriceUSD)
+  token0.marketCap = token0.derivedUSD.times(token0.totalSupply.toBigDecimal())
+  token1.marketCap = token1.derivedUSD.times(token1.totalSupply.toBigDecimal())
 
   /**
    * Things afffected by new USD rates
