@@ -470,6 +470,7 @@ export function handleSwap(event: SwapEvent): void {
       token0Pot2Pump.sellCount = token0Pot2Pump.sellCount.plus(ONE_BI)
     }
   }
+
   if (token1Pot2Pump) {
     if (amount1.lt(ZERO_BD)) {
       token1Pot2Pump.buyCount = token1Pot2Pump.buyCount.plus(ONE_BI)
@@ -477,6 +478,7 @@ export function handleSwap(event: SwapEvent): void {
       token1Pot2Pump.sellCount = token1Pot2Pump.sellCount.plus(ONE_BI)
     }
   }
+
   let swapFee = event.params.overrideFee > 0 ? BigInt.fromI32(event.params.overrideFee) : pool.fee
 
   let pluginFee = BigInt.fromI32(event.params.pluginFee)
