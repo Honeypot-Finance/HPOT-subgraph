@@ -59,3 +59,32 @@ goldsky subgraph deploy {name} --path {path}
 eg:
 goldsky subgraph deploy hpot-algebra-farming/1.0.0 --path ./
 ```
+
+
+## LBP
+
+Before build you need to make a few changes:
+
+Update network, startBlock and addresses in subgraph.yaml
+
+After that you need to run:
+```
+$ yarn
+$ yarn codegen
+$ yarn build 
+```
+
+### Deploy
+
+For deploy you need to run:
+```
+$ yarn graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ --access-token <access-token> <graph-name> subgraph.yaml
+
+
+goldsky(use git bash): 
+goldsky login
+goldsky subgraph deploy {name} --path {path}
+eg:
+goldsky subgraph deploy hpot-lbp/1.0.0 --path ./
+```
+

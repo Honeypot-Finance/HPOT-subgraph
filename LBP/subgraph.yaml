@@ -1,0 +1,64 @@
+specVersion: 0.0.4
+description: LBP
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: LBP_Factory
+    network: berachain-bartio
+    source:
+      address: '0xB21b59d368e04b6a55ca7Fb78DEaF0c82fD289cC'
+      abi: LiquidityBootstrapPoolFactory
+      startBlock: 6849362
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/LBP_Factory.ts
+      entities:
+        - LBPPool
+      abis:
+        - name: LiquidityBootstrapPoolFactory
+          file: ./abis/LiquidityBootstrapPoolFactory.json
+        - name: LiquidityBootstrapPool
+          file: ./abis/LiquidityBootstrapPool.json
+      eventHandlers:
+        - event: PoolCreated(address)
+          handler: handlePoolCreated
+
+templates:
+  - kind: ethereum/contract
+    name: LBP_Pool
+    network: berachain-bartio
+    source:
+      abi: LiquidityBootstrapPool
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/LBP_Pool.ts
+      entities:
+        - LBPPool
+        - Buy
+        - Sell
+        - Close
+        - MaxRaiseReached
+        - FeesPaid
+      abis:
+        - name: LiquidityBootstrapPool
+          file: ./abis/LiquidityBootstrapPool.json
+      eventHandlers:
+        - event: Buy(indexed address,indexed address,uint256,uint256,uint256)
+          handler: handleBuy
+        - event: Sell(indexed address,indexed address,uint256,uint256,uint256)
+          handler: handleSell
+        - event: Close(uint256,uint256,uint256,uint256)
+          handler: handleClose
+        - event: MaxRaiseReached(uint256,uint256,uint256,uint256)
+          handler: handleMaxRaiseReached
+        - event: FeesPaid(uint256,uint256,uint256)
+          handler: handleFeesPaid
+        - event: Cancelled(uint256,uint256)
+          handler: handleCancelled
+        - event: V2LPCreated(indexed address,indexed address,uint256,uint256,uint256)
+          handler: handleV2LPCreated
