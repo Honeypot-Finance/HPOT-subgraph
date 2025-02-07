@@ -298,11 +298,6 @@ type Pool @entity {
 
   # APR calculations
   aprPercentage: BigDecimal!
-  # Historical APR data points
-  aprHourData: [PoolHourData!]! @derivedFrom(field: "pool")
-  aprDayData: [PoolDayData!]! @derivedFrom(field: "pool")
-  aprWeekData: [PoolWeekData!]! @derivedFrom(field: "pool")
-  aprMonthData: [PoolMonthData!]! @derivedFrom(field: "pool")
 }
 
 type Tick @entity {

@@ -4,17 +4,19 @@ import { Bundle, Pool, Token } from './../types/schema'
 import { BigDecimal, BigInt, log } from '@graphprotocol/graph-ts'
 import { exponentToBigDecimal, safeDiv } from '../utils/index'
 
-const WMatic_ADDRESS = '0x7507c1dc16935B82698e4C63f2746A2fCf994dF8'.toLowerCase()
-const Honey_WBera_POOL = '0x84f4b14b036f29310ff200ca60e98f9c83300fb1'.toLowerCase()
+const WMatic_ADDRESS = '0x6969696969696969696969696969696969696969'.toLowerCase()
+const Honey_WBera_POOL = '0xB6B6E240291A4d433A94279C1A68F85e2BF24857'.toLowerCase()
 
 // token where amounts should contribute to tracked volume and liquidity
 // usually tokens that many tokens are paired with s
 export let WHITELIST_TOKENS: string[] = [
-  '0x7507c1dc16935b82698e4c63f2746a2fcf994df8'.toLowerCase(), // WBERA
-  '0xd6D83aF58a19Cd14eF3CF6fe848C9A4d21e5727c'.toLowerCase(), // USDC
-  '0x05d0dd5135e3ef3ade32a9ef9cb06e8d37a6795d'.toLowerCase(), // USDT
-  '0x0E4aaF1351de4c0264C5c7056Ef3777b41BD8e03'.toLowerCase(), // Honey
-  '0xfc5e3743e9fac8bb60408797607352e24db7d65e'.toLowerCase() // tHpot
+  '0x6969696969696969696969696969696969696969'.toLowerCase(), // WBERA
+  '0x9b37d542114070518a44e200fdcd8e4be737297f'.toLowerCase(), // Hpot
+  '0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce'.toLowerCase(), // Honey
+  '0x549943e04f40284185054145c6E4e9568C1D3241'.toLowerCase(), // USDC
+  '0x656b95E550C07a9ffe548bd4085c72418Ceb1dba'.toLowerCase(), // BGT
+  '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c'.toLowerCase(), // WBTC
+  '0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590'.toLowerCase() // WETH
 ]
 
 let MINIMUM_Matic_LOCKED = BigDecimal.fromString('0')
@@ -22,9 +24,8 @@ let MINIMUM_Matic_LOCKED = BigDecimal.fromString('0')
 let Q192 = Math.pow(2, 192)
 
 let STABLE_COINS: string[] = [
-  '0x0E4aaF1351de4c0264C5c7056Ef3777b41BD8e03'.toLowerCase(), // Honey
-  '0xd6D83aF58a19Cd14eF3CF6fe848C9A4d21e5727c'.toLowerCase(), // USDC
-  '0x05d0dd5135e3ef3ade32a9ef9cb06e8d37a6795d'.toLowerCase() // USDT
+  '0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce'.toLowerCase(), // Honey
+  '0x549943e04f40284185054145c6E4e9568C1D3241'.toLowerCase() // USDC
 ]
 
 export function priceToTokenPrices(price: BigInt, token0: Token, token1: Token): BigDecimal[] {
