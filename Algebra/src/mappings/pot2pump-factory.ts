@@ -46,10 +46,14 @@ export function handlePairCreated(event: PairCreated): void {
   }
 
   // Update the if launch is meme token and register it to ERC20 listener
-  let launchToken = Token.load(event.params.launchedToken.toHexString())
+  let launchToken = loadToken(event.params.launchedToken)
   if (launchToken == null) {
-    launchToken = loadToken(event.params.launchedToken)
     TokenTemplate.create(event.params.launchedToken)
+  }
+
+  let raisedToken = loadToken(event.params.raisedToken)
+  if (raisedToken == null) {
+    TokenTemplate.create(event.params.raisedToken)
   }
 
   newPair.searchString =
