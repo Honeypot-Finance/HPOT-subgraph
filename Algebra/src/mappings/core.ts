@@ -118,9 +118,10 @@ export function handleMint(event: MintEvent): void {
     amount1 = convertTokenToDecimal(event.params.amount0, token1.decimals)
   }
 
-  let amountUSD = amount0
-    .times(token0.derivedMatic.times(bundle.maticPriceUSD))
-    .plus(amount1.times(token1.derivedMatic.times(bundle.maticPriceUSD)))
+  const amount0USD = amount0.times(token0.derivedUSD)
+  const amount1USD = amount1.times(token1.derivedUSD)
+
+  let amountUSD = amount0USD.plus(amount1USD)
 
   // update token pool count
   token0.poolCount = token0.poolCount.plus(ONE_BI)
@@ -135,7 +136,8 @@ export function handleMint(event: MintEvent): void {
   // update token0 data
   token0.txCount = token0.txCount.plus(ONE_BI)
   token0.totalValueLocked = token0.totalValueLocked.plus(amount0)
-  token0.totalValueLockedUSD = token0.totalValueLocked.times(token0.derivedMatic.times(bundle.maticPriceUSD))
+  token0.totalValueLockedUSD = token0.totalValueLocked.times(token0.derivedUSD)
+  token0.liquidityUSD = token0.liquidityUSD.plus(amountUSD)
   if (token0Pot2Pump) {
     token0Pot2Pump.LaunchTokenTVLUSD = token0.totalValueLockedUSD
   }
@@ -143,7 +145,8 @@ export function handleMint(event: MintEvent): void {
   // update token1 data
   token1.txCount = token1.txCount.plus(ONE_BI)
   token1.totalValueLocked = token1.totalValueLocked.plus(amount1)
-  token1.totalValueLockedUSD = token1.totalValueLocked.times(token1.derivedMatic.times(bundle.maticPriceUSD))
+  token1.totalValueLockedUSD = token1.totalValueLocked.times(token1.derivedUSD)
+  token1.liquidityUSD = token1.liquidityUSD.plus(amountUSD)
   if (token1Pot2Pump) {
     token1Pot2Pump.LaunchTokenTVLUSD = token1.totalValueLockedUSD
   }
@@ -297,9 +300,10 @@ export function handleBurn(event: BurnEvent): void {
     amount1 = convertTokenToDecimal(event.params.amount0, token1.decimals)
   }
 
-  let amountUSD = amount0
-    .times(token0.derivedMatic.times(bundle.maticPriceUSD))
-    .plus(amount1.times(token1.derivedMatic.times(bundle.maticPriceUSD)))
+  const amount0USD = amount0.times(token0.derivedUSD)
+  const amount1USD = amount1.times(token1.derivedUSD)
+
+  let amountUSD = amount0USD.plus(amount1USD)
 
   let pluginFee = BigInt.fromI32(event.params.pluginFee).toBigDecimal()
 
@@ -310,8 +314,12 @@ export function handleBurn(event: BurnEvent): void {
   plugin.save()
 
   // update token pool count
-  token0.poolCount = token0.poolCount.minus(ONE_BI)
-  token1.poolCount = token1.poolCount.minus(ONE_BI)
+  if (amount0.lt(ZERO_BD)) {
+    token0.poolCount = token0.poolCount.minus(ONE_BI)
+  }
+  if (amount1.lt(ZERO_BD)) {
+    token1.poolCount = token1.poolCount.minus(ONE_BI)
+  }
 
   // reset tvl aggregates until new amounts calculated
   factory.totalValueLockedMatic = factory.totalValueLockedMatic.minus(pool.totalValueLockedMatic)
@@ -322,7 +330,8 @@ export function handleBurn(event: BurnEvent): void {
   // update token0 data
   token0.txCount = token0.txCount.plus(ONE_BI)
   token0.totalValueLocked = token0.totalValueLocked.minus(amount0)
-  token0.totalValueLockedUSD = token0.totalValueLocked.times(token0.derivedMatic.times(bundle.maticPriceUSD))
+  token0.totalValueLockedUSD = token0.totalValueLocked.times(token0.derivedUSD)
+  token0.liquidityUSD = token0.liquidityUSD.minus(amountUSD)
   if (token0Pot2Pump) {
     token0Pot2Pump.LaunchTokenTVLUSD = token0.totalValueLockedUSD
   }
@@ -330,7 +339,8 @@ export function handleBurn(event: BurnEvent): void {
   // update token1 data
   token1.txCount = token1.txCount.plus(ONE_BI)
   token1.totalValueLocked = token1.totalValueLocked.minus(amount1)
-  token1.totalValueLockedUSD = token1.totalValueLocked.times(token1.derivedMatic.times(bundle.maticPriceUSD))
+  token1.totalValueLockedUSD = token1.totalValueLocked.times(token1.derivedUSD)
+  token1.liquidityUSD = token1.liquidityUSD.minus(amountUSD)
   if (token1Pot2Pump) {
     token1Pot2Pump.LaunchTokenTVLUSD = token1.totalValueLockedUSD
   }
@@ -621,8 +631,13 @@ export function handleSwap(event: SwapEvent): void {
   factory.totalValueLockedMatic = factory.totalValueLockedMatic.plus(pool.totalValueLockedMatic)
   factory.totalValueLockedUSD = factory.totalValueLockedMatic.times(bundle.maticPriceUSD)
 
-  token0.totalValueLockedUSD = token0.totalValueLocked.times(token0.derivedMatic).times(bundle.maticPriceUSD)
-  token1.totalValueLockedUSD = token1.totalValueLocked.times(token1.derivedMatic).times(bundle.maticPriceUSD)
+  const token0TotalValueLockedUSD = token0.totalValueLocked.times(token0.derivedMatic).times(bundle.maticPriceUSD)
+  const token1TotalValueLockedUSD = token1.totalValueLocked.times(token1.derivedMatic).times(bundle.maticPriceUSD)
+  const totalValueLockedUSD = token0TotalValueLockedUSD.plus(token1TotalValueLockedUSD)
+
+  token0.totalValueLockedUSD = token0TotalValueLockedUSD
+  token1.totalValueLockedUSD = token1TotalValueLockedUSD
+
   if (token0Pot2Pump) {
     token0Pot2Pump.LaunchTokenTVLUSD = token0.totalValueLockedUSD
   }

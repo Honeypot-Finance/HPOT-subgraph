@@ -1,6 +1,6 @@
 import { ERC20 } from '../types/Factory/ERC20'
 import { PairCreated, Pot2PumpFactory } from '../types/Factory/Pot2PumpFactory'
-import { Pot2Pump, Token } from '../types/schema'
+import { Participant, Pot2Pump, Token } from '../types/schema'
 import { Pot2Pump as Pot2PumpTemplate, Token as TokenTemplate } from '../types/templates'
 import { BigInt } from '@graphprotocol/graph-ts'
 import { fetchCreator, fetchEndTime, fetchLaunchTokenAmount, fetchMinCap } from '../utils/pot2pump'
@@ -11,6 +11,11 @@ import { loadAccount } from '../utils/account'
 export function handlePairCreated(event: PairCreated): void {
   let newPair = Pot2Pump.load(event.params.pair.toHexString())
   let creatorAccount = loadAccount(fetchCreator(event.params.pair))
+  let raisedToken = loadToken(event.params.raisedToken)
+  let launchToken = loadToken(event.params.launchedToken)
+
+  // Update the if launch is meme token and register it to ERC20 listener
+  TokenTemplate.create(event.params.launchedToken)
 
   if (newPair == null) {
     newPair = new Pot2Pump(event.params.pair.toHexString())
@@ -42,18 +47,32 @@ export function handlePairCreated(event: PairCreated): void {
       creatorAccount.save()
     }
 
+    //update deployer participant info
+    if (creatorAccount != null) {
+      let deployerParticipantId = newPair.id + '-' + creatorAccount.id
+      let deployerParticipant = Participant.load(deployerParticipantId)
+      if (deployerParticipant == null) {
+        deployerParticipant = new Participant(deployerParticipantId)
+        deployerParticipant.id = deployerParticipantId
+        deployerParticipant.pot2Pump = newPair.id
+        deployerParticipant.account = creatorAccount.id
+        deployerParticipant.amount = ZERO_BI
+        deployerParticipant.totalRefundAmount = ZERO_BI
+        deployerParticipant.totalclaimLqAmount = ZERO_BI
+        deployerParticipant.claimed = false
+        deployerParticipant.refunded = false
+        deployerParticipant.createdAt = event.block.timestamp
+
+        newPair.participantsCount = newPair.participantsCount.plus(ONE_BI)
+
+        creatorAccount.participateCount = creatorAccount.participateCount.plus(ONE_BI)
+        creatorAccount.platformTxCount = creatorAccount.platformTxCount.plus(ONE_BI)
+
+        deployerParticipant.save()
+      }
+    }
+
     Pot2PumpTemplate.create(event.params.pair)
-  }
-
-  // Update the if launch is meme token and register it to ERC20 listener
-  let launchToken = loadToken(event.params.launchedToken)
-  if (launchToken == null) {
-    TokenTemplate.create(event.params.launchedToken)
-  }
-
-  let raisedToken = loadToken(event.params.raisedToken)
-  if (raisedToken == null) {
-    TokenTemplate.create(event.params.raisedToken)
   }
 
   newPair.searchString =

@@ -99,31 +99,6 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
     launchToken.derivedUSD = initPriceUSD
     launchToken.initialUSD = initPriceUSD
     pair.launchTokenInitialPrice = initPriceUSD
-
-    //update deployer participant info
-    if (deployer != null) {
-      let deployerParticipantId = deployer.id + '-' + event.params.depositor.toHexString()
-      let deployerParticipant = Participant.load(deployerParticipantId)
-      if (deployerParticipant == null) {
-        deployerParticipant = new Participant(deployerParticipantId)
-        deployerParticipant.id = deployerParticipantId
-        deployerParticipant.pot2Pump = pair.id
-        deployerParticipant.account = event.params.depositor.toHexString()
-        deployerParticipant.amount = ZERO_BI
-        deployerParticipant.totalRefundAmount = ZERO_BI
-        deployerParticipant.totalclaimLqAmount = ZERO_BI
-        deployerParticipant.claimed = false
-        deployerParticipant.refunded = false
-        deployerParticipant.createdAt = event.block.timestamp
-
-        pair.participantsCount = pair.participantsCount.plus(ONE_BI)
-
-        if (account != null) {
-          account.participateCount = account.participateCount.plus(ONE_BI)
-          account.platformTxCount = account.platformTxCount.plus(ONE_BI)
-        }
-      }
-    }
   }
 
   // save participant transaction history

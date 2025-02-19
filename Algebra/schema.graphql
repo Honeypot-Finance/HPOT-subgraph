@@ -118,6 +118,8 @@ type Token @entity {
   tokenDayData: [TokenDayData!]! @derivedFrom(field: "token")
   # derived market cap by total supply and derived price
   marketCap: BigDecimal!
+  # token all pools liquidity combined in USD
+  liquidityUSD: BigDecimal!
 
   # Pot2Pump
   pot2Pump: Pot2Pump @derivedFrom(field: "launchToken")
