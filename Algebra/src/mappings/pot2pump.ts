@@ -51,6 +51,7 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
     event.params.depositor.toHexString(),
     TransactionTypeToString(TransactionType.DEPOSIT)
   )
+
   let depositRaisedToken = new DepositRaisedToken(
     event.transaction.hash.toHexString() + '#' + event.logIndex.toString()
   )
@@ -59,7 +60,7 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
   depositRaisedToken.amount = event.params.depositAmount
   depositRaisedToken.logIndex = event.logIndex
   depositRaisedToken.origin = event.transaction.from
-  depositRaisedToken.poolAddress = event.transaction.to ? event.transaction.to : Address.fromString(ADDRESS_ZERO)
+  depositRaisedToken.poolAddress = Address.fromString(pair.id)
 
   depositRaisedToken.save()
 
