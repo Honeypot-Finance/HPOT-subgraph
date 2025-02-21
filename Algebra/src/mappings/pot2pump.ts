@@ -96,6 +96,7 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
     pair.state = new BigInt(0)
     const initPriceUSD = pair.DepositRaisedToken.toBigDecimal()
       .div(pair.DepositLaunchToken.toBigDecimal())
+      .div(BigDecimal.fromString('2'))
       .times(raiseToken.derivedUSD)
     launchToken.derivedUSD = initPriceUSD
     launchToken.initialUSD = initPriceUSD
@@ -129,6 +130,7 @@ export function handleRefund(event: TRefund): void {
   if (pair == null) {
     return
   }
+
   pair.totalRefundAmount = pair.totalRefundAmount.plus(event.params.refundAmount)
 
   //pair.DepositRaisedToken = pair.DepositRaisedToken.minus(event.params.refundAmount)
