@@ -90,6 +90,8 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
   }
 
   participant.amount = participant.amount.plus(event.params.depositAmount)
+  participant.claimed = false
+  participant.refunded = false
 
   if (pair.DepositRaisedToken >= pair.raisedTokenMinCap) {
     pair.raisedTokenReachingMinCap = true

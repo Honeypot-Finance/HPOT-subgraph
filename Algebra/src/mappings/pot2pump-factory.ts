@@ -60,7 +60,7 @@ export function handlePairCreated(event: PairCreated): void {
         deployerParticipant.totalRefundAmount = ZERO_BI
         deployerParticipant.totalclaimLqAmount = ZERO_BI
         deployerParticipant.claimed = false
-        deployerParticipant.refunded = false
+        deployerParticipant.refunded = true
         deployerParticipant.createdAt = event.block.timestamp
 
         newPair.participantsCount = newPair.participantsCount.plus(ONE_BI)
