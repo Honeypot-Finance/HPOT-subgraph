@@ -29,6 +29,13 @@ type Factory @entity {
   owner: ID!
   # total Account count
   accountCount: BigInt!
+
+  # total meme created
+  totalMemeCreated: BigInt!
+  # total successed meme
+  totalSuccessedMeme: BigInt!
+  # total deposited USD
+  totalDepositedUSD: BigDecimal!
 }
 
 type Account @entity {

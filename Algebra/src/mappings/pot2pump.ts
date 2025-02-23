@@ -18,11 +18,11 @@ import {
 } from '../types/templates/Pot2Pump/Pot2PumpPair'
 import { fetchState } from '../utils/pot2pump'
 import { loadAccount } from '../utils/account'
-import { ONE_BI, TransactionType, TransactionTypeToString, ZERO_BI } from '../utils/constants'
+import { FACTORY_ADDRESS, ONE_BI, TransactionType, TransactionTypeToString, ZERO_BI } from '../utils/constants'
 import { ADDRESS_ZERO } from '../utils/constants'
 import { loadToken } from '../utils/token'
 import { loadFactory } from './factory'
-
+import { convertTokenToDecimal } from '../utils'
 export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
   let pair = Pot2Pump.load(event.address.toHexString())
   if (pair == null) {
@@ -55,6 +55,13 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
   let depositRaisedToken = new DepositRaisedToken(
     event.transaction.hash.toHexString() + '#' + event.logIndex.toString()
   )
+  let depositRaisedTokenUSD = convertTokenToDecimal(event.params.depositAmount, raiseToken.decimals).times(
+    raiseToken.derivedUSD
+  )
+
+  // update factory total deposited USD
+  factory.totalDepositedUSD = factory.totalDepositedUSD.plus(depositRaisedTokenUSD)
+
   depositRaisedToken.transaction = transaction.id
   depositRaisedToken.timestamp = event.block.timestamp
   depositRaisedToken.amount = event.params.depositAmount
@@ -103,6 +110,7 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
     launchToken.derivedUSD = initPriceUSD
     launchToken.initialUSD = initPriceUSD
     pair.launchTokenInitialPrice = initPriceUSD
+    factory.totalSuccessedMeme = factory.totalSuccessedMeme.plus(ONE_BI)
   }
 
   // save participant transaction history

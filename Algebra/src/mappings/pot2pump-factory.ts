@@ -1,14 +1,16 @@
 import { ERC20 } from '../types/Factory/ERC20'
 import { PairCreated, Pot2PumpFactory } from '../types/Factory/Pot2PumpFactory'
-import { Participant, Pot2Pump, Token } from '../types/schema'
+import { Factory, Participant, Pot2Pump, Token } from '../types/schema'
 import { Pot2Pump as Pot2PumpTemplate, Token as TokenTemplate } from '../types/templates'
 import { BigInt } from '@graphprotocol/graph-ts'
 import { fetchCreator, fetchEndTime, fetchLaunchTokenAmount, fetchMinCap } from '../utils/pot2pump'
 import { loadToken } from '../utils/token'
 import { ONE_BI, ZERO_BD, ZERO_BI } from '../utils/constants'
 import { loadAccount } from '../utils/account'
+import { loadFactory } from './factory'
 
 export function handlePairCreated(event: PairCreated): void {
+  const factory = loadFactory()
   let newPair = Pot2Pump.load(event.params.pair.toHexString())
   let creatorAccount = loadAccount(fetchCreator(event.params.pair))
   let raisedToken = loadToken(event.params.raisedToken)
@@ -16,6 +18,9 @@ export function handlePairCreated(event: PairCreated): void {
 
   // Update the if launch is meme token and register it to ERC20 listener
   TokenTemplate.create(event.params.launchedToken)
+
+  // update factory meme created count
+  factory.totalMemeCreated = factory.totalMemeCreated.plus(ONE_BI)
 
   if (newPair == null) {
     newPair = new Pot2Pump(event.params.pair.toHexString())
@@ -81,4 +86,5 @@ export function handlePairCreated(event: PairCreated): void {
 
   launchToken.save()
   newPair.save()
+  factory.save()
 }

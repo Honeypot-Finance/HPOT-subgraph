@@ -139,6 +139,10 @@ export function loadFactory(): Factory {
     factory.txCount = ZERO_BI
     factory.owner = ADDRESS_ZERO
     factory.accountCount = ZERO_BI
+    factory.totalMemeCreated = ZERO_BI
+    factory.totalSuccessedMeme = ZERO_BI
+    factory.totalDepositedUSD = ZERO_BD
+
     // create new bundle for tracking matic price
     let bundle = new Bundle('1')
     bundle.maticPriceUSD = ZERO_BD
