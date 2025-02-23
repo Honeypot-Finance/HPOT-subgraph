@@ -121,6 +121,28 @@ dataSources:
         - event: ICHIVaultCreated(indexed address,address,address,bool,address,bool,uint256)
           handler: handleICHIVaultCreated
       file: ./src/mappings/vaultFactory.ts
+  - kind: ethereum
+    name: ICHIVaultFactory-with-automation
+    network: berachain-mainnet
+    source:
+      address: '0x7d125D0766C968353454b7A67bB2D61a97E5665d'
+      abi: ICHIVaultFactory
+      startBlock: 969565
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - IchiVault
+      abis:
+        - name: ICHIVaultFactory
+          file: ./abis/ICHIVaultFactory.json
+        - name: ICHIVault
+          file: ./abis/ICHIVault.json
+      eventHandlers:
+        - event: ICHIVaultCreated(indexed address,address,address,bool,address,bool,uint256)
+          handler: handleICHIVaultCreated
+      file: ./src/mappings/vaultFactory.ts
 
 templates:
   - kind: ethereum/contract

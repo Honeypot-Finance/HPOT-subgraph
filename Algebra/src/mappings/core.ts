@@ -458,7 +458,7 @@ export function handleSwap(event: SwapEvent): void {
   let token1 = Token.load(pool.token1)!
   let token0Pot2Pump = Pot2Pump.load(fetchTokenPot2PumpAddress(Address.fromString(token0.id)).toHexString())
   let token1Pot2Pump = Pot2Pump.load(fetchTokenPot2PumpAddress(Address.fromString(token1.id)).toHexString())
-  let senderAccount = loadAccount(event.params.sender)
+  let senderAccount = loadAccount(event.transaction.from)
   let recipientAccount = loadAccount(event.params.recipient)
   let amount0: BigDecimal
   let amount1: BigDecimal
@@ -531,9 +531,9 @@ export function handleSwap(event: SwapEvent): void {
   factory.totalFeesUSD = factory.totalFeesUSD.plus(feesUSD)
 
   // update accounts
-  if (recipientAccount != null) {
-    recipientAccount.swapCount = recipientAccount.swapCount.plus(ONE_BI)
-    recipientAccount.totalSpendUSD = recipientAccount.totalSpendUSD.plus(amountTotalUSDUntracked)
+  if (senderAccount != null) {
+    senderAccount.swapCount = senderAccount.swapCount.plus(ONE_BI)
+    senderAccount.totalSpendUSD = senderAccount.totalSpendUSD.plus(amountTotalUSDUntracked)
   }
 
   // reset aggregate tvl before individual pool tvl updates

@@ -40,6 +40,7 @@ export function handlePairCreated(event: PairCreated): void {
     newPair.sellCount = ZERO_BI
     newPair.depositRaisedTokenPercentageToMinCap = ZERO_BD
     newPair.creator = fetchCreator(event.params.pair).toHexString()
+
     //increase account creation count
     if (creatorAccount != null) {
       creatorAccount.pot2PumpLaunchCount = creatorAccount.pot2PumpLaunchCount.plus(ONE_BI)
