@@ -38,8 +38,6 @@ export function handlePairCreated(event: PairCreated): void {
     newPair.participantsCount = ZERO_BI
     newPair.raisedTokenMinCap = fetchMinCap(event.params.pair)
     newPair.raisedTokenReachingMinCap = false
-    newPair.LaunchTokenMCAPUSD = ZERO_BD
-    newPair.LaunchTokenTVLUSD = ZERO_BD
     newPair.launchTokenInitialPrice = ZERO_BD
     newPair.buyCount = ZERO_BI
     newPair.sellCount = ZERO_BI

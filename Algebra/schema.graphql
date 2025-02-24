@@ -143,8 +143,6 @@ type Pot2Pump @entity {
   launchTokenInitialPrice: BigDecimal!
   launchToken: Token!
   DepositLaunchToken: BigInt!
-  LaunchTokenTVLUSD: BigDecimal!
-  LaunchTokenMCAPUSD: BigDecimal!
   # raised token
   raisedTokenMinCap: BigInt!
   raisedToken: Token!

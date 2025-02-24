@@ -28,7 +28,7 @@ import {
   TickSpacing,
   Plugin as PluginEvent
 } from '../types/templates/Pool/Pool'
-import { convertTokenToDecimal, loadTransaction, safeDiv } from '../utils'
+import { convertTokenToDecimal, exponentToBigDecimal, loadTransaction, safeDiv } from '../utils'
 import {
   FACTORY_ADDRESS,
   ONE_BI,
@@ -138,18 +138,12 @@ export function handleMint(event: MintEvent): void {
   token0.totalValueLocked = token0.totalValueLocked.plus(amount0)
   token0.totalValueLockedUSD = token0.totalValueLocked.times(token0.derivedUSD)
   token0.liquidityUSD = token0.liquidityUSD.plus(amountUSD)
-  if (token0Pot2Pump) {
-    token0Pot2Pump.LaunchTokenTVLUSD = token0.totalValueLockedUSD
-  }
 
   // update token1 data
   token1.txCount = token1.txCount.plus(ONE_BI)
   token1.totalValueLocked = token1.totalValueLocked.plus(amount1)
   token1.totalValueLockedUSD = token1.totalValueLocked.times(token1.derivedUSD)
   token1.liquidityUSD = token1.liquidityUSD.plus(amountUSD)
-  if (token1Pot2Pump) {
-    token1Pot2Pump.LaunchTokenTVLUSD = token1.totalValueLockedUSD
-  }
 
   // pool data
   pool.txCount = pool.txCount.plus(ONE_BI)
@@ -332,18 +326,12 @@ export function handleBurn(event: BurnEvent): void {
   token0.totalValueLocked = token0.totalValueLocked.minus(amount0)
   token0.totalValueLockedUSD = token0.totalValueLocked.times(token0.derivedUSD)
   token0.liquidityUSD = token0.liquidityUSD.minus(amountUSD)
-  if (token0Pot2Pump) {
-    token0Pot2Pump.LaunchTokenTVLUSD = token0.totalValueLockedUSD
-  }
 
   // update token1 data
   token1.txCount = token1.txCount.plus(ONE_BI)
   token1.totalValueLocked = token1.totalValueLocked.minus(amount1)
   token1.totalValueLockedUSD = token1.totalValueLocked.times(token1.derivedUSD)
   token1.liquidityUSD = token1.liquidityUSD.minus(amountUSD)
-  if (token1Pot2Pump) {
-    token1Pot2Pump.LaunchTokenTVLUSD = token1.totalValueLockedUSD
-  }
 
   // pool data
   pool.txCount = pool.txCount.plus(ONE_BI)
@@ -563,9 +551,6 @@ export function handleSwap(event: SwapEvent): void {
   token0.untrackedVolumeUSD = token0.untrackedVolumeUSD.plus(amountTotalUSDUntracked)
   token0.feesUSD = token0.feesUSD.plus(feesUSD)
   token0.txCount = token0.txCount.plus(ONE_BI)
-  if (token0Pot2Pump) {
-    token0Pot2Pump.LaunchTokenTVLUSD = token0.totalValueLockedUSD
-  }
 
   // update token1 data
   token1.volume = token1.volume.plus(amount1Abs)
@@ -574,9 +559,6 @@ export function handleSwap(event: SwapEvent): void {
   token1.untrackedVolumeUSD = token1.untrackedVolumeUSD.plus(amountTotalUSDUntracked)
   token1.feesUSD = token1.feesUSD.plus(feesUSD)
   token1.txCount = token1.txCount.plus(ONE_BI)
-  if (token1Pot2Pump) {
-    token1Pot2Pump.LaunchTokenTVLUSD = token1.totalValueLockedUSD
-  }
 
   // updated pool ratess
   let prices = priceToTokenPrices(pool.sqrtPrice, token0 as Token, token1 as Token)
@@ -617,8 +599,12 @@ export function handleSwap(event: SwapEvent): void {
   token1.derivedMatic = findEthPerToken(token1 as Token)
   token0.derivedUSD = token0.derivedMatic.times(bundle.maticPriceUSD)
   token1.derivedUSD = token1.derivedMatic.times(bundle.maticPriceUSD)
-  token0.marketCap = token0.derivedUSD.times(token0.totalSupply.toBigDecimal())
-  token1.marketCap = token1.derivedUSD.times(token1.totalSupply.toBigDecimal())
+  token0.marketCap = token0.derivedUSD
+    .times(token0.totalSupply.toBigDecimal())
+    .div(exponentToBigDecimal(token0.decimals))
+  token1.marketCap = token1.derivedUSD
+    .times(token1.totalSupply.toBigDecimal())
+    .div(exponentToBigDecimal(token1.decimals))
 
   /**
    * Things afffected by new USD rates
@@ -637,13 +623,6 @@ export function handleSwap(event: SwapEvent): void {
 
   token0.totalValueLockedUSD = token0TotalValueLockedUSD
   token1.totalValueLockedUSD = token1TotalValueLockedUSD
-
-  if (token0Pot2Pump) {
-    token0Pot2Pump.LaunchTokenTVLUSD = token0.totalValueLockedUSD
-  }
-  if (token1Pot2Pump) {
-    token1Pot2Pump.LaunchTokenTVLUSD = token1.totalValueLockedUSD
-  }
 
   // create Swap event
   let transaction = loadTransaction(event, TransactionType.SWAP)
