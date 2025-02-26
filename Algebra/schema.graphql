@@ -572,6 +572,8 @@ type Swap @entity {
   amount1: BigDecimal!
   # derived info
   amountUSD: BigDecimal!
+  # untracked amount in USD
+  amountUSDUntracked: BigDecimal!
   # The sqrt(price) of the pool after the swap, as a Q64.96
   price: BigInt!
   # the tick after the swap

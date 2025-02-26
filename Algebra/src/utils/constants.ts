@@ -18,8 +18,6 @@ export let BI_18 = BigInt.fromI32(18)
 
 export let factoryContract = FactoryContract.bind(Address.fromString(FACTORY_ADDRESS))
 
-export let pools_list = ['']
-
 export enum TransactionType {
   DEPOSIT, // 0
   REFUND, // 1

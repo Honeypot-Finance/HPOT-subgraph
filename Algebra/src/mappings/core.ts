@@ -34,7 +34,6 @@ import {
   ONE_BI,
   ZERO_BD,
   ZERO_BI,
-  pools_list,
   FEE_DENOMINATOR,
   TransactionType,
   ADDRESS_ZERO
@@ -113,19 +112,10 @@ export function handleMint(event: MintEvent): void {
   let amount0 = convertTokenToDecimal(event.params.amount0, token0.decimals)
   let amount1 = convertTokenToDecimal(event.params.amount1, token1.decimals)
 
-  if (pools_list.includes(event.address.toHexString())) {
-    amount0 = convertTokenToDecimal(event.params.amount1, token0.decimals)
-    amount1 = convertTokenToDecimal(event.params.amount0, token1.decimals)
-  }
-
   const amount0USD = amount0.times(token0.derivedUSD)
   const amount1USD = amount1.times(token1.derivedUSD)
 
   let amountUSD = amount0USD.plus(amount1USD)
-
-  // update token pool count
-  token0.poolCount = token0.poolCount.plus(ONE_BI)
-  token1.poolCount = token1.poolCount.plus(ONE_BI)
 
   // reset tvl aggregates until new amounts calculated
   factory.totalValueLockedMatic = factory.totalValueLockedMatic.minus(pool.totalValueLockedMatic)
@@ -240,6 +230,11 @@ export function handleMint(event: MintEvent): void {
     poolPosition.upperTick = upperTick.id
     poolPosition.liquidity = event.params.liquidityAmount
     poolPosition.owner = event.params.owner
+
+    // update token pool count
+    token0.poolCount = token0.poolCount.plus(ONE_BI)
+    token1.poolCount = token1.poolCount.plus(ONE_BI)
+    pool.liquidityProviderCount = pool.liquidityProviderCount.plus(ONE_BI)
   }
 
   // TODO: Update Tick's volume, fees, and liquidity provider count
@@ -288,11 +283,6 @@ export function handleBurn(event: BurnEvent): void {
 
   let amount0 = convertTokenToDecimal(event.params.amount0, token0.decimals)
   let amount1 = convertTokenToDecimal(event.params.amount1, token1.decimals)
-
-  if (pools_list.includes(event.address.toHexString())) {
-    amount0 = convertTokenToDecimal(event.params.amount1, token0.decimals)
-    amount1 = convertTokenToDecimal(event.params.amount0, token1.decimals)
-  }
 
   const amount0USD = amount0.times(token0.derivedUSD)
   const amount1USD = amount1.times(token1.derivedUSD)
@@ -409,7 +399,13 @@ export function handleBurn(event: BurnEvent): void {
   let poolPosition = PoolPosition.load(poolPositionid)
   if (poolPosition) {
     poolPosition.liquidity = poolPosition.liquidity.minus(event.params.liquidityAmount)
-    poolPosition.save()
+
+    // update token pool count
+    if (poolPosition.liquidity.equals(ZERO_BI) || poolPosition.liquidity.lt(ZERO_BI)) {
+      token0.poolCount = token0.poolCount.minus(ONE_BI)
+      token1.poolCount = token1.poolCount.minus(ONE_BI)
+      pool.liquidityProviderCount = pool.liquidityProviderCount.minus(ONE_BI)
+    }
   }
 
   updateAlgebraDayData(event)
@@ -429,6 +425,9 @@ export function handleBurn(event: BurnEvent): void {
   pool.save()
   factory.save()
   burn.save()
+  if (poolPosition) {
+    poolPosition.save()
+  }
   if (token0Pot2Pump != null) {
     token0Pot2Pump.save()
   }
@@ -448,17 +447,8 @@ export function handleSwap(event: SwapEvent): void {
   let token1Pot2Pump = Pot2Pump.load(fetchTokenPot2PumpAddress(Address.fromString(token1.id)).toHexString())
   let senderAccount = loadAccount(event.transaction.from)
   let recipientAccount = loadAccount(event.params.recipient)
-  let amount0: BigDecimal
-  let amount1: BigDecimal
-
-  // get amount0 and amount1
-  if (pools_list.includes(event.address.toHexString())) {
-    amount0 = convertTokenToDecimal(event.params.amount1, token0.decimals)
-    amount1 = convertTokenToDecimal(event.params.amount0, token1.decimals)
-  } else {
-    amount0 = convertTokenToDecimal(event.params.amount0, token0.decimals)
-    amount1 = convertTokenToDecimal(event.params.amount1, token1.decimals)
-  }
+  const amount0: BigDecimal = convertTokenToDecimal(event.params.amount0, token0.decimals)
+  const amount1: BigDecimal = convertTokenToDecimal(event.params.amount1, token1.decimals)
 
   // update pot2pump buy/sell count
   if (token0Pot2Pump) {
@@ -493,10 +483,8 @@ export function handleSwap(event: SwapEvent): void {
     ? amount1
     : amount1.times(FEE_DENOMINATOR.minus(swapFee.plus(pluginFee).toBigDecimal())).div(FEE_DENOMINATOR)
 
-  let amount0Matic = amount0Abs.times(token0.derivedMatic)
-  let amount1Matic = amount1Abs.times(token1.derivedMatic)
-  let amount0USD = amount0Matic.times(bundle.maticPriceUSD)
-  let amount1USD = amount1Matic.times(bundle.maticPriceUSD)
+  let amount0USD = amount0Abs.times(token0.derivedUSD)
+  let amount1USD = amount1Abs.times(token1.derivedUSD)
 
   // get amount that should be tracked only - div 2 because cant count both input and output as volume
   let amountTotalUSDTracked = getTrackedAmountUSD(amount0Abs, token0 as Token, amount1Abs, token1 as Token).div(
@@ -518,10 +506,13 @@ export function handleSwap(event: SwapEvent): void {
   factory.totalFeesMatic = factory.totalFeesMatic.plus(feesMatic)
   factory.totalFeesUSD = factory.totalFeesUSD.plus(feesUSD)
 
-  // update accounts
+  // update account
   if (senderAccount != null) {
     senderAccount.swapCount = senderAccount.swapCount.plus(ONE_BI)
     senderAccount.totalSpendUSD = senderAccount.totalSpendUSD.plus(amountTotalUSDUntracked)
+  } else if (recipientAccount != null) {
+    recipientAccount.swapCount = recipientAccount.swapCount.plus(ONE_BI)
+    recipientAccount.totalSpendUSD = recipientAccount.totalSpendUSD.plus(amountTotalUSDUntracked)
   }
 
   // reset aggregate tvl before individual pool tvl updates
@@ -564,12 +555,6 @@ export function handleSwap(event: SwapEvent): void {
   let prices = priceToTokenPrices(pool.sqrtPrice, token0 as Token, token1 as Token)
   pool.token0Price = prices[0]
   pool.token1Price = prices[1]
-
-  if (pools_list.includes(event.address.toHexString())) {
-    prices = priceToTokenPrices(pool.sqrtPrice, token1 as Token, token0 as Token)
-    pool.token0Price = prices[1]
-    pool.token1Price = prices[0]
-  }
 
   let plugin = Plugin.load(pool.plugin.toHexString())!
 
@@ -640,6 +625,7 @@ export function handleSwap(event: SwapEvent): void {
   swap.amount0 = amount0
   swap.amount1 = amount1
   swap.amountUSD = amountTotalUSDTracked
+  swap.amountUSDUntracked = amountTotalUSDUntracked
   swap.tick = BigInt.fromI32(event.params.tick)
   swap.price = event.params.price
   // update fee growth

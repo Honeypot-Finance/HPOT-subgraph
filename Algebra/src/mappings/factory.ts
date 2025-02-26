@@ -1,7 +1,7 @@
 import { WHITELIST_TOKENS } from '../utils/pricing'
 /* eslint-disable prefer-const */
-import { FACTORY_ADDRESS, ZERO_BI, ONE_BI, ZERO_BD, ADDRESS_ZERO, pools_list } from '../utils/constants'
-import { Factory } from '../types/schema'
+import { FACTORY_ADDRESS, ZERO_BI, ONE_BI, ZERO_BD, ADDRESS_ZERO } from '../utils/constants'
+import { Account, Factory } from '../types/schema'
 import { Pool as PoolEvent } from '../types/Factory/Factory'
 import { DefaultCommunityFee, CustomPool } from '../types/Factory/Factory'
 import { Pool, Token, Bundle } from '../types/schema'
@@ -27,11 +27,6 @@ export function handlePoolCreated(event: PoolEvent): void {
 
   let token0_address = event.params.token0
   let token1_address = event.params.token1
-
-  if (pools_list.includes(event.params.pool.toHexString())) {
-    token0_address = event.params.token1
-    token1_address = event.params.token0
-  }
 
   let token0 = loadToken(token0_address)
   let token1 = loadToken(token1_address)
@@ -76,11 +71,6 @@ export function handleCustomPoolCreated(event: CustomPool): void {
 
   let token0_address = event.params.token0
   let token1_address = event.params.token1
-
-  if (pools_list.includes(event.params.pool.toHexString())) {
-    token0_address = event.params.token1
-    token1_address = event.params.token0
-  }
 
   let token0 = loadToken(token0_address)
   let token1 = loadToken(token1_address)
@@ -153,7 +143,7 @@ export function loadFactory(): Factory {
   return factory
 }
 
-function loadDefaultPool(id: string): Pool {
+export function loadDefaultPool(id: string): Pool {
   let pool = new Pool(id) as Pool
   pool.deployer = Address.fromString(ADDRESS_ZERO)
   pool.plugin = Address.fromString(ADDRESS_ZERO)

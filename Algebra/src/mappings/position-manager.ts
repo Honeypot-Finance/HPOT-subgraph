@@ -7,7 +7,7 @@ import {
   Transfer
 } from '../types/NonfungiblePositionManager/NonfungiblePositionManager'
 import { Bundle, LiquidatorData, Position, PositionSnapshot, Token } from '../types/schema'
-import { ADDRESS_ZERO, factoryContract, ZERO_BD, ZERO_BI, pools_list, TransactionType } from '../utils/constants'
+import { ADDRESS_ZERO, factoryContract, ZERO_BD, ZERO_BI, TransactionType } from '../utils/constants'
 import { Address, BigDecimal, BigInt, ethereum } from '@graphprotocol/graph-ts'
 import { convertTokenToDecimal, loadTransaction } from '../utils'
 import { loadAccount } from '../utils/account'
@@ -30,13 +30,9 @@ function getPosition(event: ethereum.Event, tokenId: BigInt): Position | null {
       // The owner gets correctly updated in the Transfer handler
       position.owner = Address.fromString(ADDRESS_ZERO)
       position.pool = poolAddress.toHexString()
-      if (pools_list.includes(position.pool)) {
-        position.token0 = positionResult.value3.toHexString()
-        position.token1 = positionResult.value2.toHexString()
-      } else {
-        position.token0 = positionResult.value2.toHexString()
-        position.token1 = positionResult.value3.toHexString()
-      }
+      position.token0 = positionResult.value2.toHexString()
+      position.token1 = positionResult.value3.toHexString()
+
       position.tickLower = position.pool.concat('#').concat(positionResult.value5.toString())
       position.tickUpper = position.pool.concat('#').concat(positionResult.value6.toString())
       position.liquidity = ZERO_BI
@@ -78,27 +74,15 @@ function savePositionSnapshot(position: Position, event: ethereum.Event): void {
   positionSnapshot.timestamp = event.block.timestamp
   positionSnapshot.liquidity = position.liquidity
 
-  if (pools_list.includes(position.pool)) {
-    positionSnapshot.depositedToken0 = position.depositedToken1
-    positionSnapshot.depositedToken1 = position.depositedToken0
-    positionSnapshot.withdrawnToken0 = position.withdrawnToken1
-    positionSnapshot.withdrawnToken1 = position.withdrawnToken0
-    positionSnapshot.collectedFeesToken0 = position.collectedFeesToken1
-    positionSnapshot.collectedFeesToken1 = position.collectedFeesToken0
-    positionSnapshot.transaction = loadTransaction(event, TransactionType.INCREASE_LIQUIDITY).id
-    positionSnapshot.feeGrowthInside0LastX128 = position.feeGrowthInside1LastX128
-    positionSnapshot.feeGrowthInside1LastX128 = position.feeGrowthInside0LastX128
-  } else {
-    positionSnapshot.depositedToken0 = position.depositedToken0
-    positionSnapshot.depositedToken1 = position.depositedToken1
-    positionSnapshot.withdrawnToken0 = position.withdrawnToken0
-    positionSnapshot.withdrawnToken1 = position.withdrawnToken1
-    positionSnapshot.collectedFeesToken0 = position.collectedFeesToken0
-    positionSnapshot.collectedFeesToken1 = position.collectedFeesToken1
-    positionSnapshot.transaction = loadTransaction(event, TransactionType.INCREASE_LIQUIDITY).id
-    positionSnapshot.feeGrowthInside0LastX128 = position.feeGrowthInside0LastX128
-    positionSnapshot.feeGrowthInside1LastX128 = position.feeGrowthInside1LastX128
-  }
+  positionSnapshot.depositedToken0 = position.depositedToken0
+  positionSnapshot.depositedToken1 = position.depositedToken1
+  positionSnapshot.withdrawnToken0 = position.withdrawnToken0
+  positionSnapshot.withdrawnToken1 = position.withdrawnToken1
+  positionSnapshot.collectedFeesToken0 = position.collectedFeesToken0
+  positionSnapshot.collectedFeesToken1 = position.collectedFeesToken1
+  positionSnapshot.transaction = loadTransaction(event, TransactionType.INCREASE_LIQUIDITY).id
+  positionSnapshot.feeGrowthInside0LastX128 = position.feeGrowthInside0LastX128
+  positionSnapshot.feeGrowthInside1LastX128 = position.feeGrowthInside1LastX128
 
   positionSnapshot.save()
 }
@@ -119,11 +103,8 @@ export function handleIncreaseLiquidity(event: IncreaseLiquidity): void {
   let amount1 = ZERO_BD
   let amount0 = ZERO_BD
 
-  if (pools_list.includes(position.pool)) amount0 = convertTokenToDecimal(event.params.amount1, token0!.decimals)
-  else amount0 = convertTokenToDecimal(event.params.amount0, token0!.decimals)
-
-  if (pools_list.includes(position.pool)) amount1 = convertTokenToDecimal(event.params.amount0, token1!.decimals)
-  else amount1 = convertTokenToDecimal(event.params.amount1, token1!.decimals)
+  amount0 = convertTokenToDecimal(event.params.amount0, token0!.decimals)
+  amount1 = convertTokenToDecimal(event.params.amount1, token1!.decimals)
 
   position.liquidity = position.liquidity.plus(event.params.actualLiquidity)
   position.depositedToken0 = position.depositedToken0.plus(amount0)
@@ -178,11 +159,9 @@ export function handleDecreaseLiquidity(event: DecreaseLiquidity): void {
   let amount1 = ZERO_BD
   let amount0 = ZERO_BD
 
-  if (pools_list.includes(position.pool)) amount0 = convertTokenToDecimal(event.params.amount1, token0!.decimals)
-  else amount0 = convertTokenToDecimal(event.params.amount0, token0!.decimals)
+  amount0 = convertTokenToDecimal(event.params.amount0, token0!.decimals)
 
-  if (pools_list.includes(position.pool)) amount1 = convertTokenToDecimal(event.params.amount0, token1!.decimals)
-  else amount1 = convertTokenToDecimal(event.params.amount1, token1!.decimals)
+  amount1 = convertTokenToDecimal(event.params.amount1, token1!.decimals)
 
   position.liquidity = position.liquidity.minus(event.params.liquidity)
   position.withdrawnToken0 = position.withdrawnToken0.plus(amount0)
@@ -234,11 +213,8 @@ export function handleCollect(event: Collect): void {
   let amount1 = ZERO_BD
   let amount0 = ZERO_BD
 
-  if (pools_list.includes(position.pool)) amount0 = convertTokenToDecimal(event.params.amount1, token0!.decimals)
-  else amount0 = convertTokenToDecimal(event.params.amount0, token0!.decimals)
-
-  if (pools_list.includes(position.pool)) amount1 = convertTokenToDecimal(event.params.amount0, token1!.decimals)
-  else amount1 = convertTokenToDecimal(event.params.amount1, token1!.decimals)
+  amount0 = convertTokenToDecimal(event.params.amount0, token0!.decimals)
+  amount1 = convertTokenToDecimal(event.params.amount1, token1!.decimals)
 
   position.collectedToken0 = position.collectedToken0.plus(amount0)
   position.collectedToken1 = position.collectedToken1.plus(amount1)
