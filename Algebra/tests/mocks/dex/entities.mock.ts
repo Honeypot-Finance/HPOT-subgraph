@@ -7,6 +7,7 @@ import { ZERO_BI } from '../../../src/utils/constants'
 import { loadDefaultPool, loadFactory } from '../../../src/mappings/factory'
 import { loadToken } from '../../../src/utils/token'
 import { Address, BigDecimal, BigInt, ethereum } from '@graphprotocol/graph-ts'
+import { Plugin } from '../../../src/types/schema'
 
 import { newMockEvent } from 'matchstick-as/assembly/defaults'
 
@@ -16,28 +17,7 @@ export function createDexFactoryEntity(): Factory {
   return loadFactory()
 }
 
-export function createMockSwapEvent(
-  poolAddress: string,
-  sender: Address = Address.fromString('0x0000000000000000000000000000000000000001'),
-  recipient: Address = Address.fromString('0x0000000000000000000000000000000000000001'),
-  amount0: BigInt = BigInt.fromI32(0),
-  amount1: BigInt = BigInt.fromI32(0),
-  liquidity: BigInt = BigInt.fromI32(0),
-  tick: i32 = 0,
-  price: BigInt = BigInt.fromI32(0),
-  overrideFee: i32 = 0,
-  pluginFee: i32 = 0
-): Swap {
-  let mockSender: Address = sender
-  let mockRecipient: Address = recipient
-  let mockAmount0: BigInt = amount0
-  let mockAmount1: BigInt = amount1
-  let mockLiquidity: BigInt = liquidity
-  let mockTick: i32 = tick
-  let mockPrice: BigInt = price
-  let mockOverrideFee: i32 = overrideFee
-  let mockPluginFee: i32 = pluginFee
-
+export function createMockSwapEvent(poolAddress: string): Swap {
   let mockEvent = newMockEvent()
 
   let mockSwapEvent = new Swap(
@@ -51,26 +31,7 @@ export function createMockSwapEvent(
     mockEvent.receipt
   )
 
-  let senderParam = new ethereum.EventParam('sender', ethereum.Value.fromAddress(mockSender))
-  let recipientParam = new ethereum.EventParam('recipient', ethereum.Value.fromAddress(mockRecipient))
-  let amount0Param = new ethereum.EventParam('amount0', ethereum.Value.fromSignedBigInt(mockAmount0))
-  let amount1Param = new ethereum.EventParam('amount1', ethereum.Value.fromSignedBigInt(mockAmount1))
-  let liquidityParam = new ethereum.EventParam('liquidity', ethereum.Value.fromSignedBigInt(mockLiquidity))
-  let tickParam = new ethereum.EventParam('tick', ethereum.Value.fromI32(mockTick))
-  let priceParam = new ethereum.EventParam('price', ethereum.Value.fromSignedBigInt(mockPrice))
-  let overrideFeeParam = new ethereum.EventParam('overrideFee', ethereum.Value.fromI32(mockOverrideFee))
-  let pluginFeeParam = new ethereum.EventParam('pluginFee', ethereum.Value.fromI32(mockPluginFee))
-
   mockSwapEvent.address = Address.fromString(poolAddress)
-  mockSwapEvent.parameters.push(senderParam)
-  mockSwapEvent.parameters.push(recipientParam)
-  mockSwapEvent.parameters.push(amount0Param)
-  mockSwapEvent.parameters.push(amount1Param)
-  mockSwapEvent.parameters.push(liquidityParam)
-  mockSwapEvent.parameters.push(tickParam)
-  mockSwapEvent.parameters.push(priceParam)
-  mockSwapEvent.parameters.push(overrideFeeParam)
-  mockSwapEvent.parameters.push(pluginFeeParam)
 
   return mockSwapEvent
 }
@@ -168,4 +129,16 @@ export function createMockAccount(address: Address): Account {
   newAcc.save()
   factory.save()
   return newAcc
+}
+
+export function createMockPluginEntity(address: string, poolAddress: string): Plugin {
+  const plugin = new Plugin(address)
+
+  plugin.id = address
+  plugin.pool = poolAddress
+  plugin.collectedFeesToken0 = ZERO_BD
+  plugin.collectedFeesToken1 = ZERO_BD
+  plugin.collectedFeesUSD = ZERO_BD
+  plugin.save()
+  return plugin
 }
