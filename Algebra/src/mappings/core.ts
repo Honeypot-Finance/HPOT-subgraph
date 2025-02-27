@@ -15,7 +15,7 @@ import {
   Pot2Pump
 } from '../types/schema'
 import { PluginConfig, Pool as PoolABI } from '../types/Factory/Pool'
-import { Address, BigDecimal, BigInt, ethereum, log, store } from '@graphprotocol/graph-ts'
+import { Address, BigDecimal, BigInt, ethereum, log, store, Value } from '@graphprotocol/graph-ts'
 
 import {
   Burn as BurnEvent,
@@ -450,6 +450,12 @@ export function handleSwap(event: SwapEvent): void {
   const amount0: BigDecimal = convertTokenToDecimal(event.params.amount0, token0.decimals)
   const amount1: BigDecimal = convertTokenToDecimal(event.params.amount1, token1.decimals)
 
+  log.info('token0: {}', [token0.id])
+  log.info('token1: {}', [token1.id])
+  log.info('token0.totalValueLockedUSD: {}', [token0.totalValueLockedUSD.toString()])
+  log.info('token1.totalValueLockedUSD: {}', [token1.totalValueLockedUSD.toString()])
+  log.info('token0.derivedUSD: {}', [token0.derivedUSD.toString()])
+  log.info('token1.derivedUSD: {}', [token1.derivedUSD.toString()])
   // update pot2pump buy/sell count
   if (token0Pot2Pump) {
     if (amount0.lt(ZERO_BD)) {
@@ -479,10 +485,15 @@ export function handleSwap(event: SwapEvent): void {
     ? amount0
     : amount0.times(FEE_DENOMINATOR.minus(swapFee.plus(pluginFee).toBigDecimal())).div(FEE_DENOMINATOR)
 
+  log.info('FEE_DENOMINATOR: {}', [FEE_DENOMINATOR.toString()])
+  log.info('swapFee: {}', [swapFee.toString()])
+  log.info('pluginFee: {}', [pluginFee.toString()])
+  log.info('amount0withFee: {}', [amount0withFee.toString()])
   let amount1withFee = amount1.lt(ZERO_BD)
     ? amount1
     : amount1.times(FEE_DENOMINATOR.minus(swapFee.plus(pluginFee).toBigDecimal())).div(FEE_DENOMINATOR)
 
+  log.info('amount1withFee: {}', [amount1withFee.toString()])
   let amount0USD = amount0Abs.times(token0.derivedUSD)
   let amount1USD = amount1Abs.times(token1.derivedUSD)
 
@@ -506,13 +517,19 @@ export function handleSwap(event: SwapEvent): void {
   factory.totalFeesMatic = factory.totalFeesMatic.plus(feesMatic)
   factory.totalFeesUSD = factory.totalFeesUSD.plus(feesUSD)
 
+  log.info('amountTotalUSDUntracked: {}', [amountTotalUSDUntracked.toString()])
   // update account
   if (senderAccount != null) {
+    log.info('senderAccount: {}', [senderAccount.id])
     senderAccount.swapCount = senderAccount.swapCount.plus(ONE_BI)
     senderAccount.totalSpendUSD = senderAccount.totalSpendUSD.plus(amountTotalUSDUntracked)
+    log.info('senderAccount.totalSpendUSD: {}', [senderAccount.totalSpendUSD.toString()])
+    senderAccount.save()
   } else if (recipientAccount != null) {
     recipientAccount.swapCount = recipientAccount.swapCount.plus(ONE_BI)
     recipientAccount.totalSpendUSD = recipientAccount.totalSpendUSD.plus(amountTotalUSDUntracked)
+    log.info('recipientAccount.totalSpendUSD: {}', [recipientAccount.totalSpendUSD.toString()])
+    recipientAccount.save()
   }
 
   // reset aggregate tvl before individual pool tvl updates
@@ -530,7 +547,8 @@ export function handleSwap(event: SwapEvent): void {
 
   // Update the pool with the new active liquidity, price, and tick.
   pool.liquidity = event.params.liquidity
-  pool.tick = BigInt.fromI32(event.params.tick as i32)
+  // log.info('event.params.tick: {}', [event.params.tick])
+  pool.tick = BigInt.fromI32(event.params.tick)
   pool.sqrtPrice = event.params.price
   pool.totalValueLockedToken0 = pool.totalValueLockedToken0.plus(amount0withFee)
   pool.totalValueLockedToken1 = pool.totalValueLockedToken1.plus(amount1withFee)
@@ -542,6 +560,8 @@ export function handleSwap(event: SwapEvent): void {
   token0.untrackedVolumeUSD = token0.untrackedVolumeUSD.plus(amountTotalUSDUntracked)
   token0.feesUSD = token0.feesUSD.plus(feesUSD)
   token0.txCount = token0.txCount.plus(ONE_BI)
+
+  log.info('token0.totalValueLocked: {}', [token0.totalValueLocked.toString()])
 
   // update token1 data
   token1.volume = token1.volume.plus(amount1Abs)
@@ -581,7 +601,9 @@ export function handleSwap(event: SwapEvent): void {
   bundle.save()
 
   token0.derivedMatic = findEthPerToken(token0 as Token)
+  log.info('token0.derivedMatic: {}', [token0.derivedMatic.toString()])
   token1.derivedMatic = findEthPerToken(token1 as Token)
+  log.info('token1.derivedMatic: {}', [token1.derivedMatic.toString()])
   token0.derivedUSD = token0.derivedMatic.times(bundle.maticPriceUSD)
   token1.derivedUSD = token1.derivedMatic.times(bundle.maticPriceUSD)
   token0.marketCap = token0.derivedUSD
@@ -597,17 +619,20 @@ export function handleSwap(event: SwapEvent): void {
   pool.totalValueLockedMatic = pool.totalValueLockedToken0
     .times(token0.derivedMatic)
     .plus(pool.totalValueLockedToken1.times(token1.derivedMatic))
-  pool.totalValueLockedUSD = pool.totalValueLockedMatic.times(bundle.maticPriceUSD)
+  pool.totalValueLockedUSD = pool.totalValueLockedToken0
+    .times(token0.derivedUSD)
+    .plus(pool.totalValueLockedToken1.times(token1.derivedUSD))
 
   factory.totalValueLockedMatic = factory.totalValueLockedMatic.plus(pool.totalValueLockedMatic)
-  factory.totalValueLockedUSD = factory.totalValueLockedMatic.times(bundle.maticPriceUSD)
+  factory.totalValueLockedUSD = factory.totalValueLockedUSD.plus(pool.totalValueLockedUSD)
 
-  const token0TotalValueLockedUSD = token0.totalValueLocked.times(token0.derivedMatic).times(bundle.maticPriceUSD)
-  const token1TotalValueLockedUSD = token1.totalValueLocked.times(token1.derivedMatic).times(bundle.maticPriceUSD)
-  const totalValueLockedUSD = token0TotalValueLockedUSD.plus(token1TotalValueLockedUSD)
+  token0.totalValueLockedUSD = token0.totalValueLocked.times(token0.derivedUSD)
+  token1.totalValueLockedUSD = token1.totalValueLocked.times(token1.derivedUSD)
 
-  token0.totalValueLockedUSD = token0TotalValueLockedUSD
-  token1.totalValueLockedUSD = token1TotalValueLockedUSD
+  log.info('token0.derivedUSD: {}', [token0.derivedUSD.toString()])
+  log.info('token1.derivedUSD: {}', [token1.derivedUSD.toString()])
+  log.info('token0.totalValueLockedUSD: {}', [token0.totalValueLockedUSD.toString()])
+  log.info('token1.totalValueLockedUSD: {}', [token1.totalValueLockedUSD.toString()])
 
   // create Swap event
   let transaction = loadTransaction(event, TransactionType.SWAP)
@@ -727,9 +752,10 @@ export function handleSwap(event: SwapEvent): void {
     token1Pot2Pump.save()
   }
   if (senderAccount != null) {
+    log.info('senderAccount.totalSpendUSD: {}', [senderAccount.totalSpendUSD.toString()])
     senderAccount.save()
-  }
-  if (recipientAccount != null) {
+  } else if (recipientAccount != null) {
+    log.info('recipientAccount.totalSpendUSD: {}', [recipientAccount.totalSpendUSD.toString()])
     recipientAccount.save()
   }
 
@@ -773,6 +799,12 @@ export function handleSwap(event: SwapEvent): void {
 
   // Update APR
   updatePoolAPR(pool, event)
+
+  if (senderAccount != null) {
+    log.info('senderAccount.totalSpendUSD: {}', [senderAccount.totalSpendUSD.toString()])
+  }
+  log.info('token0.totalValueLockedUSD: {}', [token0.totalValueLockedUSD.toString()])
+  log.info('token1.totalValueLockedUSD: {}', [token1.totalValueLockedUSD.toString()])
 }
 
 export function handleSetCommunityFee(event: CommunityFee): void {

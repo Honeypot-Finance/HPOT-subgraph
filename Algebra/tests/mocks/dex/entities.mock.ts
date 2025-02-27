@@ -142,3 +142,11 @@ export function createMockPluginEntity(address: string, poolAddress: string): Pl
   plugin.save()
   return plugin
 }
+
+export function createMockBundleEntity(): Bundle {
+  const bundle = new Bundle('1')
+  bundle.id = '1'
+  bundle.maticPriceUSD = ZERO_BD
+  bundle.save()
+  return bundle
+}

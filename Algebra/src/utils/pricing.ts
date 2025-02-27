@@ -43,6 +43,7 @@ export function priceToTokenPrices(price: BigInt, token0: Token, token1: Token):
 export function getEthPriceInUSD(): BigDecimal {
   let usdcPool = Pool.load(Honey_WBera_POOL)
   if (usdcPool !== null) {
+    log.info('usdcPool.token1Price: {}', [usdcPool.token1Price.toString()])
     return usdcPool.token1Price
   } else {
     return ZERO_BD
