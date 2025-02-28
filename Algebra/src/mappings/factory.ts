@@ -107,7 +107,14 @@ export function handleCustomPoolCreated(event: CustomPool): void {
 
 export function handleNewCommunityFee(event: DefaultCommunityFee): void {
   let factory = loadFactory()
-  factory.defaultCommunityFee = BigInt.fromI32(event.params.newDefaultCommunityFee as i32)
+  log.info('Factory Data: {}', [event.params.newDefaultCommunityFee.toString()])
+  log.info('Factory Data: {}', [factory.id])
+  let communityFee = event.params.newDefaultCommunityFee
+  if (communityFee) {
+    factory.defaultCommunityFee = BigInt.fromI32(communityFee)
+  } else {
+    factory.defaultCommunityFee = ZERO_BI
+  }
   factory.save()
 }
 
