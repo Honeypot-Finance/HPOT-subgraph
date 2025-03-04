@@ -1,0 +1,35 @@
+specVersion: 0.0.4
+description: Hpot is a decentralized protocol for automated token exchange on berachain-mainnet.
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: bgt-market
+    network: berachain-mainnet
+    source:
+      address: '0x53458cE30b71a7f306BDd1ACD8790B91Bd45bFD0'
+      abi: BGTMarket
+      startBlock: 1780203
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/bgt-market.ts
+      entities:
+        - Account
+        - Order
+        - OrderFilled
+        - OrderPosted
+        - Token
+      abis:
+        - name: BGTMarket
+          file: ./abis/BGTMarket.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: OrderPosted(indexed uint256,indexed address,indexed uint256,address,uint256,uint8)
+          handler: handleOrderPosted
+        - event: OrderFilled(indexed uint256,indexed address,indexed uint256,address,uint256,uint256)
+          handler: handleOrderFilled
+        - event: OrderClosed(indexed uint256)
+          handler: handleOrderClosed

@@ -1,0 +1,59 @@
+type Account @entity {
+  # account address
+  id: ID!
+  ordrs: [Order!] @derivedFrom(field: "dealer")
+  OrderFilled: [OrderFilled!] @derivedFrom(field: "taker")
+  OrderPosted: [OrderPosted!] @derivedFrom(field: "dealer")
+}
+
+enum OrderStatus {
+  Closed # Order has been closed
+  Pending # Order is pending
+  Filled # Order has been filled
+}
+
+enum OrderType {
+  SellBGT # Order to sell BGT
+  BuyBGT # Order to buy BGT
+}
+
+type Order @entity {
+  id: ID! # orderId
+  dealer: Account! # Address of the dealer who created the order
+  price: BigInt! # Price of 1 BGT in $BERA
+  vaultAddress: String! # Address of the vault
+  balance: BigInt! # Balance of $BERA for buying BGT
+  spentBalance: BigInt! # Spent balance of $BERA for buying BGT
+  height: BigInt! # Block number when the order was created
+  orderType: OrderType! # Type of the order (SellBGT or BuyBGT)
+  status: OrderStatus! # Status of the order (Closed, Pending, or Filled)
+}
+
+type OrderFilled @entity {
+  id: ID! # orderId
+  taker: Account! # Address of the taker who filled the order
+  price: BigInt! # Price of 1 BGT in $BERA
+  vaultAddress: String! # Address of the vault
+  payment: BigInt! # Payment in $BERA
+}
+
+type OrderPosted @entity {
+  id: ID! # orderId
+  dealer: Account! # Address of the dealer who created the order
+  price: BigInt! # Price of 1 BGT in $BERA
+  vaultAddress: String! # Address of the vault
+  balance: BigInt! # Balance of $BERA for buying BGT
+}
+
+type Token @entity {
+  # token address
+  id: ID!
+  # token symbol
+  symbol: String!
+  # token name
+  name: String!
+  # token decimals
+  decimals: BigInt!
+  # token total supply
+  totalSupply: BigInt!
+}
