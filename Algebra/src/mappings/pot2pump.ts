@@ -62,6 +62,10 @@ export function handleDepositRaisedToken(event: TDepositRaisedToken): void {
   // update factory total deposited USD
   factory.totalDepositedUSD = factory.totalDepositedUSD.plus(depositRaisedTokenUSD)
 
+  if (account != null) {
+    account.totalDepositPot2pumpUSD = account.totalDepositPot2pumpUSD.plus(depositRaisedTokenUSD)
+  }
+
   depositRaisedToken.transaction = transaction.id
   depositRaisedToken.timestamp = event.block.timestamp
   depositRaisedToken.amount = event.params.depositAmount

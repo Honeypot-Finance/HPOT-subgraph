@@ -58,6 +58,8 @@ type Account @entity {
 
   # dex total profit
   totalSpendUSD: BigDecimal!
+  # pot2pump total deposit
+  totalDepositPot2pumpUSD: BigDecimal!
 
   # aquabera
   vaultShares: [VaultShare!] @derivedFrom(field: "user")

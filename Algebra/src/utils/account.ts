@@ -19,6 +19,7 @@ export const createAccount = (account: Address): Account => {
   newAcc.swapCount = ZERO_BI
   newAcc.holdingPoolCount = ZERO_BI
   newAcc.totalSpendUSD = ZERO_BD
+  newAcc.totalDepositPot2pumpUSD = ZERO_BD
 
   factory.accountCount = factory.accountCount.plus(ONE_BI)
 
