@@ -16,6 +16,7 @@ export function handleOrderPosted(event: OrderPostedEvent): void {
 
   // Create Order entity
   let order = new Order(event.params.orderId.toString())
+  order.id = event.params.orderId.toString()
   order.dealer = account.id
   order.price = event.params.price
   order.vaultAddress = event.params.vaultAddress.toHexString()
@@ -48,9 +49,9 @@ export function handleOrderFilled(event: OrderFilledEvent): void {
   if (order) {
     order.spentBalance = order.spentBalance.plus(event.params.payment)
 
-    if (order.orderType === 'SellBGT') {
+    if (order.orderType == 'SellBGT') {
       order.status = 'Filled'
-    } else if (order.orderType === 'BuyBGT' && order.spentBalance >= order.balance) {
+    } else if (order.orderType == 'BuyBGT' && order.spentBalance >= order.balance) {
       order.status = 'Filled'
     }
 
@@ -58,7 +59,12 @@ export function handleOrderFilled(event: OrderFilledEvent): void {
   }
 
   // Create OrderFilled entity
-  let orderFilled = new OrderFilled(event.params.orderId.toString())
+  const orderFilledId = event.params.orderId
+    .toString()
+    .concat('-')
+    .concat(event.transaction.hash.toHexString())
+
+  let orderFilled = new OrderFilled(orderFilledId)
   orderFilled.taker = taker.id
   orderFilled.price = event.params.price
   orderFilled.vaultAddress = event.params.vaultAddress.toHexString()
