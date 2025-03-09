@@ -10,12 +10,15 @@ import { Address, BigDecimal, BigInt, ethereum } from '@graphprotocol/graph-ts'
 import { Plugin } from '../../../src/types/schema'
 
 import { newMockEvent } from 'matchstick-as/assembly/defaults'
+import { Burn, Mint } from '../../../src/types/Factory/Pool'
 
 let CREATION_COUNT = 0
 
 export function createDexFactoryEntity(): Factory {
   return loadFactory()
 }
+
+//make createMockBurnEvent and createMockMintEvent for me
 
 export function createMockSwapEvent(poolAddress: string): Swap {
   let mockEvent = newMockEvent()
@@ -149,4 +152,38 @@ export function createMockBundleEntity(): Bundle {
   bundle.maticPriceUSD = ZERO_BD
   bundle.save()
   return bundle
+}
+
+export function createMockBurnEvent(poolAddress: string): Burn {
+  let mockEvent = newMockEvent()
+
+  let mockBurnEvent = new Burn(
+    mockEvent.address,
+    mockEvent.logIndex,
+    mockEvent.transactionLogIndex,
+    mockEvent.logType,
+    mockEvent.block,
+    mockEvent.transaction,
+    mockEvent.parameters,
+    mockEvent.receipt
+  )
+
+  return mockBurnEvent
+}
+
+export function createMockMintEvent(poolAddress: string): Mint {
+  let mockEvent = newMockEvent()
+
+  let mockMintEvent = new Mint(
+    mockEvent.address,
+    mockEvent.logIndex,
+    mockEvent.transactionLogIndex,
+    mockEvent.logType,
+    mockEvent.block,
+    mockEvent.transaction,
+    mockEvent.parameters,
+    mockEvent.receipt
+  )
+
+  return mockMintEvent
 }
