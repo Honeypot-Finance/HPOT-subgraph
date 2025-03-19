@@ -10,7 +10,7 @@ import { Address, BigDecimal, BigInt, ethereum } from '@graphprotocol/graph-ts'
 import { Plugin } from '../../../src/types/schema'
 
 import { newMockEvent } from 'matchstick-as/assembly/defaults'
-import { Burn, Mint } from '../../../src/types/Factory/Pool'
+import { Mint, Burn } from '../../../src/types/templates/Pool/Pool'
 
 let CREATION_COUNT = 0
 
@@ -126,6 +126,7 @@ export function createMockAccount(address: Address): Account {
   newAcc.swapCount = ZERO_BI
   newAcc.holdingPoolCount = ZERO_BI
   newAcc.totalSpendUSD = ZERO_BD
+  newAcc.totalDepositPot2pumpUSD = ZERO_BD
 
   factory.accountCount = factory.accountCount.plus(ONE_BI)
 

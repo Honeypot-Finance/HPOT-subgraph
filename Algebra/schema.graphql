@@ -1090,6 +1090,25 @@ type IchiVault @entity {
   pool: Pool!
   totalShares: BigDecimal! #current total shares sums allVaultShares
   searchString: String!
+
+  totalAmount0: BigInt! # the total amount of token0 in the vault
+  totalAmount1: BigInt! # the total amount of token1 in the vault
+  totalSupply: BigInt! # the total supply of the liquidity pool token that is used by the vault
+  lastPrice: BigDecimal! # Price of token0 in terms of token1
+  lastPriceTimestamp: BigInt! # the timestamp at which the lastPrice was set
+  lastFeeUpdate: BigInt! # the timestamp at which the last fee update was set
+  feePerSecond0_1d: BigInt! # the fee per second for token0 over the last 1 day
+  feePerSecond1_1d: BigInt! # the fee per second for token1 over the last 1 day
+  feePerSecond0_3d: BigInt! # the fee per second for token0 over the last 3 days
+  feePerSecond1_3d: BigInt! # the fee per second for token1 over the last 3 days
+  feePerSecond0_7d: BigInt! # the fee per second for token0 over the last 7 days
+  feePerSecond1_7d: BigInt! # the fee per second for token1 over the last 7 days
+  feePerSecond0_30d: BigInt! # the fee per second for token0 over the last 30 days
+  feePerSecond1_30d: BigInt! # the fee per second for token1 over the last 30 days
+  feeApr_1d: BigDecimal! # the fee APR for token0 over the last 1 day
+  feeApr_3d: BigDecimal! # the fee APR for token0 over the last 3 days
+  feeApr_7d: BigDecimal! # the fee APR for token0 over the last 7 days
+  feeApr_30d: BigDecimal! # the fee APR for token0 over the last 30 days
   vaultShares: [VaultShare!]! @derivedFrom(field: "vault")
   vaultDeposits: [VaultDeposit!]! @derivedFrom(field: "vault")
   vaultWithdraws: [VaultWithdraw!]! @derivedFrom(field: "vault")
@@ -1149,6 +1168,7 @@ type VaultDeposit @entity {
   tick: Int! # the current price tick
   createdAtTimestamp: BigInt! # the timestamp at which the deposit occurred
   sqrtPrice: BigInt! # The sqrtPrice at that moment in the pool that corresponds to the vault
+  lastPrice: BigDecimal! # Price of token0 in terms of token1
   totalAmount0: BigInt! # the total amount of token0 in the vault after the event has occurred
   totalAmount1: BigInt! # the total amount of token1 in the vault after the event has occurred
   totalAmount0BeforeEvent: BigInt! # the total amount of token0 in the vault before the event has occurred
@@ -1163,6 +1183,7 @@ type VaultCollectFee @entity {
   tick: Int! # the current price tick
   createdAtTimestamp: BigInt! # the timestamp at which the fee collection occurred
   sqrtPrice: BigInt! # The sqrtPrice at that moment in the pool that corresponds to the vault
+  lastPrice: BigDecimal! # Price of token0 in terms of token1
   feeAmount0: BigInt! # the collected fee amount of token0
   feeAmount1: BigInt! # the collected fee amount of token1
   totalAmount0: BigInt! # the total amount of token0 in the vault after the event has occurred
@@ -1205,13 +1226,13 @@ type VaultRebalance @entity {
   tick: Int! # the current price tick
   createdAtTimestamp: BigInt! # the timestamp at which the vault was created
   sqrtPrice: BigInt! # The sqrtPrice at that moment in the pool that corresponds to the vault
+  lastPrice: BigDecimal! # Price of token0 in terms of token1
   totalAmount0: BigInt! # the total amount of token0 in the vault
   totalAmount1: BigInt! # the total amount of token1 in the vault
   feeAmount0: BigInt! # the fees for token0
   feeAmount1: BigInt! # the fees for token1
   totalSupply: BigInt! # the total supply of the liquidity pool token that is used by the vault
 }
-
 type VaultSetTwapPeriod @entity {
   id: ID! # the transaction hash and the log index separated by a hyphen
   vault: IchiVault! # the vault in which the twap period has been set
@@ -1228,9 +1249,10 @@ type VaultTransfer @entity {
   tick: Int! # the current price tick
   createdAtTimestamp: BigInt! # the timestamp at which the transfer has happened
   sqrtPrice: BigInt! # the sqrt price of the pool that the vault is deployed in at the time of the event
+  lastPrice: BigDecimal! # Price of token0 in terms of token1
   totalAmount0: BigInt! # the total amount of token0 in the vault after the event
   totalAmount1: BigInt! # the total amount of token1 in the vault after the event
-  totalSupply: BigInt! # the total supply of the liquidity pool token that is used by the vault
+  totalSupply: BigInt! # the total supply of the token
 }
 
 type VaultWithdraw @entity {
@@ -1244,6 +1266,7 @@ type VaultWithdraw @entity {
   tick: Int! # the current price tick
   createdAtTimestamp: BigInt! # the timestamp at which the withdraw occurred
   sqrtPrice: BigInt! # the sqrt price of the pool that the vault is deployed in at the time of the event
+  lastPrice: BigDecimal! # Price of token0 in terms of token1
   totalAmount0: BigInt! # the total amount of token0 in the vault after the event
   totalAmount1: BigInt! # the total amount of token1 in the vault after the event
   totalAmount0BeforeEvent: BigInt! # the total amount of token0 in the vault after the event

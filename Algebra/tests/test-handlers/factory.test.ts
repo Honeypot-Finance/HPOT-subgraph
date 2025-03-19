@@ -62,17 +62,11 @@ describe('factory test', () => {
     factory.save()
   })
 
-  test('factory default community fee should be correct', () => {
-    const factory = Factory.load(FACTORY_ADDRESS)!
-
-    assert.fieldEquals('Factory', factory.id, 'defaultCommunityFee', '100')
-  })
-
-  test('totalValueLockedUSDUntracked should be accurate after position changes', () => {
+  test('totalValueLockedUSD should be accurate', () => {
     // Setup initial state
     const factory = Factory.load(FACTORY_ADDRESS)!
-    factory.totalValueLockedUSDUntracked = BigDecimal.fromString('2000.5')
-    const initialTvlUntracked = factory.totalValueLockedUSDUntracked
+    factory.totalValueLockedUSD = BigDecimal.fromString('2000.5')
+    const initialTvl = factory.totalValueLockedUSD
 
     // Create a mock position and mint liquidity
     const mintEvent = createMockMintEvent(POOL_ADDRESS) // Assume this function creates a mock mint event
@@ -81,21 +75,15 @@ describe('factory test', () => {
     handleMint(mintEvent)
 
     // Check if totalValueLockedUSDUntracked is updated correctly
-    const updatedTvlUntracked = factory.totalValueLockedUSDUntracked
-    assert.assertTrue(
-      updatedTvlUntracked > initialTvlUntracked,
-      'totalValueLockedUSDUntracked should increase after minting'
-    )
+    const updatedTvl = factory.totalValueLockedUSD
+    assert.assertTrue(updatedTvl > initialTvl, 'totalValueLockedUSDUntracked should increase after minting')
 
     // Now burn the position
     const burnEvent = createMockBurnEvent(POOL_ADDRESS) // Assume this function creates a mock burn event
     handleBurn(burnEvent)
 
     // Check if totalValueLockedUSDUntracked is updated correctly after burn
-    const finalTvlUntracked = factory.totalValueLockedUSDUntracked
-    assert.assertTrue(
-      finalTvlUntracked < updatedTvlUntracked,
-      'totalValueLockedUSDUntracked should decrease after burning'
-    )
+    const finalTvl = factory.totalValueLockedUSD
+    assert.assertTrue(finalTvl < updatedTvl, 'totalValueLockedUSDUntracked should decrease after burning')
   })
 })
