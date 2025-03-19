@@ -1,11 +1,11 @@
 specVersion: 0.0.4
-description: Hpot is a decentralized protocol for automated token exchange on berachain-mainnet.
+description: Hpot is a decentralized protocol for automated token exchange on berachain-bepolia.
 schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum/contract
     name: bgt-market
-    network: berachain-mainnet
+    network: berachain-bepolia
     source:
       address: '0x53458cE30b71a7f306BDd1ACD8790B91Bd45bFD0'
       abi: BGTMarket

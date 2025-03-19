@@ -1,15 +1,15 @@
 specVersion: 0.0.4
-description: Hpot is a decentralized protocol for automated token exchange on berachain-mainnet.
+description: Hpot is a decentralized protocol for automated token exchange on berachain-bepolia.
 schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum/contract
     name: Factory
-    network: berachain-mainnet
+    network: berachain-bepolia
     source:
-      address: '0x7d53327D78EFD0b463bd8d7dc938C52402323b95'
+      address: '0xad88D4ABbE0d0672f00eB3B83E6518608d82e95d'
       abi: Factory
-      startBlock: 500000
+      startBlock: 1
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -40,11 +40,11 @@ dataSources:
           handler: handleNewCommunityFee
   - kind: ethereum/contract
     name: NonfungiblePositionManager
-    network: berachain-mainnet
+    network: berachain-bepolia
     source:
-      address: '0xBB203aADbE36C125028a54584f5d48C1764317D0'
+      address: '0x656D1e21C74a4abF6dDc94609dBC1F7E9D014E27'
       abi: NonfungiblePositionManager
-      startBlock: 500000
+      startBlock: 1
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -76,11 +76,11 @@ dataSources:
           handler: handleTransfer
   - kind: ethereum/contract
     name: Pot2PumpFactory
-    network: berachain-mainnet
+    network: berachain-bepolia
     source:
-      address: '0xC38eF79A6cA9b3EfBe20F3dD3b99B3e25d09F52B'
+      address: '0x67457D3F5D9e9158Bde427021C33a6085F35B971'
       abi: Pot2PumpFactory
-      startBlock: 500000
+      startBlock: 1
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -101,33 +101,11 @@ dataSources:
           handler: handlePairCreated
   - kind: ethereum
     name: ICHIVaultFactory
-    network: berachain-mainnet
+    network: berachain-bepolia
     source:
-      address: '0x1bf5e51eCacdfEA65ae9276fd228bB8719ffcA7E'
+      address: '0xBc4996968b09087Cb85BBDE6Bf58953ceb393Ec9'
       abi: ICHIVaultFactory
-      startBlock: 500000
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - IchiVault
-      abis:
-        - name: ICHIVaultFactory
-          file: ./abis/ICHIVaultFactory.json
-        - name: ICHIVault
-          file: ./abis/ICHIVault.json
-      eventHandlers:
-        - event: ICHIVaultCreated(indexed address,address,address,bool,address,bool,uint256)
-          handler: handleICHIVaultCreated
-      file: ./src/mappings/vaultFactory.ts
-  - kind: ethereum
-    name: ICHIVaultFactory-with-automation
-    network: berachain-mainnet
-    source:
-      address: '0x7d125D0766C968353454b7A67bB2D61a97E5665d'
-      abi: ICHIVaultFactory
-      startBlock: 969565
+      startBlock: 1
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -147,7 +125,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: Pool
-    network: berachain-mainnet
+    network: berachain-bepolia
     source:
       abi: Pool
     mapping:
@@ -190,7 +168,7 @@ templates:
           handler: handlePluginConfig
   - kind: ethereum/contract
     name: Token
-    network: berachain-mainnet
+    network: berachain-bepolia
     source:
       abi: ERC20
     mapping:
@@ -210,7 +188,7 @@ templates:
           handler: handleTransfer
   - kind: ethereum/contract
     name: Pot2Pump
-    network: berachain-mainnet
+    network: berachain-bepolia
     source:
       abi: Pot2PumpPair
     mapping:
@@ -237,7 +215,7 @@ templates:
           handler: handlePerform
   - kind: ethereum/contract
     name: Vault
-    network: berachain-mainnet
+    network: berachain-bepolia
     source:
       abi: ICHIVault
     mapping:
