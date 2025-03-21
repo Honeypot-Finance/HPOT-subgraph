@@ -64,6 +64,7 @@ import { fetchTokenPot2PumpAddress, loadToken } from '../utils/token'
 import { updateMemeRacerHourData } from '../utils/memeRacer'
 import { updatePoolAPR } from '../utils/apr'
 import { updatePoolFees } from '../utils/liquidityPools'
+import { updateEventData } from '../events/bitget_campaign'
 
 export function handleInitialize(event: Initialize): void {
   let pool = Pool.load(event.address.toHexString())!
@@ -450,12 +451,6 @@ export function handleSwap(event: SwapEvent): void {
   const amount0: BigDecimal = convertTokenToDecimal(event.params.amount0, token0.decimals)
   const amount1: BigDecimal = convertTokenToDecimal(event.params.amount1, token1.decimals)
 
-  log.info('token0: {}', [token0.id])
-  log.info('token1: {}', [token1.id])
-  log.info('token0.totalValueLockedUSD: {}', [token0.totalValueLockedUSD.toString()])
-  log.info('token1.totalValueLockedUSD: {}', [token1.totalValueLockedUSD.toString()])
-  log.info('token0.derivedUSD: {}', [token0.derivedUSD.toString()])
-  log.info('token1.derivedUSD: {}', [token1.derivedUSD.toString()])
   // update pot2pump buy/sell count
   if (token0Pot2Pump) {
     if (amount0.lt(ZERO_BD)) {
@@ -485,15 +480,10 @@ export function handleSwap(event: SwapEvent): void {
     ? amount0
     : amount0.times(FEE_DENOMINATOR.minus(swapFee.plus(pluginFee).toBigDecimal())).div(FEE_DENOMINATOR)
 
-  log.info('FEE_DENOMINATOR: {}', [FEE_DENOMINATOR.toString()])
-  log.info('swapFee: {}', [swapFee.toString()])
-  log.info('pluginFee: {}', [pluginFee.toString()])
-  log.info('amount0withFee: {}', [amount0withFee.toString()])
   let amount1withFee = amount1.lt(ZERO_BD)
     ? amount1
     : amount1.times(FEE_DENOMINATOR.minus(swapFee.plus(pluginFee).toBigDecimal())).div(FEE_DENOMINATOR)
 
-  log.info('amount1withFee: {}', [amount1withFee.toString()])
   let amount0USD = amount0Abs.times(token0.derivedUSD)
   let amount1USD = amount1Abs.times(token1.derivedUSD)
 
@@ -520,15 +510,12 @@ export function handleSwap(event: SwapEvent): void {
   log.info('amountTotalUSDUntracked: {}', [amountTotalUSDUntracked.toString()])
   // update account
   if (senderAccount != null) {
-    log.info('senderAccount: {}', [senderAccount.id])
     senderAccount.swapCount = senderAccount.swapCount.plus(ONE_BI)
     senderAccount.totalSpendUSD = senderAccount.totalSpendUSD.plus(amountTotalUSDUntracked)
-    log.info('senderAccount.totalSpendUSD: {}', [senderAccount.totalSpendUSD.toString()])
     senderAccount.save()
   } else if (recipientAccount != null) {
     recipientAccount.swapCount = recipientAccount.swapCount.plus(ONE_BI)
     recipientAccount.totalSpendUSD = recipientAccount.totalSpendUSD.plus(amountTotalUSDUntracked)
-    log.info('recipientAccount.totalSpendUSD: {}', [recipientAccount.totalSpendUSD.toString()])
     recipientAccount.save()
   }
 
@@ -560,8 +547,6 @@ export function handleSwap(event: SwapEvent): void {
   token0.untrackedVolumeUSD = token0.untrackedVolumeUSD.plus(amountTotalUSDUntracked)
   token0.feesUSD = token0.feesUSD.plus(feesUSD)
   token0.txCount = token0.txCount.plus(ONE_BI)
-
-  log.info('token0.totalValueLocked: {}', [token0.totalValueLocked.toString()])
 
   // update token1 data
   token1.volume = token1.volume.plus(amount1Abs)
@@ -628,11 +613,6 @@ export function handleSwap(event: SwapEvent): void {
 
   token0.totalValueLockedUSD = token0.totalValueLocked.times(token0.derivedUSD)
   token1.totalValueLockedUSD = token1.totalValueLocked.times(token1.derivedUSD)
-
-  log.info('token0.derivedUSD: {}', [token0.derivedUSD.toString()])
-  log.info('token1.derivedUSD: {}', [token1.derivedUSD.toString()])
-  log.info('token0.totalValueLockedUSD: {}', [token0.totalValueLockedUSD.toString()])
-  log.info('token1.totalValueLockedUSD: {}', [token1.totalValueLockedUSD.toString()])
 
   // create Swap event
   let transaction = loadTransaction(event, TransactionType.SWAP)
@@ -800,11 +780,7 @@ export function handleSwap(event: SwapEvent): void {
   // Update APR
   updatePoolAPR(pool, event)
 
-  if (senderAccount != null) {
-    log.info('senderAccount.totalSpendUSD: {}', [senderAccount.totalSpendUSD.toString()])
-  }
-  log.info('token0.totalValueLockedUSD: {}', [token0.totalValueLockedUSD.toString()])
-  log.info('token1.totalValueLockedUSD: {}', [token1.totalValueLockedUSD.toString()])
+  updateEventData(event.params.sender, event.address, amountTotalUSDTracked, event)
 }
 
 export function handleSetCommunityFee(event: CommunityFee): void {

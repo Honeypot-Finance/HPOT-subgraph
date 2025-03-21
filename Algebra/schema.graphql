@@ -38,6 +38,32 @@ type Factory @entity {
   totalDepositedUSD: BigDecimal!
 }
 
+type BitgetCampaign @entity {
+  id: ID!
+  totalVolumeUSD: BigDecimal!
+  eventPools: [BitgetCampaignEventPool!]! @derivedFrom(field: "campaign")
+  totalFinishedUserCount: BigInt!
+  participants: [BitgetCampaignParticipant!]! @derivedFrom(field: "campaign")
+}
+
+type BitgetCampaignEventPool @entity {
+  id: ID!
+  campaign: BitgetCampaign!
+  pool: Pool!
+  totalVolumeUSD: BigDecimal!
+  totalFinishedUserCount: BigInt!
+  finishedUsers: [BitgetCampaignParticipant!]! @derivedFrom(field: "pool")
+}
+
+type BitgetCampaignParticipant @entity {
+  id: ID!
+  campaign: BitgetCampaign!
+  user: Account!
+  amountUSD: BigDecimal!
+  pool: BitgetCampaignEventPool!
+  finished: Boolean!
+}
+
 type Account @entity {
   # account address
   id: ID!
@@ -63,6 +89,9 @@ type Account @entity {
 
   # aquabera
   vaultShares: [VaultShare!] @derivedFrom(field: "user")
+
+  # bitget campaign
+  bitgetCampaignParticipants: [BitgetCampaignParticipant!]! @derivedFrom(field: "user")
 }
 
 type HoldingToken @entity {
