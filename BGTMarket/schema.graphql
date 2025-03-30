@@ -16,6 +16,10 @@ enum OrderType {
   SellBGT # Order to sell BGT
   BuyBGT # Order to buy BGT
 }
+enum OrderContract {
+  BGTMarket # Order is from BGTMarket
+  HeyBGT # Order is from HeyBGT
+}
 
 type Order @entity {
   id: ID! # orderId
@@ -27,6 +31,7 @@ type Order @entity {
   height: BigInt! # Block number when the order was created
   orderType: OrderType! # Type of the order (SellBGT or BuyBGT)
   status: OrderStatus! # Status of the order (Closed, Pending, or Filled)
+  contract: OrderContract! # Contract of the order (BGTMarket or HeyBGT)
 }
 
 type OrderFilled @entity {
@@ -35,6 +40,7 @@ type OrderFilled @entity {
   price: BigInt! # Price of 1 BGT in $BERA
   vaultAddress: String! # Address of the vault
   payment: BigInt! # Payment in $BERA
+  order: Order! # Order that was filled
 }
 
 type OrderPosted @entity {
@@ -43,6 +49,7 @@ type OrderPosted @entity {
   price: BigInt! # Price of 1 BGT in $BERA
   vaultAddress: String! # Address of the vault
   balance: BigInt! # Balance of $BERA for buying BGT
+  order: Order! # Order that was posted
 }
 
 type Token @entity {
@@ -56,4 +63,10 @@ type Token @entity {
   decimals: BigInt!
   # token total supply
   totalSupply: BigInt!
+}
+
+type RewardVault @entity {
+  id: ID! # vault address
+  vaultAddress: String! # Address of the vault
+  stakingToken: Token! # Staking token of the vault
 }

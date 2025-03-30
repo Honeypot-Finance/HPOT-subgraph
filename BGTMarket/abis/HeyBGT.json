@@ -1,0 +1,480 @@
+[
+  { "inputs": [], "stateMutability": "nonpayable", "type": "constructor" },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "balanceBefore", "type": "uint256" },
+      { "internalType": "uint256", "name": "balanceAfter", "type": "uint256" },
+      { "internalType": "uint256", "name": "needed", "type": "uint256" }
+    ],
+    "name": "InsufficientBgtBalance",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "needed", "type": "uint256" },
+      { "internalType": "uint256", "name": "earned", "type": "uint256" }
+    ],
+    "name": "InsufficientEarned",
+    "type": "error"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "amount", "type": "uint256" }],
+    "name": "InvalidAmount",
+    "type": "error"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "decimals", "type": "uint256" }],
+    "name": "InvalidDecimals",
+    "type": "error"
+  },
+  { "inputs": [], "name": "InvalidInitialization", "type": "error" },
+  { "inputs": [], "name": "InvalidOrderId", "type": "error" },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "owner", "type": "address" },
+      { "internalType": "address", "name": "caller", "type": "address" }
+    ],
+    "name": "InvalidOrderOwner",
+    "type": "error"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "token", "type": "address" }],
+    "name": "InvalidPaymentToken",
+    "type": "error"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "invalidPremiumRate", "type": "uint256" }],
+    "name": "InvalidPremiumRate",
+    "type": "error"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "price", "type": "uint256" }],
+    "name": "InvalidPrice",
+    "type": "error"
+  },
+  {
+    "inputs": [{ "internalType": "bytes32", "name": "priceId", "type": "bytes32" }],
+    "name": "InvalidPriceId",
+    "type": "error"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "vault", "type": "address" }],
+    "name": "InvalidRewardVault",
+    "type": "error"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "price", "type": "uint256" }],
+    "name": "LowPrice",
+    "type": "error"
+  },
+  { "inputs": [], "name": "NotImplemented", "type": "error" },
+  { "inputs": [], "name": "NotInitializing", "type": "error" },
+  { "inputs": [], "name": "OperatorNotSet", "type": "error" },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "orderId", "type": "uint256" }],
+    "name": "OrderNotPending",
+    "type": "error"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "owner", "type": "address" }],
+    "name": "OwnableInvalidOwner",
+    "type": "error"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "account", "type": "address" }],
+    "name": "OwnableUnauthorizedAccount",
+    "type": "error"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "token", "type": "address" }],
+    "name": "PaymentTokenAlreadyWhitelisted",
+    "type": "error"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "token", "type": "address" }],
+    "name": "PaymentTokenNotWhitelisted",
+    "type": "error"
+  },
+  { "inputs": [], "name": "ReentrancyGuardReentrantCall", "type": "error" },
+  {
+    "inputs": [{ "internalType": "address", "name": "token", "type": "address" }],
+    "name": "SafeERC20FailedOperation",
+    "type": "error"
+  },
+  { "inputs": [], "name": "SelfFill", "type": "error" },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "existingOrderId", "type": "uint256" }],
+    "name": "SellBgtOrderExists",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [{ "indexed": true, "internalType": "uint256", "name": "orderId", "type": "uint256" }],
+    "name": "BgtOrderClosed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "uint256", "name": "orderId", "type": "uint256" },
+      { "indexed": true, "internalType": "address", "name": "buyer", "type": "address" },
+      { "indexed": true, "internalType": "address", "name": "vault", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "bgtFilled", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "paymentFilled", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "nodeId", "type": "uint256" }
+    ],
+    "name": "BuyBgtOrderFilled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "uint256", "name": "orderId", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "nodeId", "type": "uint256" }
+    ],
+    "name": "BuyBgtOrderOpened",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [{ "indexed": true, "internalType": "address", "name": "feeAddress", "type": "address" }],
+    "name": "FeeAddressUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [{ "indexed": true, "internalType": "uint256", "name": "feeRate", "type": "uint256" }],
+    "name": "FeeRateUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [{ "indexed": false, "internalType": "uint64", "name": "version", "type": "uint64" }],
+    "name": "Initialized",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "address", "name": "previousOwner", "type": "address" },
+      { "indexed": true, "internalType": "address", "name": "newOwner", "type": "address" }
+    ],
+    "name": "OwnershipTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "uint256", "name": "orderId", "type": "uint256" },
+      { "indexed": true, "internalType": "address", "name": "buyer", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "bgtFilled", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "paymentFilled", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "nodeId", "type": "uint256" }
+    ],
+    "name": "SellBgtOrderFilled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "uint256", "name": "orderId", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "nodeId", "type": "uint256" }
+    ],
+    "name": "SellBgtOrderOpened",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "BASE_PREMIUM_RATE",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MINIMUM_BUY_USD_AMOUNT",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MINIMUM_SELL_EARNED",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MINIMUM_SELL_PREMIUM_RATE",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "beraPriceId",
+    "outputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "bgt",
+    "outputs": [{ "internalType": "contract IERC20", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "name": "buyBgtOrder",
+    "outputs": [
+      { "internalType": "address", "name": "owner", "type": "address" },
+      { "internalType": "uint256", "name": "price", "type": "uint256" },
+      { "internalType": "uint256", "name": "filledAmount", "type": "uint256" },
+      { "internalType": "uint256", "name": "amount", "type": "uint256" },
+      { "internalType": "enum IHeyBgt.OrderStatus", "name": "status", "type": "uint8" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "orderId", "type": "uint256" }],
+    "name": "closeBuyBgtOrder",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "orderId", "type": "uint256" }],
+    "name": "closeSellBgtOrder",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "orderId", "type": "uint256" }],
+    "name": "earned",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "feeAddress",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "feeRate",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "orderId", "type": "uint256" },
+      { "internalType": "address", "name": "vault", "type": "address" },
+      { "internalType": "uint256", "name": "nodeId", "type": "uint256" }
+    ],
+    "name": "fillBuyBgtOrder",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "orderId", "type": "uint256" },
+      { "internalType": "uint256", "name": "nodeId", "type": "uint256" }
+    ],
+    "name": "fillSellBgtOrder",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getBeraPrice",
+    "outputs": [
+      { "internalType": "uint256", "name": "", "type": "uint256" },
+      { "internalType": "uint256", "name": "", "type": "uint256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "orderId", "type": "uint256" }],
+    "name": "getBuyBgtOrder",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "owner", "type": "address" },
+          { "internalType": "uint256", "name": "price", "type": "uint256" },
+          { "internalType": "uint256", "name": "filledAmount", "type": "uint256" },
+          { "internalType": "uint256", "name": "amount", "type": "uint256" },
+          { "internalType": "enum IHeyBgt.OrderStatus", "name": "status", "type": "uint8" }
+        ],
+        "internalType": "struct IHeyBgt.HeyBgtBuyBgtOrder",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "owner", "type": "address" },
+      { "internalType": "address", "name": "rewardVault", "type": "address" }
+    ],
+    "name": "getPendingSellBgtOrderIds",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "owner", "type": "address" },
+          { "internalType": "address", "name": "rewardVault", "type": "address" },
+          { "internalType": "uint256", "name": "premiumRate", "type": "uint256" },
+          { "internalType": "uint256", "name": "filledAmount", "type": "uint256" },
+          { "internalType": "enum IHeyBgt.OrderStatus", "name": "status", "type": "uint8" }
+        ],
+        "internalType": "struct IHeyBgt.HeyBgtSellBgtOrder",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "orderId", "type": "uint256" }],
+    "name": "getSellBgtOrder",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "owner", "type": "address" },
+          { "internalType": "address", "name": "rewardVault", "type": "address" },
+          { "internalType": "uint256", "name": "premiumRate", "type": "uint256" },
+          { "internalType": "uint256", "name": "filledAmount", "type": "uint256" },
+          { "internalType": "enum IHeyBgt.OrderStatus", "name": "status", "type": "uint8" }
+        ],
+        "internalType": "struct IHeyBgt.HeyBgtSellBgtOrder",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "honey",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "_feeAddress", "type": "address" },
+      { "internalType": "uint256", "name": "_feeRate", "type": "uint256" },
+      { "internalType": "address", "name": "_oracle", "type": "address" },
+      { "internalType": "address", "name": "_honey", "type": "address" },
+      { "internalType": "bytes32", "name": "_beraPriceId", "type": "bytes32" },
+      { "internalType": "address", "name": "_owner", "type": "address" },
+      { "internalType": "address", "name": "_bgt", "type": "address" }
+    ],
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "price", "type": "uint256" },
+      { "internalType": "uint256", "name": "amount", "type": "uint256" },
+      { "internalType": "uint256", "name": "nodeId", "type": "uint256" }
+    ],
+    "name": "openBuyBgtOrder",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "rewardVault", "type": "address" },
+      { "internalType": "uint256", "name": "premiumRate", "type": "uint256" },
+      { "internalType": "uint256", "name": "nodeId", "type": "uint256" }
+    ],
+    "name": "openSellBgtOrder",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "oracle",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "", "type": "address" },
+      { "internalType": "address", "name": "", "type": "address" }
+    ],
+    "name": "pendingSellBgtOrderIds",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  { "inputs": [], "name": "renounceOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "name": "sellBgtOrder",
+    "outputs": [
+      { "internalType": "address", "name": "owner", "type": "address" },
+      { "internalType": "address", "name": "rewardVault", "type": "address" },
+      { "internalType": "uint256", "name": "premiumRate", "type": "uint256" },
+      { "internalType": "uint256", "name": "filledAmount", "type": "uint256" },
+      { "internalType": "enum IHeyBgt.OrderStatus", "name": "status", "type": "uint8" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "_feeAddress", "type": "address" }],
+    "name": "setFeeAddress",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "_feeRate", "type": "uint256" }],
+    "name": "setFeeRate",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "newOwner", "type": "address" }],
+    "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "version",
+    "outputs": [{ "internalType": "string", "name": "", "type": "string" }],
+    "stateMutability": "pure",
+    "type": "function"
+  }
+]

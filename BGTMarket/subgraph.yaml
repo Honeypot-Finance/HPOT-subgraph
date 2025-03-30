@@ -7,7 +7,7 @@ dataSources:
     name: bgt-market
     network: berachain-mainnet
     source:
-      address: '0x53458cE30b71a7f306BDd1ACD8790B91Bd45bFD0'
+      address: '0x35249377829876127A8C33C303cC6712b002e3Fc'
       abi: BGTMarket
       startBlock: 1780203
     mapping:
@@ -28,8 +28,65 @@ dataSources:
           file: ./abis/ERC20.json
       eventHandlers:
         - event: OrderPosted(indexed uint256,indexed address,indexed uint256,address,uint256,uint8)
-          handler: handleOrderPosted
+          handler: handleOrderPostedBGTMarket
         - event: OrderFilled(indexed uint256,indexed address,indexed uint256,address,uint256,uint256)
-          handler: handleOrderFilled
+          handler: handleOrderFilledBGTMarket
         - event: OrderClosed(indexed uint256)
-          handler: handleOrderClosed
+          handler: handleOrderClosedBGTMarket
+  - kind: ethereum/contract
+    name: hey-bgt
+    network: berachain-mainnet
+    source:
+      address: '0x5f8a463334E29635Bdaca9c01B76313395462430'
+      abi: HeyBGT
+      startBlock: 1780203
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/bgt-market.ts
+      entities:
+        - Account
+        - Order
+        - OrderFilled
+        - OrderPosted
+        - Token
+      abis:
+        - name: HeyBGT
+          file: ./abis/HeyBGT.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: BuyBgtOrderOpened(indexed uint256,uint256)
+          handler: handleBuyBgtOrderOpenedHeyBGT
+        - event: BgtOrderClosed(indexed uint256)
+          handler: handleBgtOrderClosedHeyBGT
+        - event: BuyBgtOrderFilled(indexed uint256,indexed address,indexed address,uint256,uint256,uint256)
+          handler: handleBuyBgtOrderFilledHeyBGT
+        - event: SellBgtOrderFilled(indexed uint256,indexed address,uint256,uint256,uint256)
+          handler: handleSellBgtOrderFilledHeyBGT
+        - event: SellBgtOrderOpened(indexed uint256,uint256)
+          handler: handleSellBgtOrderOpenedHeyBGT
+  - kind: ethereum/contract
+    name: reward-vault-factory
+    network: berachain-mainnet
+    source:
+      address: '0x94Ad6Ac84f6C6FbA8b8CCbD71d9f4f101def52a8'
+      abi: RewardVaultFactory
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/reward-vault-factory.ts
+      entities:
+        - Token
+        - RewardVault
+      abis:
+        - name: RewardVaultFactory
+          file: ./abis/RewardVaultFactory.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: VaultCreated(indexed address,indexed address)
+          handler: handleVaultCreatedRewardVaultFactory
