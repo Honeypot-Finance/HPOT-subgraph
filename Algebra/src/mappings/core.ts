@@ -780,7 +780,7 @@ export function handleSwap(event: SwapEvent): void {
   // Update APR
   updatePoolAPR(pool, event)
 
-  updateEventData(event.params.sender, event.address, amountTotalUSDTracked, event)
+  updateEventData(event.transaction.from, event.address, amountTotalUSDTracked, event)
 }
 
 export function handleSetCommunityFee(event: CommunityFee): void {

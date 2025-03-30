@@ -79,6 +79,17 @@ export function handlePairCreated(event: PairCreated): void {
     Pot2PumpTemplate.create(event.params.pair)
   }
 
+  // Update the if launch is meme token and register it to ERC20 listener
+  let launchToken = loadToken(event.params.launchedToken)
+  if (launchToken == null) {
+    TokenTemplate.create(event.params.launchedToken)
+  }
+
+  let raisedToken = loadToken(event.params.raisedToken)
+  if (raisedToken == null) {
+    TokenTemplate.create(event.params.raisedToken)
+  }
+
   newPair.searchString =
     newPair.id.toLowerCase() + ' ' + launchToken.symbol.toLowerCase() + ' ' + newPair.raisedToken.toLowerCase()
 
