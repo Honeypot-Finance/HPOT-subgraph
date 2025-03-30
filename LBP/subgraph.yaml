@@ -1,0 +1,86 @@
+specVersion: 0.0.4
+description: LBP
+schema:
+  file: ./schema.graphql
+dataSources:
+  # - kind: ethereum/contract
+  #   name: LBP_Factory
+  #   network: berachain-mainnet
+  #   source:
+  #     address: '0xdE31ec74D3EE13ca75AbF37bc4D28DaeE8B0ECb8'
+  #     abi: LiquidityBootstrapPoolFactory
+  #     startBlock: 0
+  #   mapping:
+  #     kind: ethereum/events
+  #     apiVersion: 0.0.6
+  #     language: wasm/assemblyscript
+  #     file: ./src/mappings/LBP_Factory.ts
+  #     entities:
+  #       - LBPPool
+  #     abis:
+  #       - name: LiquidityBootstrapPoolFactory
+  #         file: ./abis/LiquidityBootstrapPoolFactory.json
+  #       - name: LiquidityBootstrapPool
+  #         file: ./abis/LiquidityBootstrapPool.json
+  #     eventHandlers:
+  #       - event: PoolCreated(address)
+  #         handler: handlePoolCreated
+  - kind: ethereum/contract
+    name: LBP_Factory
+    network: arbitrum-one
+    source:
+      address: '0x880f17fb7b1d5aafaf36d0ac9d5a81f5c543d71d'
+      abi: LiquidityBootstrapPoolFactory
+      startBlock: 178521350
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/LBP_Factory.ts
+      entities:
+        - LBPPool
+      abis:
+        - name: LiquidityBootstrapPoolFactory
+          file: ./abis/LiquidityBootstrapPoolFactory.json
+        - name: LiquidityBootstrapPool
+          file: ./abis/LiquidityBootstrapPool.json
+      eventHandlers:
+        - event: PoolCreated(address)
+          handler: handlePoolCreated
+
+templates:
+  - kind: ethereum/contract
+    name: LBP_Pool
+    network: arbitrum-one
+    source:
+      abi: LiquidityBootstrapPool
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/LBP_Pool.ts
+      entities:
+        - LBPPool
+        - Buy
+        - Sell
+        - Close
+        - MaxRaiseReached
+        - FeesPaid
+      abis:
+        - name: LiquidityBootstrapPool
+          file: ./abis/LiquidityBootstrapPool.json
+      eventHandlers:
+        - event: Buy(indexed address,indexed address,uint256,uint256,uint256)
+          handler: handleBuy
+        - event: Sell(indexed address,indexed address,uint256,uint256,uint256)
+          handler: handleSell
+        - event: Close(uint256,uint256,uint256,uint256)
+          handler: handleClose
+        - event: MaxRaiseReached(uint256,uint256,uint256,uint256)
+          handler: handleMaxRaiseReached
+        - event: FeesPaid(uint256,uint256,uint256)
+          handler: handleFeesPaid
+        - event: Cancelled(uint256,uint256)
+          handler: handleCancelled
+        - event: V2LPCreated(indexed address,indexed address,uint256,uint256,uint256)
+          handler: handleV2LPCreated

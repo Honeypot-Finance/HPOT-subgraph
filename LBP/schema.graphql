@@ -1,0 +1,80 @@
+type LBPPool @entity {
+  id: ID!
+  address: Bytes!
+  totalPurchased: BigInt!
+  totalAssetsIn: BigInt!
+  totalSwapFeesAsset: BigInt!
+  totalSwapFeesShare: BigInt!
+  cancelled: Boolean!
+  closed: Boolean!
+  buys: [Buy!]! @derivedFrom(field: "pool")
+  sells: [Sell!]! @derivedFrom(field: "pool")
+}
+
+type Buy @entity {
+  id: ID!
+  pool: LBPPool!
+  caller: Bytes!
+  recipient: Bytes!
+  assets: BigInt!
+  shares: BigInt!
+  swapFee: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+}
+
+type Sell @entity {
+  id: ID!
+  pool: LBPPool!
+  caller: Bytes!
+  recipient: Bytes!
+  shares: BigInt!
+  assets: BigInt!
+  swapFee: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+}
+
+type Close @entity {
+  id: ID!
+  pool: LBPPool!
+  assets: BigInt!
+  platformFees: BigInt!
+  swapFeesAsset: BigInt!
+  swapFeesShare: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+}
+
+type MaxRaiseReached @entity {
+  id: ID!
+  pool: LBPPool!
+  totalPurchased: BigInt!
+  totalAssetsIn: BigInt!
+  totalSwapFeesAsset: BigInt!
+  totalSwapFeesShare: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+}
+
+type FeesPaid @entity {
+  id: ID!
+  pool: LBPPool!
+  platformFees: BigInt!
+  swapFeesAsset: BigInt!
+  swapFeesShare: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+}
+
+type V2LPCreated @entity {
+  id: ID!
+  pool: LBPPool!
+  lp: Bytes!
+  lpReceiver: Bytes!
+  lpToken: BigInt!
+  addedLpAssets: BigInt!
+  addedShares: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+}
