@@ -5,18 +5,13 @@ import { BigDecimal, BigInt, log } from '@graphprotocol/graph-ts'
 import { exponentToBigDecimal, safeDiv } from '../utils/index'
 
 const WMatic_ADDRESS = '0x6969696969696969696969696969696969696969'.toLowerCase()
-const Honey_WBera_POOL = '0xB6B6E240291A4d433A94279C1A68F85e2BF24857'.toLowerCase()
+const Honey_WBera_POOL = '0x7793ec6959ed52a815d7d8899d949af7c340fd8a'.toLowerCase()
 
 // token where amounts should contribute to tracked volume and liquidity
 // usually tokens that many tokens are paired with s
 export let WHITELIST_TOKENS: string[] = [
   '0x6969696969696969696969696969696969696969'.toLowerCase(), // WBERA
-  '0x9b37d542114070518a44e200fdcd8e4be737297f'.toLowerCase(), // Hpot
-  '0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce'.toLowerCase(), // Honey
-  '0x549943e04f40284185054145c6E4e9568C1D3241'.toLowerCase(), // USDC
-  '0x656b95E550C07a9ffe548bd4085c72418Ceb1dba'.toLowerCase(), // BGT
-  '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c'.toLowerCase(), // WBTC
-  '0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590'.toLowerCase() // WETH
+  '0xfcbd14dc51f0a4d49d5e53c2e0950e0bc26d0dce'.toLowerCase() // Honey
 ]
 
 let MINIMUM_Matic_LOCKED = BigDecimal.fromString('0')
@@ -24,8 +19,7 @@ let MINIMUM_Matic_LOCKED = BigDecimal.fromString('0')
 let Q192 = Math.pow(2, 192)
 
 let STABLE_COINS: string[] = [
-  '0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce'.toLowerCase(), // Honey
-  '0x549943e04f40284185054145c6E4e9568C1D3241'.toLowerCase() // USDC
+  '0xfcbd14dc51f0a4d49d5e53c2e0950e0bc26d0dce'.toLowerCase() // Honey
 ]
 
 export function priceToTokenPrices(price: BigInt, token0: Token, token1: Token): BigDecimal[] {
