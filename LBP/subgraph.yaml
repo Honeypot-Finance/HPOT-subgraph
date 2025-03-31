@@ -70,17 +70,13 @@ templates:
         - name: LiquidityBootstrapPool
           file: ./abis/LiquidityBootstrapPool.json
       eventHandlers:
-        - event: Buy(indexed address,indexed address,uint256,uint256,uint256)
+        - event: Buy(indexed address,uint256,uint256,uint256)
           handler: handleBuy
-        - event: Sell(indexed address,indexed address,uint256,uint256,uint256)
+        - event: Sell(indexed address,uint256,uint256,uint256)
           handler: handleSell
         - event: Close(uint256,uint256,uint256,uint256)
           handler: handleClose
-        - event: MaxRaiseReached(uint256,uint256,uint256,uint256)
-          handler: handleMaxRaiseReached
-        - event: FeesPaid(uint256,uint256,uint256)
-          handler: handleFeesPaid
-        - event: Cancelled(uint256,uint256)
-          handler: handleCancelled
-        - event: V2LPCreated(indexed address,indexed address,uint256,uint256,uint256)
-          handler: handleV2LPCreated
+        - event: Redeem(indexed address,indexed uint256,uint256)
+          handler: handleRedeem
+        - event: Paused(bool)
+          handler: handlePaused
