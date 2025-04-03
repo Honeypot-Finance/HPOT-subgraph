@@ -2,9 +2,10 @@ import {
   Buy as BuyEvent,
   Sell as SellEvent,
   Close as CloseEvent,
-  LiquidityBootstrapPool
+  LiquidityBootstrapPool,
+  Redeem as RedeemEvent
 } from '../types/templates/LBP_Pool/LiquidityBootstrapPool'
-import { LBPPool, Buy, Sell, Close } from '../types/schema'
+import { LBPPool, Buy, Sell, Close, Redeem } from '../types/schema'
 import { BigInt, log } from '@graphprotocol/graph-ts'
 
 export function handleBuy(event: BuyEvent): void {
@@ -74,4 +75,20 @@ export function handleClose(event: CloseEvent): void {
 
   pool.save()
   close.save()
+}
+
+export function handleRedeem(event: RedeemEvent): void {
+  let pool = LBPPool.load(event.address.toHexString())
+  if (!pool) return
+
+  let redeem = new Redeem(event.transaction.hash.toHexString() + '-' + event.logIndex.toString())
+
+  redeem.pool = pool.id
+  redeem.caller = event.params.caller
+  redeem.shares = event.params.shares
+  redeem.timestamp = event.block.timestamp
+  redeem.blockNumber = event.block.number
+
+  pool.save()
+  redeem.save()
 }

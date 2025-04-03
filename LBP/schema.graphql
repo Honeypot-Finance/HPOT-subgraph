@@ -43,3 +43,12 @@ type Close @entity {
   timestamp: BigInt!
   blockNumber: BigInt!
 }
+
+type Redeem @entity {
+  id: ID!
+  pool: LBPPool!
+  caller: Bytes!
+  shares: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+}
