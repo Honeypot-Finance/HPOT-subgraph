@@ -7,6 +7,7 @@ type LBPPool @entity {
   totalSwapFeesShare: BigInt!
   cancelled: Boolean!
   closed: Boolean!
+  createdAt: BigInt!
   buys: [Buy!]! @derivedFrom(field: "pool")
   sells: [Sell!]! @derivedFrom(field: "pool")
 }
