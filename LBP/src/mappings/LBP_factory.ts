@@ -15,6 +15,7 @@ export function handlePoolCreated(event: PoolEvent): void {
   pool.totalSwapFeesShare = BigInt.fromI32(0)
   pool.cancelled = false
   pool.closed = false
+  pool.createdAt = event.block.timestamp
 
   // Save the pool entity
   pool.save()
