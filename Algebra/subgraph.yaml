@@ -1,11 +1,11 @@
 specVersion: 0.0.4
-description: Hpot is a decentralized protocol for automated token exchange on berachain-mainnet.
+description: Hpot is a decentralized protocol for automated token exchange on sepolia.
 schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum/contract
     name: Factory
-    network: berachain-mainnet
+    network: sepolia
     source:
       address: '0x7d53327D78EFD0b463bd8d7dc938C52402323b95'
       abi: Factory
@@ -40,7 +40,7 @@ dataSources:
           handler: handleNewCommunityFee
   - kind: ethereum/contract
     name: NonfungiblePositionManager
-    network: berachain-mainnet
+    network: sepolia
     source:
       address: '0xBB203aADbE36C125028a54584f5d48C1764317D0'
       abi: NonfungiblePositionManager
@@ -76,7 +76,7 @@ dataSources:
           handler: handleTransfer
   - kind: ethereum/contract
     name: Pot2PumpFactory
-    network: berachain-mainnet
+    network: sepolia
     source:
       address: '0xC38eF79A6cA9b3EfBe20F3dD3b99B3e25d09F52B'
       abi: Pot2PumpFactory
@@ -101,7 +101,7 @@ dataSources:
           handler: handlePairCreated
   - kind: ethereum
     name: ICHIVaultFactory
-    network: berachain-mainnet
+    network: sepolia
     source:
       address: '0x1bf5e51eCacdfEA65ae9276fd228bB8719ffcA7E'
       abi: ICHIVaultFactory
@@ -123,7 +123,7 @@ dataSources:
       file: ./src/mappings/vaultFactory.ts
   - kind: ethereum
     name: ICHIVaultFactory-with-automation
-    network: berachain-mainnet
+    network: sepolia
     source:
       address: '0x7d125D0766C968353454b7A67bB2D61a97E5665d'
       abi: ICHIVaultFactory
@@ -147,7 +147,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: Pool
-    network: berachain-mainnet
+    network: sepolia
     source:
       abi: Pool
     mapping:
@@ -190,7 +190,7 @@ templates:
           handler: handlePluginConfig
   - kind: ethereum/contract
     name: Token
-    network: berachain-mainnet
+    network: sepolia
     source:
       abi: ERC20
     mapping:
@@ -210,7 +210,7 @@ templates:
           handler: handleTransfer
   - kind: ethereum/contract
     name: Pot2Pump
-    network: berachain-mainnet
+    network: sepolia
     source:
       abi: Pot2PumpPair
     mapping:
@@ -237,7 +237,7 @@ templates:
           handler: handlePerform
   - kind: ethereum/contract
     name: Vault
-    network: berachain-mainnet
+    network: sepolia
     source:
       abi: ICHIVault
     mapping:

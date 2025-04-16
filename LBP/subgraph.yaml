@@ -5,9 +5,9 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: LBP_Factory
-    network: berachain-mainnet
+    network: sepolia
     source:
-      address: '0xdE31ec74D3EE13ca75AbF37bc4D28DaeE8B0ECb8'
+      address: '0x2BaBD1667d4A2DB9582d77eF5d360147E6504827'
       abi: LiquidityBootstrapPoolFactory
       startBlock: 0
     mapping:
@@ -29,7 +29,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: LBP_Pool
-    network: berachain-mainnet
+    network: sepolia
     source:
       abi: LiquidityBootstrapPool
     mapping:
