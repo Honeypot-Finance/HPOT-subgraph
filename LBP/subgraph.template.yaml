@@ -5,11 +5,11 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: LBP_Factory
-    network: berachain-bepolia
+    network: ${NETWORK}
     source:
-      address: '0xdb29328b1dc60b6eecdddd64e9152819d04e02c9'
+      address: '${LBP_FACTORY_ADDRESS}'
       abi: LiquidityBootstrapPoolFactory
-      startBlock: 0
+      startBlock: ${START_BLOCK}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -29,7 +29,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: LBP_Pool
-    network: berachain-bepolia
+    network: ${NETWORK}
     source:
       abi: LiquidityBootstrapPool
     mapping:

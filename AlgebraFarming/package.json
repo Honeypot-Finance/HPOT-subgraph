@@ -1,27 +1,27 @@
-
 {
   "name": "algebra-farming-subgraph",
   "version": "1.0.0",
-  "repository": "https://github.com/cryptoalgebra/algebra-subgraph",
+  "repository": "https://github.com/graphprotocol/algebra-subgraph",
   "license": "GPL-3.0-or-later",
   "scripts": {
     "codegen": "graph codegen --output-dir src/types/",
     "build": "graph build",
-    "create-local": "graph create iliaazhel/karasb --node http://127.0.0.1:8020",
-    "create-pulse": "graph create cryptoalgebra/algebra-farming --node http://3.16.122.80:8120/",
-    "deploy-pulse": "graph deploy cryptoalgebra/algebra-farming --debug --ipfs http://3.16.122.80:5101 --node http://3.16.122.80:8120/",
-    "deploy-local": "graph deploy iliaazhel/karasb --debug --ipfs http://localhost:5001 --node http://127.0.0.1:8020",
-    "deploy": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ --access-token  iliaazhel/zyberswap-farming  subgraph.yaml",
-    "deploy-dev": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ iliaazhel/algebra-dev-staker subgraph.yaml"
+    "test": "graph test",
+    "create-local": "graph create cryptoalgebra/algebra-farming --node http://127.0.0.1:8020",
+    "deploy-local": "graph deploy cryptoalgebra/algebra-farming --debug --ipfs http://localhost:5001 --node http://127.0.0.1:8020",
+    "deploy:chain": "ts-node --project scripts/tsconfig.json scripts/deploy.ts $CHAIN && yarn codegen && yarn build && goldsky subgraph deploy hpot-algebra-farming-$CHAIN/$VERSION --path ./"
   },
   "devDependencies": {
     "@graphprotocol/graph-cli": "0.64.0",
-    "@graphprotocol/graph-ts": "0.32.0",
+    "@graphprotocol/graph-ts": "^0.36.0",
+    "@types/node": "^20.11.19",
     "@typescript-eslint/eslint-plugin": "^2.0.0",
     "@typescript-eslint/parser": "^2.0.0",
     "eslint": "^6.2.2",
     "eslint-config-prettier": "^6.1.0",
+    "matchstick-as": "^0.6.0",
     "prettier": "^1.18.2",
+    "ts-node": "^10.9.2",
     "typescript": "^3.5.2"
   }
 }

@@ -1,0 +1,30 @@
+specVersion: 0.0.4
+description: Limits
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: Limits
+    network: ${NETWORK}
+    source:
+      address: '${LIMITS_ADDRESS}'
+      abi: Limits
+      startBlock: ${START_BLOCK}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/Limits.ts
+      entities:
+        - Limit
+        - Order
+      abis:
+        - name: Limits
+          file: ./abis/Limits.json
+      eventHandlers:
+        - event: LimitCreated(uint256,address,uint256,uint256)
+          handler: handleLimitCreated
+        - event: LimitFilled(uint256,address,uint256)
+          handler: handleLimitFilled
+        - event: LimitCancelled(uint256)
+          handler: handleLimitCancelled 

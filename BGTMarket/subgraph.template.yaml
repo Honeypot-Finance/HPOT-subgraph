@@ -1,0 +1,31 @@
+specVersion: 0.0.4
+description: BGT Market
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: BGT_Market
+    network: ${NETWORK}
+    source:
+      address: '${MARKET_ADDRESS}'
+      abi: BGTMarket
+      startBlock: ${START_BLOCK}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/BGT_Market.ts
+      entities:
+        - Market
+        - Order
+        - Trade
+      abis:
+        - name: BGTMarket
+          file: ./abis/BGTMarket.json
+      eventHandlers:
+        - event: OrderCreated(uint256,address,uint256,uint256,uint256)
+          handler: handleOrderCreated
+        - event: OrderFilled(uint256,address,uint256,uint256)
+          handler: handleOrderFilled
+        - event: OrderCancelled(uint256)
+          handler: handleOrderCancelled

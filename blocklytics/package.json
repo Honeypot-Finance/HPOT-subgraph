@@ -1,21 +1,27 @@
 {
-  "name": "ethereum-blocks",
-  "license": "UNLICENSED",
+  "name": "blocklytics-subgraph",
+  "version": "1.0.0",
+  "repository": "https://github.com/graphprotocol/algebra-subgraph",
+  "license": "GPL-3.0-or-later",
   "scripts": {
-    "codegen": "graph codegen",
+    "codegen": "graph codegen --output-dir src/types/",
     "build": "graph build",
-    "deploy": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ --access-token iliaazhel/goerli-blocks subgraph.yaml",
-    "create-local": "graph create --node http://localhost:8020/ iliaazhel/ethereum-blocks",
-    "remove-local": "graph remove --node http://localhost:8020/ iliaazhel/ethereum-blocks",
-    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 iliaazhel/ethereum-blocks",
-    "deploy-rinkeby": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ blocklytics/rinkeby-blocks",
-    "deploy-kovan": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ blocklytics/kovan-blocks",
-    "deploy-goerli": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ blocklytics/goerli-blocks",
-    "deploy-ropsten": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ blocklytics/ropsten-blocks",
-    "deploy-poa": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ blocklytics/poa-core-blocks"
+    "test": "graph test",
+    "create-local": "graph create cryptoalgebra/blocklytics --node http://127.0.0.1:8020",
+    "deploy-local": "graph deploy cryptoalgebra/blocklytics --debug --ipfs http://localhost:5001 --node http://127.0.0.1:8020",
+    "deploy:chain": "ts-node --project scripts/tsconfig.json scripts/deploy.ts $CHAIN && yarn codegen && yarn build && goldsky subgraph deploy hpot-blocklytics-$CHAIN/$VERSION --path ./"
   },
-  "dependencies": {
+  "devDependencies": {
     "@graphprotocol/graph-cli": "0.64.0",
-    "@graphprotocol/graph-ts": "0.32.0"
+    "@graphprotocol/graph-ts": "^0.36.0",
+    "@types/node": "^20.11.19",
+    "@typescript-eslint/eslint-plugin": "^2.0.0",
+    "@typescript-eslint/parser": "^2.0.0",
+    "eslint": "^6.2.2",
+    "eslint-config-prettier": "^6.1.0",
+    "matchstick-as": "^0.6.0",
+    "prettier": "^1.18.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^3.5.2"
   }
 }
