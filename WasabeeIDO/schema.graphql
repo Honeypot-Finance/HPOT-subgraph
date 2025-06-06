@@ -1,0 +1,89 @@
+type IDOPool @entity(immutable: false) {
+  id: ID!
+  address: Bytes!
+  idoToken: Bytes!
+  idoTotalAmount: BigInt!
+  priceInETH: BigInt!
+  startTime: BigInt!
+  endTime: BigInt!
+  idoSold: BigInt!
+  feeRate: BigInt!
+  maxEthPerWallet: BigInt!
+  purchases: [Purchase!]! @derivedFrom(field: "pool")
+  withdraws: [Withdraw!]! @derivedFrom(field: "pool")
+}
+
+type Purchase @entity(immutable: true) {
+  id: ID!
+  pool: IDOPool!
+  buyer: Bytes!
+  ethAmount: BigInt!
+  tokenAmount: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+}
+
+type Withdraw @entity(immutable: true) {
+  id: ID!
+  pool: IDOPool!
+  to: Bytes!
+  amount: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+}
+
+type LBPPool @entity(immutable: true) {
+  id: ID!
+  address: Bytes!
+  totalPurchased: BigInt!
+  totalAssetsIn: BigInt!
+  totalSwapFeesAsset: BigInt!
+  totalSwapFeesShare: BigInt!
+  cancelled: Boolean!
+  closed: Boolean!
+  createdAt: BigInt!
+  buys: [Buy!]! @derivedFrom(field: "pool")
+  sells: [Sell!]! @derivedFrom(field: "pool")
+}
+
+type Buy @entity(immutable: true) {
+  id: ID!
+  pool: LBPPool!
+  caller: Bytes!
+  assets: BigInt!
+  shares: BigInt!
+  swapFee: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+}
+
+type Sell @entity(immutable: true) {
+  id: ID!
+  pool: LBPPool!
+  caller: Bytes!
+  shares: BigInt!
+  assets: BigInt!
+  swapFee: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+}
+
+type Close @entity(immutable: true) {
+  id: ID!
+  pool: LBPPool!
+  assets: BigInt!
+  platformFees: BigInt!
+  swapFeesAsset: BigInt!
+  swapFeesShare: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+}
+
+type Redeem @entity(immutable: true) {
+  id: ID!
+  pool: LBPPool!
+  caller: Bytes!
+  shares: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+}

@@ -1,0 +1,29 @@
+specVersion: 0.0.4
+description: WasabeeIDO
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: WasabeeIDO
+    network: berachain-mainnet
+    source:
+      address: '0x1164f0dFa6ECb206C3F581ED42d6423b1BaD06e3'
+      abi: WasabeeIDO
+      startBlock: 5950000
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/WasabeeIDO.ts
+      entities:
+        - IDOPool
+        - Purchase
+        - Withdraw
+      abis:
+        - name: WasabeeIDO
+          file: ./abis/WasabeeIDO.json
+      eventHandlers:
+        - event: Purchased(indexed address,uint256,uint256)
+          handler: handlePurchased
+        - event: Withdraw(indexed address,uint256)
+          handler: handleWithdraw
