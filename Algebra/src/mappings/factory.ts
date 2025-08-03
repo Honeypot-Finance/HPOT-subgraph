@@ -5,7 +5,7 @@ import { Account, Factory } from '../types/schema'
 import { Pool as PoolEvent } from '../types/Factory/Factory'
 import { DefaultCommunityFee, CustomPool } from '../types/Factory/Factory'
 import { Pool, Token, Bundle } from '../types/schema'
-import { Pool as PoolTemplate } from '../types/templates'
+import { Algebra_Pool as PoolTemplate } from '../types/templates'
 import {
   fetchTokenSymbol,
   fetchTokenName,

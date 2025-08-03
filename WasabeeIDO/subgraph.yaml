@@ -7,7 +7,7 @@ dataSources:
     name: WasabeeIDO
     network: berachain-mainnet
     source:
-      address: '0x1164f0dFa6ECb206C3F581ED42d6423b1BaD06e3'
+      address: '0x37e1F8ea31307d9Bf2560bB0b4fA4b3274Ea468F'
       abi: WasabeeIDO
       startBlock: 5950000
     mapping:

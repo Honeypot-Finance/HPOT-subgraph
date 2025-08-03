@@ -1,15 +1,15 @@
 specVersion: 0.0.4
-description: Hpot is a decentralized protocol for automated token exchange on berachain-mainnet.
+description: Algebra
 schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum/contract
-    name: Factory
-    network: berachain-mainnet
+    name: Algebra_Factory
+    network: bsc
     source:
-      address: '0x7d53327D78EFD0b463bd8d7dc938C52402323b95'
-      abi: Factory
-      startBlock: 500000
+      address: '0xE8B1932CecF2d3fB85033135D72c728893c80D86'
+      abi: AlgebraFactory
+      startBlock: 56151190
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -17,277 +17,41 @@ dataSources:
       file: ./src/mappings/factory.ts
       entities:
         - Pool
-        - Token
       abis:
-        - name: Factory
+        - name: AlgebraFactory
           file: ./abis/factory.json
-        - name: ERC20
-          file: ./abis/ERC20.json
-        - name: ERC20SymbolBytes
-          file: ./abis/ERC20SymbolBytes.json
-        - name: ERC20NameBytes
-          file: ./abis/ERC20NameBytes.json
-        - name: Pool
-          file: ./abis/pool.json
-        - name: Pot2PumpFactory
-          file: ./abis/pot2PumpFactory.json
-      eventHandlers:
-        - event: Pool(indexed address,indexed address,address)
-          handler: handlePoolCreated
-        - event: CustomPool(indexed address,indexed address,indexed address,address)
-          handler: handleCustomPoolCreated
-        - event: DefaultCommunityFee(uint16)
-          handler: handleNewCommunityFee
-  - kind: ethereum/contract
-    name: NonfungiblePositionManager
-    network: berachain-mainnet
-    source:
-      address: '0xBB203aADbE36C125028a54584f5d48C1764317D0'
-      abi: NonfungiblePositionManager
-      startBlock: 500000
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      file: ./src/mappings/position-manager.ts
-      entities:
-        - Pool
-        - Token
-        - Deposit
-      abis:
-        - name: NonfungiblePositionManager
-          file: ./abis/NonfungiblePositionManager.json
-        - name: Pool
-          file: ./abis/pool.json
-        - name: Factory
-          file: ./abis/factory.json
-        - name: ERC20
-          file: ./abis/ERC20.json
-        - name: Pot2PumpFactory
-          file: ./abis/pot2PumpFactory.json
-      eventHandlers:
-        - event: Collect(indexed uint256,address,uint256,uint256)
-          handler: handleCollect
-        - event: DecreaseLiquidity(indexed uint256,uint128,uint256,uint256)
-          handler: handleDecreaseLiquidity
-        - event: IncreaseLiquidity(indexed uint256,uint128,uint128,uint256,uint256,address)
-          handler: handleIncreaseLiquidity
-        - event: Transfer(indexed address,indexed address,indexed uint256)
-          handler: handleTransfer
-  - kind: ethereum/contract
-    name: Pot2PumpFactory
-    network: berachain-mainnet
-    source:
-      address: '0xC38eF79A6cA9b3EfBe20F3dD3b99B3e25d09F52B'
-      abi: Pot2PumpFactory
-      startBlock: 500000
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      file: ./src/mappings/pot2pump-factory.ts
-      entities:
-        - Pot2Pump
-        - Token
-      abis:
-        - name: Pot2PumpFactory
-          file: ./abis/pot2PumpFactory.json
-        - name: Pot2PumpPair
-          file: ./abis/pot2PumpPair.json
-        - name: ERC20
-          file: ./abis/ERC20.json
-      eventHandlers:
-        - event: PairCreated(indexed address,indexed address,address,uint256)
-          handler: handlePairCreated
-  - kind: ethereum
-    name: ICHIVaultFactory
-    network: berachain-mainnet
-    source:
-      address: '0x1bf5e51eCacdfEA65ae9276fd228bB8719ffcA7E'
-      abi: ICHIVaultFactory
-      startBlock: 500000
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - IchiVault
-      abis:
-        - name: ICHIVaultFactory
-          file: ./abis/ICHIVaultFactory.json
-        - name: ICHIVault
-          file: ./abis/ICHIVault.json
-      eventHandlers:
-        - event: ICHIVaultCreated(indexed address,address,address,bool,address,bool,uint256)
-          handler: handleICHIVaultCreated
-      file: ./src/mappings/vaultFactory.ts
-  - kind: ethereum
-    name: ICHIVaultFactory-with-automation
-    network: berachain-mainnet
-    source:
-      address: '0x7d125D0766C968353454b7A67bB2D61a97E5665d'
-      abi: ICHIVaultFactory
-      startBlock: 969565
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - IchiVault
-      abis:
-        - name: ICHIVaultFactory
-          file: ./abis/ICHIVaultFactory.json
-        - name: ICHIVault
-          file: ./abis/ICHIVault.json
-      eventHandlers:
-        - event: ICHIVaultCreated(indexed address,address,address,bool,address,bool,uint256)
-          handler: handleICHIVaultCreated
-      file: ./src/mappings/vaultFactory.ts
-
-templates:
-  - kind: ethereum/contract
-    name: Pool
-    network: berachain-mainnet
-    source:
-      abi: Pool
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      file: ./src/mappings/core.ts
-      entities:
-        - Pool
-        - Token
-      abis:
-        - name: Pool
-          file: ./abis/pool.json
-        - name: Factory
-          file: ./abis/factory.json
-        - name: ERC20
-          file: ./abis/ERC20.json
-        - name: Pot2PumpFactory
-          file: ./abis/pot2PumpFactory.json
-      eventHandlers:
-        - event: Initialize(uint160,int24)
-          handler: handleInitialize
-        - event: Swap(indexed address,indexed address,int256,int256,uint160,uint128,int24,uint24,uint24)
-          handler: handleSwap
-        - event: Mint(address,indexed address,indexed int24,indexed int24,uint128,uint256,uint256)
-          handler: handleMint
-        - event: Burn(indexed address,indexed int24,indexed int24,uint128,uint256,uint256,uint24)
-          handler: handleBurn
-        - event: Fee(uint16)
-          handler: handleChangeFee
-        - event: Collect(indexed address,address,indexed int24,indexed int24,uint128,uint128)
-          handler: handleCollect
-        - event: CommunityFee(uint16)
-          handler: handleSetCommunityFee
-        - event: TickSpacing(int24)
-          handler: handleSetTickSpacing
-        - event: Plugin(address)
-          handler: handlePlugin
-        - event: PluginConfig(uint8)
-          handler: handlePluginConfig
-  - kind: ethereum/contract
-    name: Token
-    network: berachain-mainnet
-    source:
-      abi: ERC20
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      file: ./src/mappings/core.ts
-      entities:
-        - Token
-      abis:
-        - name: ERC20
-          file: ./abis/ERC20.json
-        - name: Pot2PumpFactory
-          file: ./abis/pot2PumpFactory.json
-      eventHandlers:
-        - event: Transfer(indexed address,indexed address,uint256)
-          handler: handleTransfer
-  - kind: ethereum/contract
-    name: Pot2Pump
-    network: berachain-mainnet
-    source:
-      abi: Pot2PumpPair
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      file: ./src/mappings/pot2pump.ts
-      entities:
-        - Pot2Pump
-        - Token
-      abis:
-        - name: Pot2PumpPair
-          file: ./abis/pot2PumpPair.json
-        - name: ERC20
-          file: ./abis/ERC20.json
-      eventHandlers:
-        - event: DepositRaisedToken(indexed address,uint256)
-          handler: handleDepositRaisedToken
-        - event: Refund(indexed address,uint256)
-          handler: handleRefund
-        - event: ClaimLP(indexed address,uint256)
-          handler: handleClaimLP
-        - event: Perform(uint8)
-          handler: handlePerform
-  - kind: ethereum/contract
-    name: Vault
-    network: berachain-mainnet
-    source:
-      abi: ICHIVault
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      file: ./src/mappings/vaults.ts
-      entities:
-        - Affiliate
-        - Approval
-        - DeployICHIVault
-        - Deposit
-        - DepositMax
-        - CollectFee
-        - Hysteresis
-        - MaxTotalSupply
-        - OwnershipTransferred
-        - Rebalance
-        - SetTwapPeriod
-        - Transfer
-        - Withdraw
-      abis:
-        - name: ICHIVault
-          file: ./abis/ICHIVault.json
         - name: AlgebraPool
           file: ./abis/AlgebraPool.json
       eventHandlers:
-        - event: Affiliate(indexed address,address)
-          handler: handleAffiliate
-        - event: Approval(indexed address,indexed address,uint256)
-          handler: handleApproval
-        - event: DeployICHIVault(indexed address,indexed address,bool,bool,address,uint256)
-          handler: handleDeployICHIVault
-        - event: Deposit(indexed address,indexed address,uint256,uint256,uint256)
-          handler: handleDeposit
-        - event: DepositMax(indexed address,uint256,uint256)
-          handler: handleDepositMax
-        - event: CollectFees(indexed address,uint256,uint256)
-          handler: handleCollectFees
-        - event: Hysteresis(indexed address,uint256)
-          handler: handleHysteresis
-        - event: MaxTotalSupply(indexed address,uint256)
-          handler: handleMaxTotalSupply
-        - event: OwnershipTransferred(indexed address,indexed address)
-          handler: handleOwnershipTransferred
-        - event: Rebalance(int24,uint256,uint256,uint256,uint256,uint256)
-          handler: handleRebalance
-        - event: SetTwapPeriod(address,uint32)
-          handler: handleSetTwapPeriod
-        - event: Transfer(indexed address,indexed address,uint256)
-          handler: handleTransfer
-        - event: Withdraw(indexed address,indexed address,uint256,uint256,uint256)
-          handler: handleWithdraw
+        - event: Pool(indexed address,indexed address,address)
+          handler: handlePoolCreated
+
+templates:
+  - kind: ethereum/contract
+    name: Algebra_Pool
+    network: bsc
+    source:
+      abi: AlgebraPool
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/core.ts
+      entities:
+        - Pool
+        - Swap
+        - Mint
+        - Burn
+        - Flash
+      abis:
+        - name: AlgebraPool
+          file: ./abis/AlgebraPool.json
+      eventHandlers:
+        - event: Swap(indexed address,indexed address,int256,int256,uint160,uint128,int24)
+          handler: handleSwap
+        - event: Mint(address,indexed address,indexed int24,indexed int24,uint128,uint256,uint256)
+          handler: handleMint
+        - event: Burn(indexed address,indexed int24,indexed int24,uint128,uint256,uint256)
+          handler: handleBurn
+        - event: Flash(indexed address,indexed address,uint256,uint256,uint256,uint256)
+          handler: handleFlash
