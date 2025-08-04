@@ -1,33 +1,82 @@
 specVersion: 0.0.4
-description: Algebra Farming
+description: Algebra is a Innovative DEX with concentrated liquidity, adaptive fee, build-in farming etc.
 schema:
   file: ./schema.graphql
 dataSources:
-  - kind: ethereum/contract
-    name: FarmingCenter
-    network: ${NETWORK}
-    source:
-      address: '${FARMING_CENTER_ADDRESS}'
-      abi: FarmingCenter
+- kind: ethereum/contract
+  name: NonfungiblePositionManager
+  network: ${NETWORK}
+  source:
+      address: '${NONFUNGIBLE_POSITION_MANAGER_ADDRESS}'
+      abi: NonfungiblePositionManager
       startBlock: ${START_BLOCK}
-    mapping:
+  mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
       language: wasm/assemblyscript
-      file: ./src/mappings/FarmingCenter.ts
+      file: ./src/mappings/position-manager.ts
       entities:
-        - Farm
-        - Position
-        - Incentive
+        - Deposit
+        - Token
       abis:
-        - name: FarmingCenter
-          file: ./abis/FarmingCenter.json
+        - name: NonfungiblePositionManager
+          file: ./abis/NonfungiblePositionManager.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: ERC20SymbolBytes
+          file: ./abis/ERC20SymbolBytes.json
+        - name: ERC20NameBytes
+          file: ./abis/ERC20NameBytes.json
       eventHandlers:
-        - event: FarmCreated(uint256,address,address,uint256,uint256)
-          handler: handleFarmCreated
-        - event: PositionEntered(uint256,uint256,uint256)
-          handler: handlePositionEntered
-        - event: PositionExited(uint256,uint256,uint256)
-          handler: handlePositionExited
-        - event: IncentiveCreated(uint256,address,address,uint256,uint256,uint256)
-          handler: handleIncentiveCreated 
+        - event: IncreaseLiquidity(indexed uint256,uint128,uint128,uint256,uint256,address)
+          handler: handleIncreaseLiquidity
+        - event: Transfer(indexed address,indexed address,indexed uint256)
+          handler: handleTransfer
+        - event: DecreaseLiquidity(indexed uint256,uint128,uint256,uint256)
+          handler: handleDecreaseLiquidity
+- kind: ethereum/contract
+  name: EternalFarming
+  network: ${NETWORK}
+  source:
+      address: '${ETERNAL_FARMING_ADDRESS}'
+      abi: EternalFarming
+      startBlock: ${START_BLOCK}
+  mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/eternalFarming.ts
+      entities:
+        - Deposit
+        - Token
+        - EternalFarming
+        - EternalFarmingPosition
+        - Tier
+      abis:
+        - name: EternalFarming
+          file: ./abis/EternalFarming.json
+        - name: NonfungiblePositionManager
+          file: ./abis/NonfungiblePositionManager.json
+        - name: AlgebraPool
+          file: ./abis/AlgebraPool.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: ERC20SymbolBytes
+          file: ./abis/ERC20SymbolBytes.json
+        - name: ERC20NameBytes
+          file: ./abis/ERC20NameBytes.json
+      eventHandlers:
+        - event: EternalFarmingCreated(indexed address,indexed address,indexed address,address,uint256,uint256,uint256,uint24)
+          handler: handleIncentiveCreated
+        - event: FarmEntered(indexed uint256,indexed bytes32,uint128)
+          handler: handleTokenStaked
+        - event: FarmEnded(indexed uint256,indexed bytes32,indexed address,address,address,uint256,uint256)
+          handler: handleTokenUnstaked
+        - event: RewardsAdded(uint256,uint256,bytes32)
+          handler: handleRewardsAdded
+        - event: IncentiveDeactivated(indexed bytes32)
+          handler: handleDeactivate
+        - event: RewardsRatesChanged(uint128,uint128,bytes32)
+          handler: handleRewardsRatesChanged
+        - event: RewardClaimed(indexed address,uint256,indexed address,indexed address)
+          handler: handleRewardClaimed

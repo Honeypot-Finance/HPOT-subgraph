@@ -26,7 +26,8 @@ let template = fs.readFileSync(templatePath, 'utf8');
 // Replace all placeholders with config values
 template = template
   .replace(/\${NETWORK}/g, chainConfig.network)
-  .replace(/\${FARMING_CENTER_ADDRESS}/g, chainConfig.farmingCenterAddress)
+  .replace(/\${NONFUNGIBLE_POSITION_MANAGER_ADDRESS}/g, chainConfig.nonfungiblePositionManagerAddress)
+  .replace(/\${ETERNAL_FARMING_ADDRESS}/g, chainConfig.eternalFarmingAddress)
   .replace(/\${START_BLOCK}/g, chainConfig.startBlock.toString());
 
 // Write the final subgraph.yaml

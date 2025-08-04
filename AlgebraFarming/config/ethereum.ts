@@ -1,5 +1,6 @@
 export const config = {
   network: 'mainnet',
-  farmingCenterAddress: '0x...', // Replace with actual Ethereum farming center address
+  nonfungiblePositionManagerAddress: '0x0000000000000000000000000000000000000000', // Replace with actual Ethereum NPM address
+  eternalFarmingAddress: '0x0000000000000000000000000000000000000000', // Replace with actual Ethereum EternalFarming address
   startBlock: 0,
 } as const; 
