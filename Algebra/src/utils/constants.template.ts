@@ -2,10 +2,10 @@
 import { BigInt, BigDecimal, Address, bigDecimal } from '@graphprotocol/graph-ts'
 import { Factory as FactoryContract } from '../types/templates/Pool/Factory'
 
-export const POT2PUMP_FACTORY_ADDRESS = '0xE0D1F1cE03A7598EE7FdF7E5DB837d9726C0Ea5c'
+export const POT2PUMP_FACTORY_ADDRESS = '${POT2PUMP_FACTORY_ADDRESS}'
 
 export const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000'
-export const FACTORY_ADDRESS = '0xE8B1932CecF2d3fB85033135D72c728893c80D86'
+export const FACTORY_ADDRESS = '${FACTORY_ADDRESS}'
 export const FEE_DENOMINATOR = BigDecimal.fromString('1000000')
 
 export let ZERO_BI = BigInt.fromI32(0)
