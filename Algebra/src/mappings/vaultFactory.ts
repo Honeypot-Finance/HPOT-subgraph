@@ -1,6 +1,6 @@
 import { ICHIVaultCreated } from './../types/ICHIVaultFactory/ICHIVaultFactory'
 import { IchiVault, Pool } from '../types/schema'
-import { Vault } from '../types/templates'
+import { ICHIVault as Vault } from '../types/templates'
 import { fetchAlgebraPoolAddress } from '../utils/aquabera'
 import { ZERO_BD, ZERO_BI } from '../utils/constants'
 import { loadToken } from '../utils/token'

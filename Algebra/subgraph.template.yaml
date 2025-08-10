@@ -35,6 +35,101 @@ dataSources:
       eventHandlers:
         - event: Pool(indexed address,indexed address,address)
           handler: handlePoolCreated
+  - kind: ethereum/contract
+    name: NonfungiblePositionManager
+    network: ${NETWORK}
+    source:
+      address: '${NONFUNGIBLE_POSITION_MANAGER_ADDRESS}'
+      abi: NonfungiblePositionManager
+      startBlock: ${START_BLOCK}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/position-manager.ts
+      entities:
+        - Position
+        - Token
+      abis:
+        - name: NonfungiblePositionManager
+          file: ./abis/NonfungiblePositionManager.json
+        - name: AlgebraPool
+          file: ./abis/AlgebraPool.json
+        - name: AlgebraFactory
+          file: ./abis/factory.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: ERC20SymbolBytes
+          file: ./abis/ERC20SymbolBytes.json
+        - name: ERC20NameBytes
+          file: ./abis/ERC20NameBytes.json
+      eventHandlers:
+        - event: IncreaseLiquidity(indexed uint256,uint128,uint128,uint256,uint256,address)
+          handler: handleIncreaseLiquidity
+        - event: DecreaseLiquidity(indexed uint256,uint128,uint256,uint256)
+          handler: handleDecreaseLiquidity
+        - event: Collect(indexed uint256,address,uint256,uint256)
+          handler: handleCollect
+        - event: Transfer(indexed address,indexed address,indexed uint256)
+          handler: handleTransfer
+  - kind: ethereum/contract
+    name: Pot2PumpFactory
+    network: ${NETWORK}
+    source:
+      address: '${POT2PUMP_FACTORY_ADDRESS}'
+      abi: Pot2PumpFactory
+      startBlock: ${START_BLOCK}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/pot2pump-factory.ts
+      entities:
+        - Pot2Pump
+      abis:
+        - name: Pot2PumpFactory
+          file: ./abis/pot2PumpFactory.json
+        - name: Pot2PumpPair
+          file: ./abis/pot2PumpPair.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: ERC20SymbolBytes
+          file: ./abis/ERC20SymbolBytes.json
+        - name: ERC20NameBytes
+          file: ./abis/ERC20NameBytes.json
+      eventHandlers:
+        - event: PairCreated(indexed address,indexed address,address,uint256)
+          handler: handlePairCreated
+  - kind: ethereum/contract
+    name: ICHIVaultFactory
+    network: ${NETWORK}
+    source:
+      address: '${ICHI_VAULT_FACTORY_ADDRESS}'
+      abi: ICHIVaultFactory
+      startBlock: ${START_BLOCK}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/vaultFactory.ts
+      entities:
+        - IchiVault
+      abis:
+        - name: ICHIVaultFactory
+          file: ./abis/ICHIVaultFactory.json
+        - name: ICHIVault
+          file: ./abis/ICHIVault.json
+        - name: AlgebraPool
+          file: ./abis/AlgebraPool.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: ERC20SymbolBytes
+          file: ./abis/ERC20SymbolBytes.json
+        - name: ERC20NameBytes
+          file: ./abis/ERC20NameBytes.json
+      eventHandlers:
+        - event: ICHIVaultCreated(indexed address,address,address,bool,address,bool,uint256)
+          handler: handleICHIVaultCreated
 
 templates:
   - kind: ethereum/contract
@@ -65,3 +160,110 @@ templates:
           handler: handleBurn
         - event: Flash(indexed address,indexed address,uint256,uint256,uint256,uint256)
           handler: handleFlash
+  - kind: ethereum/contract
+    name: Pot2PumpPair
+    network: ${NETWORK}
+    source:
+      abi: Pot2PumpPair
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/pot2pump.ts
+      entities:
+        - Pot2Pump
+        - Participant
+        - ParticipantTransactionHistory
+      abis:
+        - name: Pot2PumpPair
+          file: ./abis/pot2PumpPair.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: ERC20SymbolBytes
+          file: ./abis/ERC20SymbolBytes.json
+        - name: ERC20NameBytes
+          file: ./abis/ERC20NameBytes.json
+      eventHandlers:
+        - event: ClaimLP(indexed address,uint256)
+          handler: handleClaimLP
+        - event: DepositRaisedToken(indexed address,uint256)
+          handler: handleDepositRaisedToken
+        - event: Perform(uint8)
+          handler: handlePerform
+        - event: Refund(indexed address,uint256)
+          handler: handleRefund
+  - kind: ethereum/contract
+    name: ICHIVault
+    network: ${NETWORK}
+    source:
+      abi: ICHIVault
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/vaults.ts
+      entities:
+        - IchiVault
+        - VaultShare
+        - VaultAffiliate
+        - VaultDeposit
+        - VaultRebalance
+        - VaultWithdraw
+        - VaultCollectFees
+        - VaultHysteresis
+      abis:
+        - name: ICHIVault
+          file: ./abis/ICHIVault.json
+        - name: AlgebraPool
+          file: ./abis/AlgebraPool.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: ERC20SymbolBytes
+          file: ./abis/ERC20SymbolBytes.json
+        - name: ERC20NameBytes
+          file: ./abis/ERC20NameBytes.json
+      eventHandlers:
+        - event: Affiliate(indexed address,address)
+          handler: handleAffiliate
+        - event: Approval(indexed address,indexed address,uint256)
+          handler: handleApproval
+        - event: DeployICHIVault(indexed address,indexed address,bool,bool,address,uint256)
+          handler: handleDeployICHIVault
+        - event: Deposit(indexed address,indexed address,uint256,uint256,uint256)
+          handler: handleDeposit
+        - event: DepositMax(indexed address,uint256,uint256)
+          handler: handleDepositMax
+        - event: CollectFees(indexed address,uint256,uint256)
+          handler: handleCollectFees
+        - event: Hysteresis(indexed address,uint256)
+          handler: handleHysteresis
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: Rebalance(int24,uint256,uint256,uint256,uint256,uint256)
+          handler: handleRebalance
+        - event: SetTwapPeriod(address,uint32)
+          handler: handleSetTwapPeriod
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+        - event: Withdraw(indexed address,indexed address,uint256,uint256,uint256)
+          handler: handleWithdraw
+  - kind: ethereum/contract
+    name: Token
+    network: ${NETWORK}
+    source:
+      abi: ERC20
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/core.ts
+      entities:
+        - Token
+      abis:
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: Pot2PumpFactory
+          file: ./abis/pot2PumpFactory.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer

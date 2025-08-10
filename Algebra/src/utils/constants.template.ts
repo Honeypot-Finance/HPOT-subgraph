@@ -3,6 +3,8 @@ import { BigInt, BigDecimal, Address, bigDecimal } from '@graphprotocol/graph-ts
 import { Factory as FactoryContract } from '../types/templates/Pool/Factory'
 
 export const POT2PUMP_FACTORY_ADDRESS = '${POT2PUMP_FACTORY_ADDRESS}'
+export const NONFUNGIBLE_POSITION_MANAGER_ADDRESS = '${NONFUNGIBLE_POSITION_MANAGER_ADDRESS}'
+export const ICHI_VAULT_FACTORY_ADDRESS = '${ICHI_VAULT_FACTORY_ADDRESS}'
 
 export const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000'
 export const FACTORY_ADDRESS = '${FACTORY_ADDRESS}'

@@ -1,6 +1,8 @@
 export const config = {
   network: 'bsc',
   factoryAddress: '0xE8B1932CecF2d3fB85033135D72c728893c80D86',
-  pot2pumpFactoryAddress: '0xE0D1F1cE03A7598EE7FdF7E5DB837d9726C0Ea5c', // BSC POT2PUMP factory
+  nonfungiblePositionManagerAddress: '0x559066e029787e27153BC99Dcf9E540111F346f4', // TODO: Add BSC NFT position manager
+  pot2pumpFactoryAddress: '0xB192af2225791c439CB2024290158d3202DbcD95', // BSC POT2PUMP factory
+  ichiVaultFactoryAddress: '0x4fdD224DD6A7CcBdeAA7ae1be3257EC10456d042', // TODO: Add ICHI vault factory address
   startBlock: 56151190
 } as const

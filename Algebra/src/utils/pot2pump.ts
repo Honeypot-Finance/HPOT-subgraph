@@ -1,7 +1,7 @@
 import { Pot2Pump } from '../types/schema'
-import { Pot2Pump as Pot2PumpTemplate } from '../types/templates'
+import { Pot2PumpPair as Pot2PumpTemplate } from '../types/templates'
 import { Address, BigInt } from '@graphprotocol/graph-ts'
-import { Pot2PumpPair } from '../types/templates/Pot2Pump/Pot2PumpPair'
+import { Pot2PumpPair } from '../types/templates/Pot2PumpPair/Pot2PumpPair'
 import { ADDRESS_ZERO } from './constants'
 
 export const fetchEndTime = (address: Address): BigInt => {

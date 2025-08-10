@@ -1,7 +1,7 @@
 import { ERC20 } from '../types/Factory/ERC20'
 import { PairCreated, Pot2PumpFactory } from '../types/Factory/Pot2PumpFactory'
 import { Factory, Participant, Pot2Pump, Token } from '../types/schema'
-import { Pot2Pump as Pot2PumpTemplate, Token as TokenTemplate } from '../types/templates'
+import { Pot2PumpPair as Pot2PumpTemplate, Token as TokenTemplate } from '../types/templates'
 import { BigInt } from '@graphprotocol/graph-ts'
 import { fetchCreator, fetchEndTime, fetchLaunchTokenAmount, fetchMinCap } from '../utils/pot2pump'
 import { loadToken } from '../utils/token'
@@ -80,12 +80,11 @@ export function handlePairCreated(event: PairCreated): void {
   }
 
   // Update the if launch is meme token and register it to ERC20 listener
-  let launchToken = loadToken(event.params.launchedToken)
+  // Create Token templates for tracking
   if (launchToken == null) {
     TokenTemplate.create(event.params.launchedToken)
   }
 
-  let raisedToken = loadToken(event.params.raisedToken)
   if (raisedToken == null) {
     TokenTemplate.create(event.params.raisedToken)
   }

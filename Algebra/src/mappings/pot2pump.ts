@@ -8,14 +8,14 @@ import {
   ClaimLp,
   Factory
 } from '../types/schema'
-import { Pot2Pump as Pot2PumpTemplate } from '../types/templates'
+import { Pot2PumpPair as Pot2PumpTemplate } from '../types/templates'
 import { Address, BigDecimal, BigInt } from '@graphprotocol/graph-ts'
 import {
   ClaimLP as TClaimLP,
   DepositRaisedToken as TDepositRaisedToken,
   Perform,
   Refund as TRefund
-} from '../types/templates/Pot2Pump/Pot2PumpPair'
+} from '../types/templates/Pot2PumpPair/Pot2PumpPair'
 import { fetchState } from '../utils/pot2pump'
 import { loadAccount } from '../utils/account'
 import { FACTORY_ADDRESS, ONE_BI, TransactionType, TransactionTypeToString, ZERO_BI } from '../utils/constants'

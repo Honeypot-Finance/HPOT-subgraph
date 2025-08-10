@@ -27,6 +27,9 @@ let subgraphTemplate = fs.readFileSync(subgraphTemplatePath, 'utf8')
 subgraphTemplate = subgraphTemplate
   .replace(/\${NETWORK}/g, chainConfig.network)
   .replace(/\${FACTORY_ADDRESS}/g, chainConfig.factoryAddress)
+  .replace(/\${NONFUNGIBLE_POSITION_MANAGER_ADDRESS}/g, chainConfig.nonfungiblePositionManagerAddress)
+  .replace(/\${POT2PUMP_FACTORY_ADDRESS}/g, chainConfig.pot2pumpFactoryAddress)
+  .replace(/\${ICHI_VAULT_FACTORY_ADDRESS}/g, chainConfig.ichiVaultFactoryAddress)
   .replace(/\${START_BLOCK}/g, chainConfig.startBlock.toString())
 
 fs.writeFileSync(subgraphOutputPath, subgraphTemplate)
@@ -36,7 +39,9 @@ console.log(`Generated subgraph.yaml for ${chain}`)
 let constantsTemplate = fs.readFileSync(constantsTemplatePath, 'utf8')
 constantsTemplate = constantsTemplate
   .replace(/\${FACTORY_ADDRESS}/g, chainConfig.factoryAddress)
+  .replace(/\${NONFUNGIBLE_POSITION_MANAGER_ADDRESS}/g, chainConfig.nonfungiblePositionManagerAddress)
   .replace(/\${POT2PUMP_FACTORY_ADDRESS}/g, chainConfig.pot2pumpFactoryAddress)
+  .replace(/\${ICHI_VAULT_FACTORY_ADDRESS}/g, chainConfig.ichiVaultFactoryAddress)
 
 fs.writeFileSync(constantsOutputPath, constantsTemplate)
 console.log(`Generated constants.ts for ${chain}`)
