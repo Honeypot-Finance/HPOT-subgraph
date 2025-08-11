@@ -57,6 +57,8 @@ dataSources:
           file: ./abis/AlgebraPool.json
         - name: AlgebraFactory
           file: ./abis/factory.json
+        - name: Factory
+          file: ./abis/factory.json
         - name: ERC20
           file: ./abis/ERC20.json
         - name: ERC20SymbolBytes
@@ -151,6 +153,16 @@ templates:
       abis:
         - name: AlgebraPool
           file: ./abis/AlgebraPool.json
+        - name: Pool
+          file: ./abis/pool.json
+        - name: Pot2PumpFactory
+          file: ./abis/pot2PumpFactory.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: ERC20SymbolBytes
+          file: ./abis/ERC20SymbolBytes.json
+        - name: ERC20NameBytes
+          file: ./abis/ERC20NameBytes.json
       eventHandlers:
         - event: Swap(indexed address,indexed address,int256,int256,uint160,uint128,int24)
           handler: handleSwap
