@@ -4,23 +4,18 @@ import { Bundle, Pool, Token } from './../types/schema'
 import { BigDecimal, BigInt, log } from '@graphprotocol/graph-ts'
 import { exponentToBigDecimal, safeDiv } from '../utils/index'
 
-const WNATIVE_ADDRESS = '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c'.toLowerCase()
-const STABLE_NATIVE_POOL = '0x568e7d3811a78a5edbdb07df869f3ab0d793a786'.toLowerCase()
+const WNATIVE_ADDRESS = '${WNATIVE_ADDRESS}'.toLowerCase()
+const STABLE_NATIVE_POOL = '${STABLE_NATIVE_POOL}'.toLowerCase()
 
 // token where amounts should contribute to tracked volume and liquidity
 // usually tokens that many tokens are paired with s
-export let WHITELIST_TOKENS: string[] = [
-    '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c',
-    '0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d'
-  ]
+export let WHITELIST_TOKENS: string[] = ${WHITELIST_TOKENS}
 
-let STABLE_COINS: string[] = [
-    '0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d'
-  ]
+let STABLE_COINS: string[] = ${STABLE_COINS}
 
 let Q192 = Math.pow(2, 192)
 
-let MINIMUM_NATIVE_LOCKED = BigDecimal.fromString('0')
+let MINIMUM_NATIVE_LOCKED = BigDecimal.fromString('${MINIMUM_NATIVE_LOCKED}')
 
 export function priceToTokenPrices(price: BigInt, token0: Token, token1: Token): BigDecimal[] {
   let num = price.times(price).toBigDecimal()

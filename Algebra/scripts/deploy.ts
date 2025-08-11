@@ -6,6 +6,8 @@ const subgraphTemplatePath = path.join(__dirname, '../subgraph.template.yaml')
 const subgraphOutputPath = path.join(__dirname, '../subgraph.yaml')
 const constantsTemplatePath = path.join(__dirname, '../src/utils/constants.template.ts')
 const constantsOutputPath = path.join(__dirname, '../src/utils/constants.ts')
+const pricingTemplatePath = path.join(__dirname, '../src/utils/pricing.template')
+const pricingOutputPath = path.join(__dirname, '../src/utils/pricing.ts')
 
 // Get the chain from command line arguments
 const chain = process.argv[2] as keyof typeof configs
@@ -45,3 +47,27 @@ constantsTemplate = constantsTemplate
 
 fs.writeFileSync(constantsOutputPath, constantsTemplate)
 console.log(`Generated constants.ts for ${chain}`)
+
+// Generate pricing.ts if template exists and config has pricing info
+if (fs.existsSync(pricingTemplatePath) && chainConfig.wnativeAddress) {
+  let pricingTemplate = fs.readFileSync(pricingTemplatePath, 'utf8')
+  
+  // Format arrays for TypeScript
+  const whitelistTokensStr = JSON.stringify(chainConfig.whitelistTokens || [], null, 2)
+    .replace(/"/g, "'")
+    .replace(/\n/g, '\n  ')
+  
+  const stableCoinsStr = JSON.stringify(chainConfig.stableCoins || [], null, 2)
+    .replace(/"/g, "'")
+    .replace(/\n/g, '\n  ')
+  
+  pricingTemplate = pricingTemplate
+    .replace(/\${WNATIVE_ADDRESS}/g, chainConfig.wnativeAddress || '')
+    .replace(/\${STABLE_NATIVE_POOL}/g, chainConfig.stableNativePool || '')
+    .replace(/\${MINIMUM_NATIVE_LOCKED}/g, chainConfig.minimumNativeLocked || '0')
+    .replace(/\${WHITELIST_TOKENS}/g, whitelistTokensStr)
+    .replace(/\${STABLE_COINS}/g, stableCoinsStr)
+  
+  fs.writeFileSync(pricingOutputPath, pricingTemplate)
+  console.log(`Generated pricing.ts for ${chain}`)
+}
