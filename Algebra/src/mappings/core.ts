@@ -43,7 +43,10 @@ import {
   getDerivedPriceUSD,
   getEthPriceInUSD,
   getTrackedAmountUSD,
-  priceToTokenPrices
+  priceToTokenPrices,
+  WHITELIST_TOKENS,
+  STABLE_NATIVE_POOL,
+  STABLE_COINS
 } from '../utils/pricing'
 import {
   updatePoolDayData,
@@ -71,19 +74,37 @@ export function handleInitialize(event: Initialize): void {
 
   pool.sqrtPrice = event.params.price
   pool.tick = BigInt.fromI32(event.params.tick)
-  pool.save()
-  // update token prices
+  
+  // Calculate initial token prices from sqrtPrice
   let token0 = loadToken(Address.fromString(pool.token0))
   let token1 = loadToken(Address.fromString(pool.token1))
+  let prices = priceToTokenPrices(pool.sqrtPrice, token0 as Token, token1 as Token)
+  pool.token0Price = prices[0]
+  pool.token1Price = prices[1]
+  pool.save()
 
-  // update Matic price now that prices could have changed
+  // Special handling for stable/native pool initialization
   let bundle = Bundle.load('1')!
-  bundle.maticPriceUSD = getEthPriceInUSD()
+  if (pool.id.toLowerCase() == STABLE_NATIVE_POOL.toLowerCase()) {
+    // This is the stable/native pool, bootstrap the native price
+    if (STABLE_COINS.includes(token0.id.toLowerCase())) {
+      // token0 is stable, native price is in terms of stable
+      bundle.maticPriceUSD = pool.token0Price // Price of native in USD
+    } else if (STABLE_COINS.includes(token1.id.toLowerCase())) {
+      // token1 is stable, native price is in terms of stable  
+      bundle.maticPriceUSD = pool.token1Price // Price of native in USD
+    }
+  } else {
+    // For other pools, try to get the native price from the stable pool
+    bundle.maticPriceUSD = getEthPriceInUSD()
+  }
   bundle.save()
+  
   updatePoolDayData(event)
   updatePoolHourData(event)
   updatePoolWeekData(event)
   updatePoolMonthData(event)
+  
   // update token prices
   token0.derivedMatic = findEthPerToken(token0 as Token)
   token1.derivedMatic = findEthPerToken(token1 as Token)

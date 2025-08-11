@@ -4,8 +4,8 @@ import { Bundle, Pool, Token } from './../types/schema'
 import { BigDecimal, BigInt, log } from '@graphprotocol/graph-ts'
 import { exponentToBigDecimal, safeDiv } from '../utils/index'
 
-const WNATIVE_ADDRESS = '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c'.toLowerCase()
-const STABLE_NATIVE_POOL = '0x568e7d3811a78a5edbdb07df869f3ab0d793a786'.toLowerCase()
+export const WNATIVE_ADDRESS = '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c'.toLowerCase()
+export const STABLE_NATIVE_POOL = '0x568e7d3811a78a5edbdb07df869f3ab0d793a786'.toLowerCase()
 
 // token where amounts should contribute to tracked volume and liquidity
 // usually tokens that many tokens are paired with s
@@ -14,7 +14,7 @@ export let WHITELIST_TOKENS: string[] = [
     '0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d'
   ]
 
-let STABLE_COINS: string[] = [
+export let STABLE_COINS: string[] = [
     '0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d'
   ]
 
@@ -37,11 +37,18 @@ export function priceToTokenPrices(price: BigInt, token0: Token, token1: Token):
 export function getEthPriceInUSD(): BigDecimal {
   let usdcPool = Pool.load(STABLE_NATIVE_POOL)
   if (usdcPool !== null) {
-    log.info('usdcPool.token1Price: {}', [usdcPool.token1Price.toString()])
-    return usdcPool.token1Price
-  } else {
-    return ZERO_BD
+    // Check which token is the stable coin
+    if (STABLE_COINS.includes(usdcPool.token0.toLowerCase())) {
+      // token0 is stable, so native price is token0Price (stable per native)
+      log.info('Native price in USD (token0 is stable): {}', [usdcPool.token0Price.toString()])
+      return usdcPool.token0Price
+    } else if (STABLE_COINS.includes(usdcPool.token1.toLowerCase())) {
+      // token1 is stable, so native price is token1Price (stable per native)
+      log.info('Native price in USD (token1 is stable): {}', [usdcPool.token1Price.toString()])
+      return usdcPool.token1Price
+    }
   }
+  return ZERO_BD
 }
 
 /**
@@ -61,8 +68,10 @@ export function findEthPerToken(token: Token): BigDecimal {
 
   // hardcoded fix for incorrect rates
   // if whitelist includes token - get the safe price
-  if (STABLE_COINS.includes(token.id)) {
-    priceSoFar = safeDiv(ONE_BD, bundle!.maticPriceUSD)
+  if (STABLE_COINS.includes(token.id.toLowerCase())) {
+    // Stablecoins have a fixed value, so 1 stablecoin = 1 USD
+    // To get native per token: if 1 USDC = 1 USD and 1 WBNB = X USD, then 1 USDC = 1/X WBNB
+    priceSoFar = bundle!.maticPriceUSD.gt(ZERO_BD) ? safeDiv(ONE_BD, bundle!.maticPriceUSD) : ZERO_BD
   } else {
     for (let i = 0; i < whiteList.length; ++i) {
       let poolAddress = whiteList[i]
@@ -132,6 +141,11 @@ export function findEthPerToken(token: Token): BigDecimal {
 }
 
 export function getDerivedPriceUSD(token: Token): BigDecimal {
+  // Stablecoins should always be $1
+  if (STABLE_COINS.includes(token.id.toLowerCase())) {
+    return ONE_BD
+  }
+  
   let bundle = Bundle.load('1')!
   return token.derivedMatic.times(bundle.maticPriceUSD)
 }
