@@ -293,7 +293,6 @@ export function handleBurn(event: BurnEvent): void {
   let bundle = Bundle.load('1')!
   let poolAddress = event.address.toHexString()
   let pool = Pool.load(poolAddress)!
-  let plugin = Plugin.load(pool.plugin.toHexString())!
   let factory = Factory.load(FACTORY_ADDRESS)!
   let ownerAccount = loadAccount(event.params.owner)
 
@@ -313,11 +312,23 @@ export function handleBurn(event: BurnEvent): void {
 
   let pluginFee = BigInt.fromI32(event.params.pluginFee).toBigDecimal()
 
-  plugin.collectedFeesToken0 = plugin.collectedFeesToken0.plus(amount0.times(pluginFee).div(FEE_DENOMINATOR))
-  plugin.collectedFeesToken1 = plugin.collectedFeesToken1.plus(amount1.times(pluginFee).div(FEE_DENOMINATOR))
-  plugin.collectedFeesUSD = plugin.collectedFeesUSD.plus(amountUSD.times(pluginFee).div(FEE_DENOMINATOR))
+  // Handle plugin fees if plugin exists and pluginFee is non-zero
+  let pluginAddress = pool.plugin.toHexString()
+  if (pluginAddress != ADDRESS_ZERO && pluginFee.gt(ZERO_BD)) {
+    let plugin = Plugin.load(pluginAddress)
+    if (plugin == null) {
+      plugin = new Plugin(pluginAddress)
+      plugin.collectedFeesToken0 = ZERO_BD
+      plugin.collectedFeesToken1 = ZERO_BD
+      plugin.collectedFeesUSD = ZERO_BD
+    }
 
-  plugin.save()
+    plugin.collectedFeesToken0 = plugin.collectedFeesToken0.plus(amount0.times(pluginFee).div(FEE_DENOMINATOR))
+    plugin.collectedFeesToken1 = plugin.collectedFeesToken1.plus(amount1.times(pluginFee).div(FEE_DENOMINATOR))
+    plugin.collectedFeesUSD = plugin.collectedFeesUSD.plus(amountUSD.times(pluginFee).div(FEE_DENOMINATOR))
+
+    plugin.save()
+  }
 
   // update token pool count
   if (amount0.lt(ZERO_BD)) {
@@ -582,23 +593,33 @@ export function handleSwap(event: SwapEvent): void {
   pool.token0Price = prices[0]
   pool.token1Price = prices[1]
 
-  let plugin = Plugin.load(pool.plugin.toHexString())!
+  // Handle plugin fees if plugin exists and pluginFee is non-zero
+  let pluginAddress = pool.plugin.toHexString()
+  if (pluginAddress != ADDRESS_ZERO && pluginFee.gt(BigInt.fromI32(0))) {
+    let plugin = Plugin.load(pluginAddress)
+    if (plugin == null) {
+      plugin = new Plugin(pluginAddress)
+      plugin.collectedFeesToken0 = ZERO_BD
+      plugin.collectedFeesToken1 = ZERO_BD
+      plugin.collectedFeesUSD = ZERO_BD
+    }
 
-  if (amount0.lt(ZERO_BD)) {
-    plugin.collectedFeesToken1 = plugin.collectedFeesToken1.plus(
-      amount1.times(pluginFee.toBigDecimal()).div(FEE_DENOMINATOR)
+    if (amount0.lt(ZERO_BD)) {
+      plugin.collectedFeesToken1 = plugin.collectedFeesToken1.plus(
+        amount1.times(pluginFee.toBigDecimal()).div(FEE_DENOMINATOR)
+      )
+    } else {
+      plugin.collectedFeesToken0 = plugin.collectedFeesToken0.plus(
+        amount0.times(pluginFee.toBigDecimal()).div(FEE_DENOMINATOR)
+      )
+    }
+
+    plugin.collectedFeesUSD = plugin.collectedFeesUSD.plus(
+      amountTotalUSDTracked.times(pluginFee.toBigDecimal()).div(FEE_DENOMINATOR)
     )
-  } else {
-    plugin.collectedFeesToken0 = plugin.collectedFeesToken0.plus(
-      amount0.times(pluginFee.toBigDecimal()).div(FEE_DENOMINATOR)
-    )
+
+    plugin.save()
   }
-
-  plugin.collectedFeesUSD = plugin.collectedFeesUSD.plus(
-    amountTotalUSDTracked.times(pluginFee.toBigDecimal()).div(FEE_DENOMINATOR)
-  )
-
-  plugin.save()
 
   pool.save()
 
