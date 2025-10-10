@@ -1,0 +1,62 @@
+specVersion: 0.0.4
+description: NFT Staking - Track NFT staking, burning, and reward claims
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: NFTStaking
+    network: ${NETWORK}
+    source:
+      address: '${STAKING_CONTRACT_ADDRESS}'
+      abi: NFTStaking
+      startBlock: ${START_BLOCK}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/staking.ts
+      entities:
+        - StakingContract
+        - Stake
+        - User
+        - StakeEvent
+        - RewardClaim
+        - ParameterEpoch
+        - DailyStat
+      abis:
+        - name: NFTStaking
+          file: ./abis/NFTStaking.json
+      eventHandlers:
+        - event: Staked(indexed address,indexed uint256)
+          handler: handleStaked
+        - event: Unstaked(indexed address,indexed uint256)
+          handler: handleUnstaked
+        - event: RewardClaimed(indexed address,indexed uint256,uint256)
+          handler: handleRewardClaimed
+        - event: Burned(indexed address,indexed uint256)
+          handler: handleBurned
+        - event: BurnRewardClaimed(indexed address,indexed uint256,uint256)
+          handler: handleBurnRewardClaimed
+        - event: ParametersUpdated(uint256,uint256)
+          handler: handleParametersUpdated
+  - kind: ethereum/contract
+    name: NFTContract
+    network: ${NETWORK}
+    source:
+      address: '${NFT_CONTRACT_ADDRESS}'
+      abi: ERC721
+      startBlock: ${START_BLOCK}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/nft.ts
+      entities:
+        - NFT
+        - User
+      abis:
+        - name: ERC721
+          file: ./abis/ERC721.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,indexed uint256)
+          handler: handleTransfer
