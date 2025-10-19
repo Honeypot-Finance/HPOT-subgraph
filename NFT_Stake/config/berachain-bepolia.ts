@@ -1,6 +1,6 @@
 export const config = {
   network: "berachain-bepolia",
-  stakingContractAddress: "0xF4efb3C1CaC5Ed0a8D9518140dC443401858b016",
-  nftContractAddress: "0x1164f0dFa6ECb206C3F581ED42d6423b1BaD06e3", // Replace with actual NFT contract address
-  startBlock: 10546000,
+  stakingContractAddress: "0xE72D2C76cE3B0302392513FAE83EF2b5949BaD7e",
+  nftContractAddress: "0xfF95cdfC724Ca85b8d96D5a6Ea86333AC6a4799D", // Replace with actual NFT contract address
+  startBlock: 10742478,
 } as const;
