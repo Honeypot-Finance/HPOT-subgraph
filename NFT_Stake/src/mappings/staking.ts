@@ -1,7 +1,9 @@
 import { Address, BigDecimal, BigInt } from '@graphprotocol/graph-ts'
 import {
   Staked as StakedEvent,
+  StakedFor as StakedForEvent,
   Unstaked as UnstakedEvent,
+  UnstakedFor as UnstakedForEvent,
   RewardClaimed as RewardClaimedEvent,
   Burned as BurnedEvent,
   BurnRewardClaimed as BurnRewardClaimedEvent,
@@ -90,6 +92,78 @@ export function handleStaked(event: StakedEvent): void {
   dailyStat.save()
 }
 
+export function handleStakedFor(event: StakedForEvent): void {
+  const contractAddress = event.address
+  const tokenId = event.params.tokenId
+  const ownerAddress = event.params.owner
+  const operatorAddress = event.params.operator
+
+  // Update global stats
+  const globalStats = getOrCreateGlobalStats()
+  globalStats.totalStaked = globalStats.totalStaked.plus(BigInt.fromI32(1))
+  globalStats.save()
+
+  // Get or create staking contract
+  const contract = getOrCreateStakingContract(contractAddress)
+  contract.totalStaked = contract.totalStaked.plus(BigInt.fromI32(1))
+  contract.save()
+
+  // Get or create user (owner of the NFT)
+  const user = getOrCreateUser(ownerAddress)
+  user.totalStaked = user.totalStaked.plus(BigInt.fromI32(1))
+  // When staking, decrease owned count (NFT moves from wallet to staking contract)
+  if (user.totalOwned.gt(BigInt.fromI32(0))) {
+    user.totalOwned = user.totalOwned.minus(BigInt.fromI32(1))
+  }
+  user.save()
+
+  // Create stake
+  const stakeId = contractAddress.toHexString() + '-' + tokenId.toString()
+  let stake = new Stake(stakeId)
+  stake.contract = contract.id
+  stake.tokenId = tokenId
+  stake.owner = user.id
+  stake.ownerAddress = ownerAddress
+  stake.stakedAt = event.block.timestamp
+  stake.lastClaimAt = event.block.timestamp
+  stake.burned = false
+  stake.burnedAt = null
+  stake.lastBurnClaimAt = null
+  stake.totalStakingRewardsClaimed = BigDecimal.zero()
+  stake.totalBurnRewardsClaimed = BigDecimal.zero()
+  stake.status = 'STAKED'
+  stake.save()
+
+  // Update NFT entity to mark as staked
+  const nftId = contract.nft.toHexString() + '-' + tokenId.toString()
+  let nft = NFT.load(nftId)
+  if (nft !== null) {
+    nft.isStaked = true
+    nft.save()
+  }
+
+  // Create stake event (using owner as the user for the event)
+  const stakeEventId = event.transaction.hash.toHexString() + '-' + event.logIndex.toString()
+  const stakeEventEntity = new StakeEvent(stakeEventId)
+  stakeEventEntity.stake = stake.id
+  stakeEventEntity.type = 'STAKE'
+  stakeEventEntity.user = user.id
+  stakeEventEntity.userAddress = ownerAddress
+  stakeEventEntity.tokenId = tokenId
+  stakeEventEntity.transactionHash = event.transaction.hash
+  stakeEventEntity.timestamp = event.block.timestamp
+  stakeEventEntity.blockNumber = event.block.number
+  stakeEventEntity.logIndex = event.logIndex
+  stakeEventEntity.save()
+
+  // Update daily stats
+  const dailyStat = getOrCreateDailyStat(contractAddress, event.block.timestamp)
+  dailyStat.newStakes = dailyStat.newStakes.plus(BigInt.fromI32(1))
+  dailyStat.totalStaked = contract.totalStaked
+  dailyStat.totalBurned = contract.totalBurned
+  dailyStat.save()
+}
+
 export function handleUnstaked(event: UnstakedEvent): void {
   const contractAddress = event.address
   const tokenId = event.params.tokenId
@@ -135,6 +209,67 @@ export function handleUnstaked(event: UnstakedEvent): void {
   stakeEventEntity.type = 'UNSTAKE'
   stakeEventEntity.user = user.id
   stakeEventEntity.userAddress = userAddress
+  stakeEventEntity.tokenId = tokenId
+  stakeEventEntity.transactionHash = event.transaction.hash
+  stakeEventEntity.timestamp = event.block.timestamp
+  stakeEventEntity.blockNumber = event.block.number
+  stakeEventEntity.logIndex = event.logIndex
+  stakeEventEntity.save()
+
+  // Update daily stats
+  const dailyStat = getOrCreateDailyStat(contractAddress, event.block.timestamp)
+  dailyStat.newUnstakes = dailyStat.newUnstakes.plus(BigInt.fromI32(1))
+  dailyStat.totalStaked = contract.totalStaked
+  dailyStat.totalBurned = contract.totalBurned
+  dailyStat.save()
+}
+
+export function handleUnstakedFor(event: UnstakedForEvent): void {
+  const contractAddress = event.address
+  const tokenId = event.params.tokenId
+  const ownerAddress = event.params.owner
+  const operatorAddress = event.params.operator
+
+  // Update global stats
+  const globalStats = getOrCreateGlobalStats()
+  globalStats.totalStaked = globalStats.totalStaked.minus(BigInt.fromI32(1))
+  globalStats.save()
+
+  // Update staking contract
+  const contract = getOrCreateStakingContract(contractAddress)
+  contract.totalStaked = contract.totalStaked.minus(BigInt.fromI32(1))
+  contract.save()
+
+  // Update user (owner of the NFT)
+  const user = getOrCreateUser(ownerAddress)
+  user.totalStaked = user.totalStaked.minus(BigInt.fromI32(1))
+  // When unstaking, increase owned count (NFT returns to wallet)
+  user.totalOwned = user.totalOwned.plus(BigInt.fromI32(1))
+  user.save()
+
+  // Update stake
+  const stakeId = contractAddress.toHexString() + '-' + tokenId.toString()
+  const stake = Stake.load(stakeId)
+  if (stake !== null) {
+    stake.status = 'UNSTAKED'
+    stake.save()
+  }
+
+  // Update NFT entity to mark as not staked
+  const nftId = contract.nft.toHexString() + '-' + tokenId.toString()
+  let nft = NFT.load(nftId)
+  if (nft !== null) {
+    nft.isStaked = false
+    nft.save()
+  }
+
+  // Create stake event (using owner as the user for the event)
+  const stakeEventId = event.transaction.hash.toHexString() + '-' + event.logIndex.toString()
+  const stakeEventEntity = new StakeEvent(stakeEventId)
+  stakeEventEntity.stake = stakeId
+  stakeEventEntity.type = 'UNSTAKE'
+  stakeEventEntity.user = user.id
+  stakeEventEntity.userAddress = ownerAddress
   stakeEventEntity.tokenId = tokenId
   stakeEventEntity.transactionHash = event.transaction.hash
   stakeEventEntity.timestamp = event.block.timestamp

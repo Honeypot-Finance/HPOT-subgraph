@@ -29,8 +29,12 @@ dataSources:
       eventHandlers:
         - event: Staked(indexed address,indexed uint256)
           handler: handleStaked
+        - event: StakedFor(indexed address,indexed address,indexed uint256)
+          handler: handleStakedFor
         - event: Unstaked(indexed address,indexed uint256)
           handler: handleUnstaked
+        - event: UnstakedFor(indexed address,indexed address,indexed uint256)
+          handler: handleUnstakedFor
         - event: RewardClaimed(indexed address,indexed uint256,uint256)
           handler: handleRewardClaimed
         - event: Burned(indexed address,indexed uint256)
