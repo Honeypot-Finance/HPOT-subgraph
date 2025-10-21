@@ -17,12 +17,17 @@ import {
   DailyStat,
   NFT
 } from '../types/schema'
-import { getOrCreateStakingContract, getOrCreateUser, getOrCreateDailyStat, toDecimal } from '../utils/helpers'
+import { getOrCreateStakingContract, getOrCreateUser, getOrCreateDailyStat, getOrCreateGlobalStats, toDecimal } from '../utils/helpers'
 
 export function handleStaked(event: StakedEvent): void {
   const contractAddress = event.address
   const tokenId = event.params.tokenId
   const userAddress = event.params.user
+
+  // Update global stats
+  const globalStats = getOrCreateGlobalStats()
+  globalStats.totalStaked = globalStats.totalStaked.plus(BigInt.fromI32(1))
+  globalStats.save()
 
   // Get or create staking contract
   const contract = getOrCreateStakingContract(contractAddress)
@@ -50,7 +55,7 @@ export function handleStaked(event: StakedEvent): void {
   stake.burned = false
   stake.burnedAt = null
   stake.lastBurnClaimAt = null
-  stake.totalRewardsClaimed = BigDecimal.zero()
+  stake.totalStakingRewardsClaimed = BigDecimal.zero()
   stake.totalBurnRewardsClaimed = BigDecimal.zero()
   stake.status = 'STAKED'
   stake.save()
@@ -89,6 +94,11 @@ export function handleUnstaked(event: UnstakedEvent): void {
   const contractAddress = event.address
   const tokenId = event.params.tokenId
   const userAddress = event.params.user
+
+  // Update global stats
+  const globalStats = getOrCreateGlobalStats()
+  globalStats.totalStaked = globalStats.totalStaked.minus(BigInt.fromI32(1))
+  globalStats.save()
 
   // Update staking contract
   const contract = getOrCreateStakingContract(contractAddress)
@@ -146,21 +156,27 @@ export function handleRewardClaimed(event: RewardClaimedEvent): void {
   const userAddress = event.params.user
   const amount = event.params.amount
 
+  // Update global stats
+  const globalStats = getOrCreateGlobalStats()
+  globalStats.totalStakingRewardsClaimed = globalStats.totalStakingRewardsClaimed.plus(toDecimal(amount))
+  globalStats.totalAllRewardsClaimed = globalStats.totalAllRewardsClaimed.plus(toDecimal(amount))
+  globalStats.save()
+
   // Update contract stats
   const contract = getOrCreateStakingContract(contractAddress)
-  contract.totalRewardsClaimed = contract.totalRewardsClaimed.plus(toDecimal(amount))
+  contract.totalStakingRewardsClaimed = contract.totalStakingRewardsClaimed.plus(toDecimal(amount))
   contract.save()
 
   // Update user stats
   const user = getOrCreateUser(userAddress)
-  user.totalRewardsClaimed = user.totalRewardsClaimed.plus(toDecimal(amount))
+  user.totalStakingRewardsClaimed = user.totalStakingRewardsClaimed.plus(toDecimal(amount))
   user.save()
 
   // Update stake
   const stakeId = contractAddress.toHexString() + '-' + tokenId.toString()
   const stake = Stake.load(stakeId)
   if (stake !== null) {
-    stake.totalRewardsClaimed = stake.totalRewardsClaimed.plus(toDecimal(amount))
+    stake.totalStakingRewardsClaimed = stake.totalStakingRewardsClaimed.plus(toDecimal(amount))
     stake.lastClaimAt = event.block.timestamp
     stake.save()
   }
@@ -191,13 +207,23 @@ export function handleBurned(event: BurnedEvent): void {
   const tokenId = event.params.tokenId
   const userAddress = event.params.user
 
+  // Check if NFT was previously staked
+  const stakeId = contractAddress.toHexString() + '-' + tokenId.toString()
+  const existingStake = Stake.load(stakeId)
+  const wasStaked = existingStake !== null && existingStake.status == 'STAKED'
+
+  // Update global stats
+  const globalStats = getOrCreateGlobalStats()
+  globalStats.totalBurned = globalStats.totalBurned.plus(BigInt.fromI32(1))
+  if (wasStaked) {
+    globalStats.totalStaked = globalStats.totalStaked.minus(BigInt.fromI32(1))
+  }
+  globalStats.save()
+
   // Update contract stats
   const contract = getOrCreateStakingContract(contractAddress)
   contract.totalBurned = contract.totalBurned.plus(BigInt.fromI32(1))
-  // If it was previously staked, decrease staked count
-  const stakeId = contractAddress.toHexString() + '-' + tokenId.toString()
-  const existingStake = Stake.load(stakeId)
-  if (existingStake !== null && existingStake.status == 'STAKED') {
+  if (wasStaked) {
     contract.totalStaked = contract.totalStaked.minus(BigInt.fromI32(1))
   }
   contract.save()
@@ -205,7 +231,7 @@ export function handleBurned(event: BurnedEvent): void {
   // Update user stats
   const user = getOrCreateUser(userAddress)
   user.totalBurned = user.totalBurned.plus(BigInt.fromI32(1))
-  if (existingStake !== null && existingStake.status == 'STAKED') {
+  if (wasStaked) {
     user.totalStaked = user.totalStaked.minus(BigInt.fromI32(1))
     // If burning a staked NFT, decrease owned count
     if (user.totalOwned.gt(BigInt.fromI32(0))) {
@@ -230,7 +256,7 @@ export function handleBurned(event: BurnedEvent): void {
     stake.ownerAddress = userAddress
     stake.stakedAt = BigInt.fromI32(0)
     stake.lastClaimAt = BigInt.fromI32(0)
-    stake.totalRewardsClaimed = BigDecimal.zero()
+    stake.totalStakingRewardsClaimed = BigDecimal.zero()
     stake.totalBurnRewardsClaimed = BigDecimal.zero()
   }
   stake.burned = true
@@ -275,6 +301,12 @@ export function handleBurnRewardClaimed(event: BurnRewardClaimedEvent): void {
   const tokenId = event.params.tokenId
   const userAddress = event.params.user
   const amount = event.params.amount
+
+  // Update global stats
+  const globalStats = getOrCreateGlobalStats()
+  globalStats.totalBurnRewardsClaimed = globalStats.totalBurnRewardsClaimed.plus(toDecimal(amount))
+  globalStats.totalAllRewardsClaimed = globalStats.totalAllRewardsClaimed.plus(toDecimal(amount))
+  globalStats.save()
 
   // Update contract stats
   const contract = getOrCreateStakingContract(contractAddress)

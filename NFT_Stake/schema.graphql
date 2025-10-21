@@ -1,3 +1,18 @@
+type GlobalStats @entity {
+  # Singleton entity with ID "global"
+  id: ID!
+  # Total NFTs currently staked across all contracts
+  totalStaked: BigInt!
+  # Total NFTs burned across all contracts
+  totalBurned: BigInt!
+  # Total staking rewards claimed across all contracts (excludes burn rewards)
+  totalStakingRewardsClaimed: BigDecimal!
+  # Total burn bonus rewards claimed across all contracts (excludes staking rewards)
+  totalBurnRewardsClaimed: BigDecimal!
+  # Total of ALL rewards claimed (staking + burn bonus combined)
+  totalAllRewardsClaimed: BigDecimal!
+}
+
 type StakingContract @entity {
   # Staking contract address
   id: ID!
@@ -13,9 +28,9 @@ type StakingContract @entity {
   totalStaked: BigInt!
   # Total NFTs burned
   totalBurned: BigInt!
-  # Total rewards claimed
-  totalRewardsClaimed: BigDecimal!
-  # Total burn rewards claimed
+  # Total staking rewards claimed (excludes burn rewards)
+  totalStakingRewardsClaimed: BigDecimal!
+  # Total burn bonus rewards claimed (excludes staking rewards)
   totalBurnRewardsClaimed: BigDecimal!
   # Number of parameter epochs
   epochCount: BigInt!
@@ -61,9 +76,9 @@ type Stake @entity {
   burnedAt: BigInt
   # last burn reward claim timestamp
   lastBurnClaimAt: BigInt
-  # total rewards claimed (normal staking)
-  totalRewardsClaimed: BigDecimal!
-  # total burn rewards claimed
+  # total staking rewards claimed (excludes burn rewards)
+  totalStakingRewardsClaimed: BigDecimal!
+  # total burn bonus rewards claimed (excludes staking rewards)
   totalBurnRewardsClaimed: BigDecimal!
   # current status: STAKED, BURNED, UNSTAKED
   status: StakeStatus!
@@ -140,9 +155,9 @@ type User @entity {
   totalStaked: BigInt!
   # total NFTs burned
   totalBurned: BigInt!
-  # total rewards claimed
-  totalRewardsClaimed: BigDecimal!
-  # total burn rewards claimed
+  # total staking rewards claimed (excludes burn rewards)
+  totalStakingRewardsClaimed: BigDecimal!
+  # total burn bonus rewards claimed (excludes staking rewards)
   totalBurnRewardsClaimed: BigDecimal!
   # total NFTs owned (not staked or burned)
   totalOwned: BigInt!

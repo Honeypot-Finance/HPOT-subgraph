@@ -1,6 +1,6 @@
 import { Address, BigInt, BigDecimal } from '@graphprotocol/graph-ts'
 import { NFTStaking } from '../types/NFTStaking/NFTStaking'
-import { StakingContract, User, DailyStat } from '../types/schema'
+import { StakingContract, User, DailyStat, GlobalStats } from '../types/schema'
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 const SECONDS_PER_DAY = BigInt.fromI32(86400)
@@ -24,7 +24,7 @@ export function getOrCreateStakingContract(contractAddress: Address): StakingCon
     contract.burnBonusBps = bonusResult.reverted ? BigInt.fromI32(0) : bonusResult.value
     contract.totalStaked = BigInt.fromI32(0)
     contract.totalBurned = BigInt.fromI32(0)
-    contract.totalRewardsClaimed = BigDecimal.zero()
+    contract.totalStakingRewardsClaimed = BigDecimal.zero()
     contract.totalBurnRewardsClaimed = BigDecimal.zero()
     contract.epochCount = BigInt.fromI32(0)
     contract.save()
@@ -40,7 +40,7 @@ export function getOrCreateUser(userAddress: Address): User {
     user = new User(userAddress.toHexString())
     user.totalStaked = BigInt.fromI32(0)
     user.totalBurned = BigInt.fromI32(0)
-    user.totalRewardsClaimed = BigDecimal.zero()
+    user.totalStakingRewardsClaimed = BigDecimal.zero()
     user.totalBurnRewardsClaimed = BigDecimal.zero()
     user.totalOwned = BigInt.fromI32(0)
     user.save()
@@ -71,6 +71,22 @@ export function getOrCreateDailyStat(contractAddress: Address, timestamp: BigInt
   }
 
   return dailyStat
+}
+
+export function getOrCreateGlobalStats(): GlobalStats {
+  let globalStats = GlobalStats.load('global')
+
+  if (globalStats === null) {
+    globalStats = new GlobalStats('global')
+    globalStats.totalStaked = BigInt.fromI32(0)
+    globalStats.totalBurned = BigInt.fromI32(0)
+    globalStats.totalStakingRewardsClaimed = BigDecimal.zero()
+    globalStats.totalBurnRewardsClaimed = BigDecimal.zero()
+    globalStats.totalAllRewardsClaimed = BigDecimal.zero()
+    globalStats.save()
+  }
+
+  return globalStats
 }
 
 export function toDecimal(value: BigInt, decimals: i32 = 18): BigDecimal {
