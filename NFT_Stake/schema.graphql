@@ -66,6 +66,8 @@ type Stake @entity {
   owner: User!
   # owner address (for convenience)
   ownerAddress: Bytes!
+  # payout recipient address (if set, otherwise defaults to owner)
+  payoutRecipient: Bytes
   # staked timestamp
   stakedAt: BigInt!
   # last claim timestamp for normal staking
@@ -148,6 +150,57 @@ type RewardClaim @entity {
   logIndex: BigInt!
 }
 
+type BatchOperation @entity {
+  # transaction hash + log index
+  id: ID!
+  # operation type: BATCH_STAKE, BATCH_UNSTAKE, BATCH_BURN, BATCH_CLAIM
+  type: BatchOperationType!
+  # user who initiated the batch operation
+  user: User!
+  # user address (for convenience)
+  userAddress: Bytes!
+  # token IDs involved in the batch operation
+  tokenIds: [BigInt!]!
+  # recipient address (for batch stake/burn operations)
+  recipient: Bytes
+  # transaction hash
+  transactionHash: Bytes!
+  # timestamp
+  timestamp: BigInt!
+  # block number
+  blockNumber: BigInt!
+  # log index
+  logIndex: BigInt!
+}
+
+enum BatchOperationType {
+  BATCH_STAKE
+  BATCH_UNSTAKE
+  BATCH_BURN
+  BATCH_CLAIM
+}
+
+type PayoutRecipientUpdate @entity {
+  # transaction hash + log index
+  id: ID!
+  # stake
+  stake: Stake!
+  # token ID
+  tokenId: BigInt!
+  # owner address
+  owner: Bytes!
+  # recipient address
+  recipient: Bytes!
+  # transaction hash
+  transactionHash: Bytes!
+  # timestamp
+  timestamp: BigInt!
+  # block number
+  blockNumber: BigInt!
+  # log index
+  logIndex: BigInt!
+}
+
 type User @entity {
   # user address
   id: ID!
@@ -159,58 +212,12 @@ type User @entity {
   totalStakingRewardsClaimed: BigDecimal!
   # total burn bonus rewards claimed (excludes staking rewards)
   totalBurnRewardsClaimed: BigDecimal!
-  # total NFTs owned (not staked or burned)
-  totalOwned: BigInt!
   # all user stakes
   stakes: [Stake!]! @derivedFrom(field: "owner")
   # all stake events
   stakeEvents: [StakeEvent!]! @derivedFrom(field: "user")
   # all reward claims
   claims: [RewardClaim!]! @derivedFrom(field: "user")
-  # all NFTs owned by this user
-  nfts: [NFT!]! @derivedFrom(field: "owner")
-}
-
-type NFT @entity {
-  # NFT contract address + token ID
-  id: ID!
-  # NFT contract address
-  contract: Bytes!
-  # token ID
-  tokenId: BigInt!
-  # current owner (User entity)
-  owner: User!
-  # current owner address (for convenience)
-  ownerAddress: Bytes!
-  # whether NFT is currently staked
-  isStaked: Boolean!
-  # whether NFT has been burned
-  isBurned: Boolean!
-  # all transfer events for this NFT
-  transfers: [NFTTransfer!]! @derivedFrom(field: "nft")
-}
-
-type NFTTransfer @entity {
-  # transaction hash + log index
-  id: ID!
-  # NFT
-  nft: NFT!
-  # NFT contract address
-  contract: Bytes!
-  # token ID
-  tokenId: BigInt!
-  # from address
-  from: Bytes!
-  # to address
-  to: Bytes!
-  # transaction hash
-  transactionHash: Bytes!
-  # timestamp
-  timestamp: BigInt!
-  # block number
-  blockNumber: BigInt!
-  # log index
-  logIndex: BigInt!
 }
 
 type DailyStat @entity {

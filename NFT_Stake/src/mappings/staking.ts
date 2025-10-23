@@ -7,7 +7,12 @@ import {
   RewardClaimed as RewardClaimedEvent,
   Burned as BurnedEvent,
   BurnRewardClaimed as BurnRewardClaimedEvent,
-  ParametersUpdated as ParametersUpdatedEvent
+  ParametersUpdated as ParametersUpdatedEvent,
+  BatchStaked as BatchStakedEvent,
+  BatchClaimed as BatchClaimedEvent,
+  BatchUnstaked as BatchUnstakedEvent,
+  BatchBurned as BatchBurnedEvent,
+  PayoutRecipientSet as PayoutRecipientSetEvent
 } from '../types/NFTStaking/NFTStaking'
 import {
   StakingContract,
@@ -17,7 +22,8 @@ import {
   RewardClaim,
   ParameterEpoch,
   DailyStat,
-  NFT
+  BatchOperation,
+  PayoutRecipientUpdate
 } from '../types/schema'
 import { getOrCreateStakingContract, getOrCreateUser, getOrCreateDailyStat, getOrCreateGlobalStats, toDecimal } from '../utils/helpers'
 
@@ -39,10 +45,6 @@ export function handleStaked(event: StakedEvent): void {
   // Get or create user
   const user = getOrCreateUser(userAddress)
   user.totalStaked = user.totalStaked.plus(BigInt.fromI32(1))
-  // When staking, decrease owned count (NFT moves from wallet to staking contract)
-  if (user.totalOwned.gt(BigInt.fromI32(0))) {
-    user.totalOwned = user.totalOwned.minus(BigInt.fromI32(1))
-  }
   user.save()
 
   // Create stake
@@ -61,14 +63,6 @@ export function handleStaked(event: StakedEvent): void {
   stake.totalBurnRewardsClaimed = BigDecimal.zero()
   stake.status = 'STAKED'
   stake.save()
-
-  // Update NFT entity to mark as staked
-  const nftId = contract.nft.toHexString() + '-' + tokenId.toString()
-  let nft = NFT.load(nftId)
-  if (nft !== null) {
-    nft.isStaked = true
-    nft.save()
-  }
 
   // Create stake event
   const stakeEventId = event.transaction.hash.toHexString() + '-' + event.logIndex.toString()
@@ -111,10 +105,6 @@ export function handleStakedFor(event: StakedForEvent): void {
   // Get or create user (owner of the NFT)
   const user = getOrCreateUser(ownerAddress)
   user.totalStaked = user.totalStaked.plus(BigInt.fromI32(1))
-  // When staking, decrease owned count (NFT moves from wallet to staking contract)
-  if (user.totalOwned.gt(BigInt.fromI32(0))) {
-    user.totalOwned = user.totalOwned.minus(BigInt.fromI32(1))
-  }
   user.save()
 
   // Create stake
@@ -133,14 +123,6 @@ export function handleStakedFor(event: StakedForEvent): void {
   stake.totalBurnRewardsClaimed = BigDecimal.zero()
   stake.status = 'STAKED'
   stake.save()
-
-  // Update NFT entity to mark as staked
-  const nftId = contract.nft.toHexString() + '-' + tokenId.toString()
-  let nft = NFT.load(nftId)
-  if (nft !== null) {
-    nft.isStaked = true
-    nft.save()
-  }
 
   // Create stake event (using owner as the user for the event)
   const stakeEventId = event.transaction.hash.toHexString() + '-' + event.logIndex.toString()
@@ -182,8 +164,6 @@ export function handleUnstaked(event: UnstakedEvent): void {
   // Update user
   const user = getOrCreateUser(userAddress)
   user.totalStaked = user.totalStaked.minus(BigInt.fromI32(1))
-  // When unstaking, increase owned count (NFT returns to wallet)
-  user.totalOwned = user.totalOwned.plus(BigInt.fromI32(1))
   user.save()
 
   // Update stake
@@ -192,14 +172,6 @@ export function handleUnstaked(event: UnstakedEvent): void {
   if (stake !== null) {
     stake.status = 'UNSTAKED'
     stake.save()
-  }
-
-  // Update NFT entity to mark as not staked
-  const nftId = contract.nft.toHexString() + '-' + tokenId.toString()
-  let nft = NFT.load(nftId)
-  if (nft !== null) {
-    nft.isStaked = false
-    nft.save()
   }
 
   // Create stake event
@@ -243,8 +215,6 @@ export function handleUnstakedFor(event: UnstakedForEvent): void {
   // Update user (owner of the NFT)
   const user = getOrCreateUser(ownerAddress)
   user.totalStaked = user.totalStaked.minus(BigInt.fromI32(1))
-  // When unstaking, increase owned count (NFT returns to wallet)
-  user.totalOwned = user.totalOwned.plus(BigInt.fromI32(1))
   user.save()
 
   // Update stake
@@ -253,14 +223,6 @@ export function handleUnstakedFor(event: UnstakedForEvent): void {
   if (stake !== null) {
     stake.status = 'UNSTAKED'
     stake.save()
-  }
-
-  // Update NFT entity to mark as not staked
-  const nftId = contract.nft.toHexString() + '-' + tokenId.toString()
-  let nft = NFT.load(nftId)
-  if (nft !== null) {
-    nft.isStaked = false
-    nft.save()
   }
 
   // Create stake event (using owner as the user for the event)
@@ -368,15 +330,6 @@ export function handleBurned(event: BurnedEvent): void {
   user.totalBurned = user.totalBurned.plus(BigInt.fromI32(1))
   if (wasStaked) {
     user.totalStaked = user.totalStaked.minus(BigInt.fromI32(1))
-    // If burning a staked NFT, decrease owned count
-    if (user.totalOwned.gt(BigInt.fromI32(0))) {
-      user.totalOwned = user.totalOwned.minus(BigInt.fromI32(1))
-    }
-  } else {
-    // If burning directly (not staked), decrease owned count
-    if (user.totalOwned.gt(BigInt.fromI32(0))) {
-      user.totalOwned = user.totalOwned.minus(BigInt.fromI32(1))
-    }
   }
   user.save()
 
@@ -399,15 +352,6 @@ export function handleBurned(event: BurnedEvent): void {
   stake.lastBurnClaimAt = BigInt.fromI32(0)
   stake.status = 'BURNED'
   stake.save()
-
-  // Update NFT entity to mark as burned and not staked
-  const nftId = contract.nft.toHexString() + '-' + tokenId.toString()
-  let nft = NFT.load(nftId)
-  if (nft !== null) {
-    nft.isStaked = false
-    nft.isBurned = true
-    nft.save()
-  }
 
   // Create stake event
   const stakeEventId = event.transaction.hash.toHexString() + '-' + event.logIndex.toString()
@@ -506,4 +450,302 @@ export function handleParametersUpdated(event: ParametersUpdatedEvent): void {
 
   contract.epochCount = contract.epochCount.plus(BigInt.fromI32(1))
   contract.save()
+}
+
+export function handleBatchStaked(event: BatchStakedEvent): void {
+  const contractAddress = event.address
+  const tokenIds = event.params.tokenIds
+  const userAddress = event.params.user
+  const recipient = event.params.recipient
+
+  // Update global stats
+  const globalStats = getOrCreateGlobalStats()
+  globalStats.totalStaked = globalStats.totalStaked.plus(BigInt.fromI32(tokenIds.length))
+  globalStats.save()
+
+  // Get or create staking contract
+  const contract = getOrCreateStakingContract(contractAddress)
+  contract.totalStaked = contract.totalStaked.plus(BigInt.fromI32(tokenIds.length))
+  contract.save()
+
+  // Get or create user
+  const user = getOrCreateUser(userAddress)
+  user.totalStaked = user.totalStaked.plus(BigInt.fromI32(tokenIds.length))
+  user.save()
+
+  // Create stakes for each token
+  for (let i = 0; i < tokenIds.length; i++) {
+    const tokenId = tokenIds[i]
+    const stakeId = contractAddress.toHexString() + '-' + tokenId.toString()
+    let stake = new Stake(stakeId)
+    stake.contract = contract.id
+    stake.tokenId = tokenId
+    stake.owner = user.id
+    stake.ownerAddress = userAddress
+    stake.payoutRecipient = recipient
+    stake.stakedAt = event.block.timestamp
+    stake.lastClaimAt = event.block.timestamp
+    stake.burned = false
+    stake.burnedAt = null
+    stake.lastBurnClaimAt = null
+    stake.totalStakingRewardsClaimed = BigDecimal.zero()
+    stake.totalBurnRewardsClaimed = BigDecimal.zero()
+    stake.status = 'STAKED'
+    stake.save()
+
+    // Create stake event
+    const stakeEventId = event.transaction.hash.toHexString() + '-' + event.logIndex.toString() + '-' + i.toString()
+    const stakeEventEntity = new StakeEvent(stakeEventId)
+    stakeEventEntity.stake = stake.id
+    stakeEventEntity.type = 'STAKE'
+    stakeEventEntity.user = user.id
+    stakeEventEntity.userAddress = userAddress
+    stakeEventEntity.tokenId = tokenId
+    stakeEventEntity.transactionHash = event.transaction.hash
+    stakeEventEntity.timestamp = event.block.timestamp
+    stakeEventEntity.blockNumber = event.block.number
+    stakeEventEntity.logIndex = event.logIndex
+    stakeEventEntity.save()
+  }
+
+  // Create batch operation record
+  const batchOpId = event.transaction.hash.toHexString() + '-' + event.logIndex.toString()
+  const batchOp = new BatchOperation(batchOpId)
+  batchOp.type = 'BATCH_STAKE'
+  batchOp.user = user.id
+  batchOp.userAddress = userAddress
+  batchOp.tokenIds = tokenIds
+  batchOp.recipient = recipient
+  batchOp.transactionHash = event.transaction.hash
+  batchOp.timestamp = event.block.timestamp
+  batchOp.blockNumber = event.block.number
+  batchOp.logIndex = event.logIndex
+  batchOp.save()
+
+  // Update daily stats
+  const dailyStat = getOrCreateDailyStat(contractAddress, event.block.timestamp)
+  dailyStat.newStakes = dailyStat.newStakes.plus(BigInt.fromI32(tokenIds.length))
+  dailyStat.totalStaked = contract.totalStaked
+  dailyStat.totalBurned = contract.totalBurned
+  dailyStat.save()
+}
+
+export function handleBatchClaimed(event: BatchClaimedEvent): void {
+  const contractAddress = event.address
+  const tokenIds = event.params.tokenIds
+  const userAddress = event.params.user
+
+  // Get user
+  const user = getOrCreateUser(userAddress)
+
+  // Note: The BatchClaimed event doesn't emit individual amounts,
+  // so we rely on individual RewardClaimed/BurnRewardClaimed events
+  // for tracking actual amounts. This handler just records the batch operation.
+
+  // Create batch operation record
+  const batchOpId = event.transaction.hash.toHexString() + '-' + event.logIndex.toString()
+  const batchOp = new BatchOperation(batchOpId)
+  batchOp.type = 'BATCH_CLAIM'
+  batchOp.user = user.id
+  batchOp.userAddress = userAddress
+  batchOp.tokenIds = tokenIds
+  batchOp.recipient = null
+  batchOp.transactionHash = event.transaction.hash
+  batchOp.timestamp = event.block.timestamp
+  batchOp.blockNumber = event.block.number
+  batchOp.logIndex = event.logIndex
+  batchOp.save()
+}
+
+export function handleBatchUnstaked(event: BatchUnstakedEvent): void {
+  const contractAddress = event.address
+  const tokenIds = event.params.tokenIds
+  const userAddress = event.params.user
+  const tokenReceiver = event.params.tokenReceiver
+
+  // Update global stats
+  const globalStats = getOrCreateGlobalStats()
+  globalStats.totalStaked = globalStats.totalStaked.minus(BigInt.fromI32(tokenIds.length))
+  globalStats.save()
+
+  // Update staking contract
+  const contract = getOrCreateStakingContract(contractAddress)
+  contract.totalStaked = contract.totalStaked.minus(BigInt.fromI32(tokenIds.length))
+  contract.save()
+
+  // Update user
+  const user = getOrCreateUser(userAddress)
+  user.totalStaked = user.totalStaked.minus(BigInt.fromI32(tokenIds.length))
+  user.save()
+
+  // Update stakes
+  for (let i = 0; i < tokenIds.length; i++) {
+    const tokenId = tokenIds[i]
+    const stakeId = contractAddress.toHexString() + '-' + tokenId.toString()
+    const stake = Stake.load(stakeId)
+    if (stake !== null) {
+      stake.status = 'UNSTAKED'
+      stake.save()
+    }
+
+    // Create stake event
+    const stakeEventId = event.transaction.hash.toHexString() + '-' + event.logIndex.toString() + '-' + i.toString()
+    const stakeEventEntity = new StakeEvent(stakeEventId)
+    stakeEventEntity.stake = stakeId
+    stakeEventEntity.type = 'UNSTAKE'
+    stakeEventEntity.user = user.id
+    stakeEventEntity.userAddress = userAddress
+    stakeEventEntity.tokenId = tokenId
+    stakeEventEntity.transactionHash = event.transaction.hash
+    stakeEventEntity.timestamp = event.block.timestamp
+    stakeEventEntity.blockNumber = event.block.number
+    stakeEventEntity.logIndex = event.logIndex
+    stakeEventEntity.save()
+  }
+
+  // Create batch operation record
+  const batchOpId = event.transaction.hash.toHexString() + '-' + event.logIndex.toString()
+  const batchOp = new BatchOperation(batchOpId)
+  batchOp.type = 'BATCH_UNSTAKE'
+  batchOp.user = user.id
+  batchOp.userAddress = userAddress
+  batchOp.tokenIds = tokenIds
+  batchOp.recipient = tokenReceiver
+  batchOp.transactionHash = event.transaction.hash
+  batchOp.timestamp = event.block.timestamp
+  batchOp.blockNumber = event.block.number
+  batchOp.logIndex = event.logIndex
+  batchOp.save()
+
+  // Update daily stats
+  const dailyStat = getOrCreateDailyStat(contractAddress, event.block.timestamp)
+  dailyStat.newUnstakes = dailyStat.newUnstakes.plus(BigInt.fromI32(tokenIds.length))
+  dailyStat.totalStaked = contract.totalStaked
+  dailyStat.totalBurned = contract.totalBurned
+  dailyStat.save()
+}
+
+export function handleBatchBurned(event: BatchBurnedEvent): void {
+  const contractAddress = event.address
+  const tokenIds = event.params.tokenIds
+  const userAddress = event.params.user
+  const recipient = event.params.recipient
+
+  // Update global stats
+  const globalStats = getOrCreateGlobalStats()
+  globalStats.totalBurned = globalStats.totalBurned.plus(BigInt.fromI32(tokenIds.length))
+  globalStats.save()
+
+  // Update contract stats
+  const contract = getOrCreateStakingContract(contractAddress)
+  contract.totalBurned = contract.totalBurned.plus(BigInt.fromI32(tokenIds.length))
+  contract.save()
+
+  // Update user stats
+  const user = getOrCreateUser(userAddress)
+  user.totalBurned = user.totalBurned.plus(BigInt.fromI32(tokenIds.length))
+  user.save()
+
+  // Process each burned token
+  for (let i = 0; i < tokenIds.length; i++) {
+    const tokenId = tokenIds[i]
+    const stakeId = contractAddress.toHexString() + '-' + tokenId.toString()
+    let stake = Stake.load(stakeId)
+    const wasStaked = stake !== null && stake.status == 'STAKED'
+
+    // If was staked, decrement staked counts
+    if (wasStaked) {
+      globalStats.totalStaked = globalStats.totalStaked.minus(BigInt.fromI32(1))
+      contract.totalStaked = contract.totalStaked.minus(BigInt.fromI32(1))
+      user.totalStaked = user.totalStaked.minus(BigInt.fromI32(1))
+    }
+
+    // Update or create stake
+    if (stake === null) {
+      // Burning directly without staking
+      stake = new Stake(stakeId)
+      stake.contract = contract.id
+      stake.tokenId = tokenId
+      stake.owner = user.id
+      stake.ownerAddress = userAddress
+      stake.stakedAt = BigInt.fromI32(0)
+      stake.lastClaimAt = BigInt.fromI32(0)
+      stake.totalStakingRewardsClaimed = BigDecimal.zero()
+      stake.totalBurnRewardsClaimed = BigDecimal.zero()
+    }
+    stake.burned = true
+    stake.burnedAt = event.block.timestamp
+    stake.lastBurnClaimAt = BigInt.fromI32(0)
+    stake.payoutRecipient = recipient
+    stake.status = 'BURNED'
+    stake.save()
+
+    // Create stake event
+    const stakeEventId = event.transaction.hash.toHexString() + '-' + event.logIndex.toString() + '-' + i.toString()
+    const stakeEventEntity = new StakeEvent(stakeEventId)
+    stakeEventEntity.stake = stake.id
+    stakeEventEntity.type = 'BURN'
+    stakeEventEntity.user = user.id
+    stakeEventEntity.userAddress = userAddress
+    stakeEventEntity.tokenId = tokenId
+    stakeEventEntity.transactionHash = event.transaction.hash
+    stakeEventEntity.timestamp = event.block.timestamp
+    stakeEventEntity.blockNumber = event.block.number
+    stakeEventEntity.logIndex = event.logIndex
+    stakeEventEntity.save()
+  }
+
+  // Save updated stats
+  globalStats.save()
+  contract.save()
+  user.save()
+
+  // Create batch operation record
+  const batchOpId = event.transaction.hash.toHexString() + '-' + event.logIndex.toString()
+  const batchOp = new BatchOperation(batchOpId)
+  batchOp.type = 'BATCH_BURN'
+  batchOp.user = user.id
+  batchOp.userAddress = userAddress
+  batchOp.tokenIds = tokenIds
+  batchOp.recipient = recipient
+  batchOp.transactionHash = event.transaction.hash
+  batchOp.timestamp = event.block.timestamp
+  batchOp.blockNumber = event.block.number
+  batchOp.logIndex = event.logIndex
+  batchOp.save()
+
+  // Update daily stats
+  const dailyStat = getOrCreateDailyStat(contractAddress, event.block.timestamp)
+  dailyStat.newBurns = dailyStat.newBurns.plus(BigInt.fromI32(tokenIds.length))
+  dailyStat.totalStaked = contract.totalStaked
+  dailyStat.totalBurned = contract.totalBurned
+  dailyStat.save()
+}
+
+export function handlePayoutRecipientSet(event: PayoutRecipientSetEvent): void {
+  const contractAddress = event.address
+  const tokenId = event.params.tokenId
+  const owner = event.params.owner
+  const recipient = event.params.recipient
+
+  // Update stake
+  const stakeId = contractAddress.toHexString() + '-' + tokenId.toString()
+  const stake = Stake.load(stakeId)
+  if (stake !== null) {
+    stake.payoutRecipient = recipient
+    stake.save()
+  }
+
+  // Create payout recipient update record
+  const updateId = event.transaction.hash.toHexString() + '-' + event.logIndex.toString()
+  const update = new PayoutRecipientUpdate(updateId)
+  update.stake = stakeId
+  update.tokenId = tokenId
+  update.owner = owner
+  update.recipient = recipient
+  update.transactionHash = event.transaction.hash
+  update.timestamp = event.block.timestamp
+  update.blockNumber = event.block.number
+  update.logIndex = event.logIndex
+  update.save()
 }

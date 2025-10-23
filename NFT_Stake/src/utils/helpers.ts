@@ -42,7 +42,6 @@ export function getOrCreateUser(userAddress: Address): User {
     user.totalBurned = BigInt.fromI32(0)
     user.totalStakingRewardsClaimed = BigDecimal.zero()
     user.totalBurnRewardsClaimed = BigDecimal.zero()
-    user.totalOwned = BigInt.fromI32(0)
     user.save()
   }
 

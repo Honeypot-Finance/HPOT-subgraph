@@ -19,13 +19,127 @@
   },
   {
     "type": "function",
-    "name": "batchStakeFor",
+    "name": "aggregate3",
     "inputs": [
       {
-        "name": "owner",
+        "name": "calls",
+        "type": "tuple[]",
+        "internalType": "struct NFTStaking.Call3[]",
+        "components": [
+          {
+            "name": "target",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "allowFailure",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "callData",
+            "type": "bytes",
+            "internalType": "bytes"
+          }
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "returnData",
+        "type": "tuple[]",
+        "internalType": "struct NFTStaking.Result[]",
+        "components": [
+          {
+            "name": "success",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "returnData",
+            "type": "bytes",
+            "internalType": "bytes"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "aggregate3Value",
+    "inputs": [
+      {
+        "name": "calls",
+        "type": "tuple[]",
+        "internalType": "struct NFTStaking.Call3Value[]",
+        "components": [
+          {
+            "name": "target",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "allowFailure",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "value",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "callData",
+            "type": "bytes",
+            "internalType": "bytes"
+          }
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "returnData",
+        "type": "tuple[]",
+        "internalType": "struct NFTStaking.Result[]",
+        "components": [
+          {
+            "name": "success",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "returnData",
+            "type": "bytes",
+            "internalType": "bytes"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "function",
+    "name": "batchBurn",
+    "inputs": [
+      {
+        "name": "tokenIds",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      },
+      {
+        "name": "recipient",
         "type": "address",
         "internalType": "address"
-      },
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "batchClaim",
+    "inputs": [
       {
         "name": "tokenIds",
         "type": "uint256[]",
@@ -37,35 +151,17 @@
   },
   {
     "type": "function",
-    "name": "batchStakeForMultipleOwners",
+    "name": "batchStake",
     "inputs": [
-      {
-        "name": "owners",
-        "type": "address[]",
-        "internalType": "address[]"
-      },
       {
         "name": "tokenIds",
         "type": "uint256[]",
         "internalType": "uint256[]"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "batchUnstakeFor",
-    "inputs": [
+      },
       {
-        "name": "owner",
+        "name": "recipient",
         "type": "address",
         "internalType": "address"
-      },
-      {
-        "name": "tokenIds",
-        "type": "uint256[]",
-        "internalType": "uint256[]"
       }
     ],
     "outputs": [],
@@ -73,12 +169,17 @@
   },
   {
     "type": "function",
-    "name": "batchUnstakeForMultipleOwners",
+    "name": "batchUnstake",
     "inputs": [
       {
         "name": "tokenIds",
         "type": "uint256[]",
         "internalType": "uint256[]"
+      },
+      {
+        "name": "tokenReceiver",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "outputs": [],
@@ -164,6 +265,25 @@
   },
   {
     "type": "function",
+    "name": "multicall",
+    "inputs": [
+      {
+        "name": "data",
+        "type": "bytes[]",
+        "internalType": "bytes[]"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "results",
+        "type": "bytes[]",
+        "internalType": "bytes[]"
+      }
+    ],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "function",
     "name": "nft",
     "inputs": [],
     "outputs": [
@@ -213,6 +333,25 @@
     "type": "function",
     "name": "owner",
     "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "payoutRecipient",
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
     "outputs": [
       {
         "name": "",
@@ -307,12 +446,17 @@
   },
   {
     "type": "function",
-    "name": "stake",
+    "name": "setPayoutRecipient",
     "inputs": [
       {
         "name": "tokenId",
         "type": "uint256",
         "internalType": "uint256"
+      },
+      {
+        "name": "recipient",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "outputs": [],
@@ -320,13 +464,8 @@
   },
   {
     "type": "function",
-    "name": "stakeFor",
+    "name": "stake",
     "inputs": [
-      {
-        "name": "owner",
-        "type": "address",
-        "internalType": "address"
-      },
       {
         "name": "tokenId",
         "type": "uint256",
@@ -408,19 +547,6 @@
   },
   {
     "type": "function",
-    "name": "unstakeFor",
-    "inputs": [
-      {
-        "name": "tokenId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
     "name": "upgradeToAndCall",
     "inputs": [
       {
@@ -449,6 +575,100 @@
       }
     ],
     "stateMutability": "pure"
+  },
+  {
+    "type": "event",
+    "name": "BatchBurned",
+    "inputs": [
+      {
+        "name": "user",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "tokenIds",
+        "type": "uint256[]",
+        "indexed": false,
+        "internalType": "uint256[]"
+      },
+      {
+        "name": "recipient",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "BatchClaimed",
+    "inputs": [
+      {
+        "name": "user",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "tokenIds",
+        "type": "uint256[]",
+        "indexed": false,
+        "internalType": "uint256[]"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "BatchStaked",
+    "inputs": [
+      {
+        "name": "user",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "tokenIds",
+        "type": "uint256[]",
+        "indexed": false,
+        "internalType": "uint256[]"
+      },
+      {
+        "name": "recipient",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "BatchUnstaked",
+    "inputs": [
+      {
+        "name": "user",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "tokenIds",
+        "type": "uint256[]",
+        "indexed": false,
+        "internalType": "uint256[]"
+      },
+      {
+        "name": "tokenReceiver",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
   },
   {
     "type": "event",
@@ -509,6 +729,25 @@
   },
   {
     "type": "event",
+    "name": "MultiCallExecuted",
+    "inputs": [
+      {
+        "name": "caller",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "callsCount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "OwnershipTransferred",
     "inputs": [
       {
@@ -541,6 +780,31 @@
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "PayoutRecipientSet",
+    "inputs": [
+      {
+        "name": "tokenId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "owner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "recipient",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
       }
     ],
     "anonymous": false
