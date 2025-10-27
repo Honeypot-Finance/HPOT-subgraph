@@ -55,11 +55,12 @@ contract NFTStaking is
     );
     event BatchStaked(
         address indexed user,
-        uint256[] indexed tokenIds,
+        uint256[] tokenIds,
         address indexed recipient
     );
-    event BatchClaimed(address indexed user, uint256[] indexed tokenIds);
-    event BatchUnstaked(address indexed user, uint256[] indexed tokenIds, address indexed tokenReceiver);
+    event BatchClaimed(address indexed user, uint256[]  tokenIds);
+    event BatchUnstaked(address indexed user, uint256[] tokenIds, address indexed tokenReceiver);
+    event BatchBurned(address indexed user, uint256[] tokenIds, address recipient);
     event PayoutRecipientSet(uint256 indexed tokenId, address indexed owner, address indexed recipient);
     
     // Parameter epochs to prevent retroactive mispricing
@@ -102,7 +103,7 @@ contract NFTStaking is
         uint256 _ratePerSecond,
         uint256 _burnBonusBps,
         address initialOwner
-    ) public reinitializer(2) {
+    ) public reinitializer(3) {
         require(address(_nft) != address(0), "ZERO_NFT");
         require(address(_rewards) != address(0), "ZERO_REWARDS");
         require(_burnBonusBps <= MAX_BPS, "BPS_EXCEEDS_MAX");
@@ -125,8 +126,7 @@ contract NFTStaking is
         //         burnBonusBps: _burnBonusBps
         //     })
         // );
-
-        emit ParametersUpdated(_ratePerSecond, _burnBonusBps);
+        // emit ParametersUpdated(_ratePerSecond, _burnBonusBps);
     }
 
     // Multiplier calculation: 1 + (duration / 30 days), capped at MAX_MULTIPLIER
@@ -261,16 +261,16 @@ contract NFTStaking is
 
     // Allow the current NFT holder to set or clear a reward recipient override while idle
     function setPayoutRecipient(uint256 tokenId, address recipient) external {
+        StakeData memory s = stakes[tokenId];
+        require(s.owner == msg.sender, "NOT_OWNER");
         _setPayoutRecipient(tokenId, recipient);
     }
 
     // Internal function to set payout recipient
     function _setPayoutRecipient(uint256 tokenId, address recipient) internal {
-        StakeData memory s = stakes[tokenId];
-        require(s.owner == msg.sender, "NOT_OWNER");
+        require(recipient != address(0) && recipient != msg.sender, "INVALID_RECIPIENT");
         payoutRecipient[tokenId] = recipient;
         emit PayoutRecipientSet(tokenId, msg.sender, recipient);
-            
     }
 
     // Stake an NFT
@@ -292,23 +292,26 @@ contract NFTStaking is
         emit Staked(msg.sender, tokenId);
     }
 
+    // Batch stake function
     function batchStake(
         uint256[] calldata tokenIds,
         address recipient
     ) external nonReentrant {
         require(tokenIds.length > 0, "EMPTY_ARRAY");
-        require(tokenIds.length <= 100, "TOO_MANY_TOKENS");
 
         for (uint256 i = 0; i < tokenIds.length; i++) {
-            require(stakes[tokenIds[i]].owner == address(0), "ALREADY_STAKED");
             _stake(tokenIds[i]);
-            _setPayoutRecipient(tokenIds[i], recipient);
+            if (recipient != address(0) && recipient != msg.sender) {
+                _setPayoutRecipient(tokenIds[i], recipient);
+            }
         }
 
         emit BatchStaked(msg.sender, tokenIds, recipient);
     }
 
+    // Internal function to stake an NFT
     function _stake(uint256 tokenId) internal {
+        require(stakes[tokenId].owner == address(0), "ALREADY_STAKED");
         // Transfer NFT from user to contract
         nft.safeTransferFrom(msg.sender, address(this), tokenId);
         stakes[tokenId] = StakeData({
@@ -456,9 +459,9 @@ contract NFTStaking is
         emit Burned(msg.sender, tokenId);
     }
 
+    // Batch burn function
     function batchBurn(uint256[] calldata tokenIds, address recipient) external nonReentrant {
         require(tokenIds.length > 0, "EMPTY_ARRAY");
-        require(tokenIds.length <= 100, "TOO_MANY_TOKENS");
 
         for (uint256 i = 0; i < tokenIds.length; i++) {
             _burn(tokenIds[i], recipient);
@@ -467,6 +470,7 @@ contract NFTStaking is
         emit BatchBurned(msg.sender, tokenIds, recipient);
     }
 
+    // Internal function to burn an NFT
     function _burn(uint256 tokenId, address recipient) internal {
         StakeData storage s = stakes[tokenId];
         if (s.owner == address(0)) {
@@ -484,7 +488,9 @@ contract NFTStaking is
                 burnedAt: uint64(block.timestamp),
                 lastBurnClaimAt: 0
             });
-            _setPayoutRecipient(tokenId, recipient);
+            if (recipient != address(0) && recipient != msg.sender) {
+                _setPayoutRecipient(tokenId, recipient);
+            }
             return;
         }
 
@@ -503,248 +509,8 @@ contract NFTStaking is
         s.burnedAt = uint64(block.timestamp);
         s.lastBurnClaimAt = 0; // Reset burn claim tracking
 
-        _setPayoutRecipient(tokenId, recipient);
-    }
-    
-
-    // Stake an NFT on behalf of another user (requires approval)
-    // @deprecated
-    function stakeFor(address owner, uint256 tokenId) external nonReentrant {
-        require(stakes[tokenId].owner == address(0), "ALREADY_STAKED");
-
-        // Check if caller is authorized to operate this NFT
-        require(
-            nft.ownerOf(tokenId) == owner &&
-                (nft.getApproved(tokenId) == msg.sender ||
-                    nft.isApprovedForAll(owner, msg.sender)),
-            "NOT_AUTHORIZED"
-        );
-
-        // Transfer NFT from owner to contract
-        nft.safeTransferFrom(owner, address(this), tokenId);
-
-        stakes[tokenId] = StakeData({
-            owner: owner, // Record the real owner, not the operator
-            stakedAt: uint64(block.timestamp),
-            lastClaimAt: uint64(block.timestamp),
-            burned: false,
-            burnedAt: 0,
-            lastBurnClaimAt: 0
-        });
-
-        emit StakedFor(owner, msg.sender, tokenId);
-    }
-
-    // Batch stake NFTs for a single owner (requires approval for all)
-    // @deprecated
-    function batchStakeFor(
-        address owner,
-        uint256[] calldata tokenIds
-    ) external nonReentrant {
-        require(tokenIds.length > 0, "EMPTY_ARRAY");
-        require(tokenIds.length <= 50, "TOO_MANY_TOKENS");
-
-        for (uint256 i = 0; i < tokenIds.length; i++) {
-            uint256 tokenId = tokenIds[i];
-            require(stakes[tokenId].owner == address(0), "ALREADY_STAKED");
-            require(nft.ownerOf(tokenId) == owner, "NOT_OWNER");
-            // Check batch authorization (recommend user to use setApprovalForAll)
-            require(
-                nft.ownerOf(tokenId) == msg.sender ||
-                    nft.getApproved(tokenId) == msg.sender ||
-                    nft.isApprovedForAll(owner, msg.sender),
-                "NOT_AUTHORIZED"
-            );
-
-            // Transfer NFT from owner to contract
-            nft.safeTransferFrom(owner, address(this), tokenId);
-
-            stakes[tokenId] = StakeData({
-                owner: owner,
-                stakedAt: uint64(block.timestamp),
-                lastClaimAt: uint64(block.timestamp),
-                burned: false,
-                burnedAt: 0,
-                lastBurnClaimAt: 0
-            });
-
-            emit StakedFor(owner, msg.sender, tokenId);
-        }
-    }
-
-    // Batch stake NFTs for multiple owners
-    // @deprecated
-    function batchStakeForMultipleOwners(
-        address[] calldata owners,
-        uint256[] calldata tokenIds
-    ) external nonReentrant {
-        require(owners.length == tokenIds.length, "LENGTH_MISMATCH");
-        require(owners.length > 0, "EMPTY_ARRAY");
-        require(owners.length <= 30, "TOO_MANY_TOKENS");
-
-        for (uint256 i = 0; i < owners.length; i++) {
-            address owner = owners[i];
-            uint256 tokenId = tokenIds[i];
-
-            require(stakes[tokenId].owner == address(0), "ALREADY_STAKED");
-            require(nft.ownerOf(tokenId) == owner, "NOT_OWNER");
-            require(
-                nft.getApproved(tokenId) == msg.sender ||
-                    nft.isApprovedForAll(owner, msg.sender),
-                "NOT_AUTHORIZED"
-            );
-
-            nft.safeTransferFrom(owner, address(this), tokenId);
-
-            stakes[tokenId] = StakeData({
-                owner: owner,
-                stakedAt: uint64(block.timestamp),
-                lastClaimAt: uint64(block.timestamp),
-                burned: false,
-                burnedAt: 0,
-                lastBurnClaimAt: 0
-            });
-
-            emit StakedFor(owner, msg.sender, tokenId);
-        }
-    }
-
-    // Public claim function with reentrancy guard
-    // @deprecated
-    function claimFor(uint256 tokenId) public nonReentrant returns (uint256) {
-        return _claimFor(tokenId);
-    }
-
-    // Internal claim function for proxy operations (no owner check)
-    // @deprecated
-    function _claimFor(uint256 tokenId) internal returns (uint256 amount) {
-        StakeData storage sStore = stakes[tokenId];
-        // Allow claim for either staked or burn-only positions
-        require(sStore.stakedAt != 0 || sStore.burned, "NOT_STAKED");
-
-        // Compute pending using shared view logic
-        StakeData memory s = sStore;
-        uint256 nowTs = block.timestamp;
-        (uint256 pending, bool isBurn) = _pendingAmount(s, nowTs);
-        if (pending == 0) return 0;
-
-        if (isBurn) {
-            // Additional safety check for invalid state when claiming
-            require(sStore.burnedAt != 0, "INVALID_BURN_STATE");
-            sStore.lastBurnClaimAt = uint64(nowTs);
-            // Always mint to recorded owner to avoid future permissionless claim misdirection
-            rewards.mint(sStore.owner, pending);
-            emit BurnRewardClaimed(sStore.owner, tokenId, pending);
-        } else {
-            sStore.lastClaimAt = uint64(nowTs);
-            rewards.mint(sStore.owner, pending);
-            emit RewardClaimed(sStore.owner, tokenId, pending);
-        }
-        return pending;
-    }
-
-    // Unstake NFT on behalf of another user (requires approval)
-    // @deprecated
-    function unstakeFor(uint256 tokenId) external nonReentrant {
-        StakeData memory s = stakes[tokenId];
-        require(s.owner != address(0), "NOT_STAKED");
-        require(!s.burned, "ALREADY_BURNED");
-
-        address owner = s.owner;
-
-        // Check permission: must be owner or authorized operator
-        require(
-            msg.sender == owner ||
-                nft.isApprovedForAll(owner, msg.sender) ||
-                nft.getApproved(tokenId) == msg.sender,
-            "NOT_AUTHORIZED"
-        );
-
-        // Claim rewards for the real owner first
-        _claimFor(tokenId);
-
-        // Clear stake data
-        delete stakes[tokenId];
-
-        // Return NFT to the real owner, not the operator
-        nft.safeTransferFrom(address(this), owner, tokenId);
-
-        emit UnstakedFor(owner, msg.sender, tokenId);
-    }
-
-    // Batch unstake NFTs for a single owner (requires approval for all)
-    // @deprecated
-    function batchUnstakeFor(
-        address owner,
-        uint256[] calldata tokenIds
-    ) external nonReentrant {
-        require(tokenIds.length > 0, "EMPTY_ARRAY");
-        require(tokenIds.length <= 50, "TOO_MANY_TOKENS");
-
-        // Check batch authorization
-        require(
-            msg.sender == owner ||
-                nft.isApprovedForAll(owner, msg.sender) ||
-                nft.getApproved(tokenIds[0]) == msg.sender,
-            "NOT_AUTHORIZED"
-        );
-
-        for (uint256 i = 0; i < tokenIds.length; i++) {
-            uint256 tokenId = tokenIds[i];
-            StakeData memory s = stakes[tokenId];
-
-            require(s.owner == owner, "NOT_OWNER");
-            require(!s.burned, "ALREADY_BURNED");
-            require(s.stakedAt != 0, "NOT_STAKED");
-
-            // Claim rewards first
-            _claimFor(tokenId);
-
-            // Clear stake data
-            delete stakes[tokenId];
-
-            // Return NFT to owner
-            nft.safeTransferFrom(address(this), owner, tokenId);
-
-            emit UnstakedFor(owner, msg.sender, tokenId);
-        }
-    }
-
-    // Batch unstake NFTs for multiple owners
-    // @deprecated
-    function batchUnstakeForMultipleOwners(
-        uint256[] calldata tokenIds
-    ) external nonReentrant {
-        require(tokenIds.length > 0, "EMPTY_ARRAY");
-        require(tokenIds.length <= 30, "TOO_MANY_TOKENS");
-
-        for (uint256 i = 0; i < tokenIds.length; i++) {
-            uint256 tokenId = tokenIds[i];
-            StakeData memory s = stakes[tokenId];
-
-            require(s.owner != address(0), "NOT_STAKED");
-            require(!s.burned, "ALREADY_BURNED");
-
-            address owner = s.owner;
-
-            // Check permission for each NFT individually
-            require(
-                msg.sender == owner ||
-                    nft.isApprovedForAll(owner, msg.sender) ||
-                    nft.getApproved(tokenId) == msg.sender,
-                "NOT_AUTHORIZED"
-            );
-
-            // Claim rewards for owner
-            _claimFor(tokenId);
-
-            // Clear stake data
-            delete stakes[tokenId];
-
-            // Return NFT to real owner
-            nft.safeTransferFrom(address(this), owner, tokenId);
-
-            emit UnstakedFor(owner, msg.sender, tokenId);
+        if (recipient != address(0) && recipient != msg.sender) {
+            _setPayoutRecipient(tokenId, recipient);
         }
     }
 
@@ -783,7 +549,7 @@ contract NFTStaking is
 
     function multicall(
         bytes[] calldata data
-    ) external payable override returns (bytes[] memory results) {
+    ) external payable returns (bytes[] memory results) {
         results = new bytes[](data.length);
         unchecked {
             for (uint256 i = 0; i < data.length; i++) {
@@ -902,6 +668,6 @@ contract NFTStaking is
 
     // Get implementation version
     function version() public pure returns (string memory) {
-        return "1.0.2";
+        return "1.0.3";
     }
 }
